@@ -1,0 +1,78 @@
+name: fix_radar
+description: "FixRadar - Conecta clientes con técnicos locales en tiempo real."
+publish_to: 'none'
+
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.4.4 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  cupertino_icons: ^1.0.8
+
+  # Firebase (Auth + Storage + FCM — se mantienen por ser gratuitos)
+  firebase_core: ^4.9.0
+  firebase_auth: ^6.5.1
+  firebase_storage: ^13.4.1
+  firebase_messaging: ^16.2.2
+  google_sign_in: ^6.3.0
+
+  # Backend HTTP REST (reemplaza Firestore)
+  dio: ^5.7.0
+
+  # Real-time Socket.io (reemplaza Firestore listeners)
+  socket_io_client: ^3.0.2
+
+  # Location & Maps
+  geolocator: ^13.0.1
+  geocoding: ^3.0.0
+  google_maps_flutter: ^2.17.0
+  flutter_polyline_points: ^2.1.0
+
+  # AI Diagnosis
+  google_generative_ai: ^0.4.5
+
+  # Image
+  image_picker: ^1.1.2
+  flutter_image_compress: ^2.4.0
+
+  # Push Notifications local
+  flutter_local_notifications: ^18.0.1
+
+  # State & Utilities
+  provider: ^6.1.2
+  shared_preferences: ^2.4.23
+  intl: ^0.19.0
+  shimmer: ^3.0.0
+  share_plus: ^12.0.2
+  url_launcher: ^6.3.2
+  connectivity_plus: ^6.1.5
+  uuid: ^4.5.3
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_launcher_icons: ^0.14.0
+  flutter_native_splash: ^2.4.0
+  flutter_lints: ^6.0.0
+
+flutter_launcher_icons:
+  android: "ic_launcher"
+  ios: true
+  image_path: "assets/icon_foreground.png"
+  adaptive_icon_background: "#ffffff"
+  adaptive_icon_foreground: "assets/icon_foreground.png"
+
+flutter_native_splash:
+  color: "#ffffff"
+  image: assets/screen.png
+  android_12:
+    image: assets/screen.png
+    color: "#ffffff"
+
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/

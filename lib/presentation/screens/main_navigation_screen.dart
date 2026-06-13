@@ -1,0 +1,207 @@
+import 'dart:async';
+import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:geolocator/geolocator.dart';
+import 'home_map_screen.dart';
+import 'dashboard_screen.dart';
+import 'technician_clients_screen.dart';
+import 'client_requests_screen.dart';
+import 'client_responders_list_screen.dart';
+import 'technician_quotes_screen.dart';
+import 'technicians_directory_screen.dart';
+import '../profile/profile_screen.dart';
+import '../../core/config/routes.dart';
+import '../../core/services/firestore_service.dart';
+import '../../core/services/proximity_service.dart';
+import '../../core/services/location_service.dart';
+import '../../core/services/connectivity_service.dart';
+import '../../core/services/sync_service.dart';
+import '../../core/services/language_service.dart';
+import '../../core/models/user_model.dart';
+import '../../core/models/service_request.dart';
+
+class MainNavigationScreen extends StatefulWidget {
+  const MainNavigationScreen({super.key});
+
+  @override
+  State<MainNavigationScreen> createState() => _MainNavigationScreenState();
+}
+
+class _MainNavigationScreenState extends State<MainNavigationScreen> with WidgetsBindingObserver {
+  int _currentIndex = 0;
+  final GlobalKey<HomeMapScreenState> _mapScreenKey = GlobalKey<HomeMapScreenState>();
+  final FirestoreService _firestoreService = FirestoreService();
+  final LocationService _locationService = LocationService();
+  final ConnectivityService _connectivityService = ConnectivityService();
+  final String _currentUserId = FirebaseAuth.instance.currentUser?.uid ?? '';
+  
+  ConnectivityStatus _connectivityStatus = ConnectivityStatus.online;
+  StreamSubscription<ConnectivityStatus>? _connectivitySubscription;
+  StreamSubscription<UserModel?>? _userSubscription;
+
+  bool _isOnline = false;
+  UserModel? _currentUser;
+  Timer? _locationSyncTimer;
+
+  @override
+  void initState() {
+    super.didChangeAppLifecycleState(AppLifecycleState.resumed); // Dummy to avoid unused import if needed
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    _startRadar();
+    _syncOnlineStatus();
+    _initConnectivity();
+    _listenToUser();
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    _locationSyncTimer?.cancel();
+    _connectivitySubscription?.cancel();
+    _userSubscription?.cancel();
+    super.dispose();
+  }
+
+  void _listenToUser() {
+    if (_currentUserId.isNotEmpty) {
+      _userSubscription = _firestoreService.getUserStream(_currentUserId).listen((user) {
+        if (mounted) {
+          setState(() => _currentUser = user);
+        }
+      });
+    }
+  }
+
+  void _initConnectivity() {
+    _connectivitySubscription = _connectivityService.statusStream.listen((status) {
+      if (mounted) setState(() => _connectivityStatus = status);
+    });
+  }
+
+  Future<void> _syncOnlineStatus() async {
+    final uid = FirebaseAuth.instance.currentUser?.uid ?? '';
+    if (uid.isEmpty) return;
+    
+    setState(() => _isOnline = true);
+    final pos = await _locationService.getCurrentLocation();
+    await _firestoreService.updateUserOnlineStatus(uid, true, lat: pos?.latitude, lng: pos?.longitude);
+    _startLocationSync();
+  }
+
+  void _startLocationSync() {
+    _locationSyncTimer?.cancel();
+    _locationSyncTimer = Timer.periodic(const Duration(seconds: 15), (timer) async {
+      if (!_isOnline || _connectivityStatus == ConnectivityStatus.offline) return;
+      final pos = await _locationService.getCurrentLocation();
+      if (pos != null) {
+        final uid = FirebaseAuth.instance.currentUser?.uid ?? '';
+        await _firestoreService.updateUserLocation(uid, pos.latitude, pos.longitude);
+      }
+    });
+  }
+
+  Future<void> _toggleOnlineStatus(bool value) async {
+    final uid = FirebaseAuth.instance.currentUser?.uid ?? '';
+    if (uid.isEmpty) return;
+    setState(() => _isOnline = value);
+    if (value) {
+      final pos = await _locationService.getCurrentLocation();
+      await _firestoreService.updateUserOnlineStatus(uid, true, lat: pos?.latitude, lng: pos?.longitude);
+      _startLocationSync();
+    } else {
+      await _firestoreService.updateUserOnlineStatus(uid, false);
+      _locationSyncTimer?.cancel();
+    }
+  }
+
+  void _startRadar() {
+    ProximityService().startMonitoring();
+  }
+
+  void _onTabTapped(int index, {ServiceRequest? focusRequest}) {
+    setState(() {
+      _currentIndex = index;
+    });
+    
+    // If switching to map, trigger recenter or focus
+    if (index == 1) {
+      if (focusRequest != null) {
+        _mapScreenKey.currentState?.focusOnRequest(focusRequest);
+      } else {
+        _mapScreenKey.currentState?.centerOnUser();
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_currentUser == null) {
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    }
+
+    final bool isTechnician = _currentUser?.role == 'technician';
+
+    final List<Widget> screens = isTechnician 
+      ? [
+          DashboardScreen(onViewMap: (req) => _onTabTapped(1, focusRequest: req)),
+          HomeMapScreen(
+            key: _mapScreenKey,
+            isOnline: _isOnline,
+            onToggleOnline: _toggleOnlineStatus,
+            connectivityStatus: _connectivityStatus,
+          ),
+          const TechnicianQuotesScreen(),
+          TechnicianClientsScreen(onViewMap: (req) => _onTabTapped(1, focusRequest: req)),
+          const ProfileScreen(),
+        ]
+      : [
+          DashboardScreen(onViewMap: (req) => _onTabTapped(1, focusRequest: req)),
+          TechniciansDirectoryScreen(),
+          ClientRequestsScreen(onViewMap: (req) => _onTabTapped(1, focusRequest: req)),
+          const ClientRespondersListScreen(),
+          const ProfileScreen(),
+        ];
+
+    final List<BottomNavigationBarItem> navItems = isTechnician
+      ? const [
+          BottomNavigationBarItem(icon: Icon(Icons.home_outlined), activeIcon: Icon(Icons.home), label: 'Inicio'),
+          BottomNavigationBarItem(icon: Icon(Icons.work_outline), activeIcon: Icon(Icons.work), label: 'Mapa'),
+          BottomNavigationBarItem(icon: Icon(Icons.request_quote_outlined), activeIcon: Icon(Icons.request_quote), label: 'Cotizaciones'),
+          BottomNavigationBarItem(icon: Icon(Icons.people_outline), activeIcon: Icon(Icons.people), label: 'Clientes'),
+          BottomNavigationBarItem(icon: Icon(Icons.person_outline), activeIcon: Icon(Icons.person), label: 'Perfil'),
+        ]
+      : const [
+          BottomNavigationBarItem(icon: Icon(Icons.home_outlined), activeIcon: Icon(Icons.home), label: 'Inicio'),
+          BottomNavigationBarItem(icon: Icon(Icons.engineering_outlined), activeIcon: Icon(Icons.engineering), label: 'Técnicos'),
+          BottomNavigationBarItem(icon: Icon(Icons.history_outlined), activeIcon: Icon(Icons.history), label: 'Mis Pedidos'),
+          BottomNavigationBarItem(icon: Icon(Icons.assignment_ind_outlined), activeIcon: Icon(Icons.assignment_ind), label: 'Propuestas'),
+          BottomNavigationBarItem(icon: Icon(Icons.person_outline), activeIcon: Icon(Icons.person), label: 'Perfil'),
+        ];
+
+    return Scaffold(
+      body: IndexedStack(
+        index: _currentIndex,
+        children: screens,
+      ),
+      bottomNavigationBar: Container(
+        decoration: BoxDecoration(
+          boxShadow: [
+            BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 10, offset: const Offset(0, -5))
+          ],
+        ),
+        child: BottomNavigationBar(
+          currentIndex: _currentIndex,
+          onTap: _onTabTapped,
+          type: BottomNavigationBarType.fixed,
+          backgroundColor: Colors.white,
+          selectedItemColor: const Color(0xFFFF8A00),
+          unselectedItemColor: Colors.grey,
+          showSelectedLabels: true,
+          showUnselectedLabels: true,
+          items: navItems,
+        ),
+      ),
+    );
+  }
+}
