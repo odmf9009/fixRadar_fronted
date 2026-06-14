@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "528608210144",
+    "project_id": "fixradar-77067",
+    "storage_bucket": "fixradar-77067.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:528608210144:android:f4b811935189d7be893485",
+        "android_client_info": {
+          "package_name": "com.venturesflstudio.fix_radar"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "528608210144-cajos5fejrd64hjfscv8kq6k9qmo2baa.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDWS9722OGGyNTtDVaL4LJSQsuvAXKxBPI"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "528608210144-cajos5fejrd64hjfscv8kq6k9qmo2baa.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

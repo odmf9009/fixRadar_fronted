@@ -10,7 +10,6 @@ build/
 # Android
 android/.gradle/
 android/local.properties
-android/app/google-services.json
 **/android/gradlew
 **/android/gradlew.bat
 **/android/gradle/wrapper/gradle-wrapper.jar
@@ -37,5 +36,5 @@ ios/**/*.perspectivev3
 *.log
 pubspec.lock
 
-# Secrets (claves API reales — usar secrets.dart.example como plantilla)
-lib/core/config/secrets.dart
+# Secrets — descomenta cuando no necesites compartir entre PCs
+# lib/core/config/secrets.dart
