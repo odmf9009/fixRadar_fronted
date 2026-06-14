@@ -7,7 +7,7 @@ class AppConfig {
 
   static const String googleMapsApiKey = String.fromEnvironment(
     'GOOGLE_MAPS_KEY',
-    defaultValue: 'YOUR_GOOGLE_MAPS_API_KEY',
+    defaultValue: 'AIzaSyAwbHRMGsaUETLbP4yjDq79fzt7cEGMg50',
   );
 
   static const String geminiApiKey = String.fromEnvironment(
