@@ -1,4 +1,8 @@
 buildscript {
+    repositories {
+        google()
+        mavenCentral()
+    }
     dependencies {
         classpath("com.google.gms:google-services:4.4.2")
     }
@@ -8,6 +12,11 @@ allprojects {
     repositories {
         google()
         mavenCentral()
+    }
+    afterEvaluate {
+        extensions.findByType<com.android.build.gradle.BaseExtension>()?.apply {
+            compileSdkVersion(36)
+        }
     }
 }
 
