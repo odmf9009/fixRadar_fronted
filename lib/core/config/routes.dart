@@ -45,7 +45,7 @@ import '../../presentation/screens/language_settings_screen.dart';
 import '../../presentation/screens/terms_screen.dart';
 import '../../presentation/screens/about_screen.dart';
 import '../../presentation/screens/help_support_screen.dart';
-import '../services/auth_service.dart' show AuthService;
+import '../services/auth_service.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
 class AppRoutes {
@@ -170,8 +170,11 @@ class _SplashScreenState extends State<SplashScreen> {
     await Future.delayed(const Duration(milliseconds: 1500));
     if (!mounted) return;
 
-    final user = FirebaseAuth.instance.currentUser;
-    if (user != null) {
+    final firebaseUser = FirebaseAuth.instance.currentUser;
+    if (firebaseUser != null) {
+      // Sync with backend to ensure the user exists in MongoDB
+      await AuthService().syncCurrentUser();
+      if (!mounted) return;
       Navigator.pushReplacementNamed(context, AppRoutes.home);
     } else {
       Navigator.pushReplacementNamed(context, AppRoutes.login);

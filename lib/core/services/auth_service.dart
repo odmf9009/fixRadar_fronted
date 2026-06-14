@@ -100,6 +100,15 @@ class AuthService {
     await _googleSignIn.signOut();
   }
 
+  Future<UserModel?> syncCurrentUser() async {
+    final firebaseUser = _auth.currentUser;
+    if (firebaseUser == null) return null;
+    return _syncWithBackend(
+      name: firebaseUser.displayName,
+      profileImageUrl: firebaseUser.photoURL,
+    );
+  }
+
   Future<void> updateFcmToken(String token) async {
     try {
       await _api.put('/auth/fcm-token', data: {'token': token});
