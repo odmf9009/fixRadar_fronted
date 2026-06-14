@@ -29,20 +29,23 @@ class _LoginScreenState extends State<LoginScreen> {
 
     setState(() => _isLoading = true);
     try {
-      UserCredential? credential;
       if (_isLogin) {
-        credential = await _authService.signIn(_emailController.text.trim(), _passwordController.text.trim());
+        await _authService.signInWithEmail(
+          _emailController.text.trim(),
+          _passwordController.text.trim(),
+        );
       } else {
-        credential = await _authService.signUp(
-          _emailController.text.trim(), 
+        await _authService.signUpWithEmail(
+          _emailController.text.trim(),
           _passwordController.text.trim(),
           _nameController.text.trim(),
           referralCode: _referralController.text.trim().isEmpty ? null : _referralController.text.trim(),
         );
       }
-      
-      if (mounted && credential?.user != null) {
-        final userData = await _firestoreService.getUser(credential!.user!.uid);
+
+      if (mounted) {
+        final uid = FirebaseAuth.instance.currentUser?.uid;
+        final userData = uid != null ? await _firestoreService.getUser(uid) : null;
         if (userData == null || !userData.onboardingCompleted || userData.userType == null) {
           Navigator.pushReplacementNamed(context, AppRoutes.roleSelection);
         } else {
@@ -201,9 +204,9 @@ class _LoginScreenState extends State<LoginScreen> {
   Future<void> _signInWithGoogle() async {
     setState(() => _isLoading = true);
     try {
-      final credential = await _authService.signInWithGoogle();
-      if (mounted && credential?.user != null) {
-        final userData = await _firestoreService.getUser(credential!.user!.uid);
+      final userModel = await _authService.signInWithGoogle();
+      if (mounted && userModel != null) {
+        final userData = await _firestoreService.getUser(userModel.id);
         if (userData == null || !userData.onboardingCompleted || userData.userType == null) {
           Navigator.pushReplacementNamed(context, AppRoutes.roleSelection);
         } else {

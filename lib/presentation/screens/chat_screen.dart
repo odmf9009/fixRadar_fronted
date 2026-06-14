@@ -53,6 +53,7 @@ class _ChatScreenState extends State<ChatScreen> {
 
     final message = ChatMessage(
       id: '',
+      requestId: widget.request.id,
       senderId: _currentUserId,
       senderName: _currentUserName,
       text: _messageController.text.trim(),
@@ -71,6 +72,7 @@ class _ChatScreenState extends State<ChatScreen> {
       if (pos != null) {
         final message = ChatMessage(
           id: '',
+          requestId: widget.request.id,
           senderId: _currentUserId,
           senderName: _currentUserName,
           text: '📍 Mi ubicación actual',
@@ -97,6 +99,7 @@ class _ChatScreenState extends State<ChatScreen> {
       final url = await _uploadService.uploadObjectImage(File(pickedFile.path));
       final message = ChatMessage(
         id: '',
+        requestId: widget.request.id,
         senderId: _currentUserId,
         senderName: _currentUserName,
         text: '📷 Foto del trabajo',

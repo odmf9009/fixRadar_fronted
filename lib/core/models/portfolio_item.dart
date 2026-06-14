@@ -35,15 +35,13 @@ class PortfolioItem {
       'imageUrls': imageUrls,
       'thumbnailUrls': thumbnailUrls,
       'location': location,
-      'createdAt': createdAt != null ? createdAt!.toIso8601String() : FieldValue.serverTimestamp(),
+      'createdAt': createdAt != null ? createdAt!.toIso8601String() : DateTime.now().toIso8601String(),
     };
   }
 
   factory PortfolioItem.fromMap(String id, Map<String, dynamic> map) {
     DateTime parsedDate;
-    if (map['date'] is Timestamp) {
-      parsedDate = DateTime.tryParse(map['date'] ?? '') ?? DateTime.now();
-    } else if (map['date'] is String) {
+    if (map['date'] is String) {
       parsedDate = DateTime.tryParse(map['date']) ?? DateTime.now();
     } else {
       parsedDate = DateTime.now();

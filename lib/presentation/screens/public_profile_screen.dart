@@ -524,7 +524,7 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
 
   Widget _buildReviews(UserModel user) {
     return StreamBuilder<List<ReviewModel>>(
-      stream: _firestoreService.getTechnicianReviews(user.id),
+      stream: _firestoreService.getTechnicianReviewsStream(user.id),
       builder: (context, snapshot) {
         final reviews = snapshot.data ?? [];
         if (reviews.isEmpty) {

@@ -58,4 +58,28 @@ class NotificationService {
       ),
     );
   }
+
+  /// Show a local alert notification (triggered by proximity or socket events)
+  Future<void> showLocalAlert(String title, String body, {String? payload}) async {
+    const channel = AndroidNotificationChannel(
+      'fixradar_alerts',
+      'FixRadar Alerts',
+      importance: Importance.high,
+    );
+
+    await _local.show(
+      title.hashCode ^ body.hashCode,
+      title,
+      body,
+      NotificationDetails(
+        android: AndroidNotificationDetails(
+          channel.id,
+          channel.name,
+          importance: channel.importance,
+          icon: '@mipmap/ic_launcher',
+        ),
+        iOS: const DarwinNotificationDetails(),
+      ),
+    );
+  }
 }

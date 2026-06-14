@@ -240,4 +240,22 @@ class UserModel {
     if (totalXp >= 1000) return (totalXp - 1000) / 1500;
     return totalXp / 1000;
   }
+
+  /// The XP required to reach the next level
+  int get nextLevelXp {
+    if (totalXp < 1000) return 1000;
+    if (totalXp < 2500) return 2500;
+    if (totalXp < 5000) return 5000;
+    if (totalXp < 10000) return 10000;
+    return 10000;
+  }
+
+  /// The XP at which the current level starts
+  int get currentLevelBaseXp {
+    if (totalXp >= 10000) return 10000;
+    if (totalXp >= 5000) return 5000;
+    if (totalXp >= 2500) return 2500;
+    if (totalXp >= 1000) return 1000;
+    return 0;
+  }
 }

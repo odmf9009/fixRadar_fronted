@@ -44,7 +44,7 @@ class XPTransaction {
     return {
       'title': title,
       'xpAmount': xpAmount,
-      'date': FieldValue.serverTimestamp(),
+      'date': date.toIso8601String(),
     };
   }
 }

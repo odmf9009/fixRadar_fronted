@@ -1,7 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import '../../core/models/service_request.dart';
-import '../../core/config/routes.dart';
+import '../../../core/models/service_request.dart';
+import '../../../core/config/routes.dart';
 import 'category_badge.dart';
 
 class JobCard extends StatelessWidget {
@@ -147,6 +147,8 @@ class JobCard extends StatelessWidget {
         return Colors.orange;
       case UrgencyLevel.low:
         return Colors.green;
+      default:
+        return Colors.grey;
     }
   }
 
@@ -158,6 +160,8 @@ class JobCard extends StatelessWidget {
         return 'MEDIA';
       case UrgencyLevel.low:
         return 'BAJA';
+      default:
+        return 'MEDIA';
     }
   }
 }

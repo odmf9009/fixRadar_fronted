@@ -9,7 +9,7 @@ import '../../core/services/firestore_service.dart';
 import '../../core/services/location_service.dart';
 import '../../core/services/language_service.dart';
 import '../../core/config/routes.dart';
-import '../home/widgets/category_badge.dart';
+import 'widgets/category_badge.dart';
 
 class AlertsScreen extends StatefulWidget {
   const AlertsScreen({super.key});

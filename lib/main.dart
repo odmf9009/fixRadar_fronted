@@ -33,13 +33,12 @@ class _AppContent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final languageService = context.watch<LanguageService>();
-    AppTranslations.setLocale(languageService.locale);
+    context.watch<LanguageService>(); // Listen for language changes
 
     return MaterialApp(
       title: 'FixRadar',
       debugShowCheckedModeBanner: false,
-      theme: AppTheme.lightTheme,
+      theme: AppTheme.light,
       initialRoute: AppRoutes.splash,
       routes: AppRoutes.routes,
     );

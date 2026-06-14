@@ -68,4 +68,51 @@ class UploadService {
       await _storage.refFromURL(url).delete();
     } catch (_) {}
   }
+
+  /// Alias for deleteFile — used by some screens
+  Future<void> deleteImageByUrl(String url) => deleteFile(url);
+
+  /// Uploads an image with both full and thumbnail sizes.
+  /// Returns a map with 'full' and 'thumb' keys.
+  Future<Map<String, String>> uploadOptimizedImage(File file, String folder) async {
+    try {
+      final fileName = _uuid.v4();
+
+      // Full size
+      final fullCompressed = await FlutterImageCompress.compressWithFile(
+        file.absolute.path,
+        quality: 80,
+        minWidth: 1024,
+        minHeight: 1024,
+      );
+      final fullRef = _storage.ref('$folder/$fileName.jpg');
+      await fullRef.putData(fullCompressed!);
+      final fullUrl = await fullRef.getDownloadURL();
+
+      // Thumbnail
+      final thumbCompressed = await FlutterImageCompress.compressWithFile(
+        file.absolute.path,
+        quality: 60,
+        minWidth: 256,
+        minHeight: 256,
+      );
+      final thumbRef = _storage.ref('$folder/${fileName}_thumb.jpg');
+      await thumbRef.putData(thumbCompressed!);
+      final thumbUrl = await thumbRef.getDownloadURL();
+
+      return {'full': fullUrl, 'thumb': thumbUrl};
+    } catch (e) {
+      throw Exception('Upload failed: $e');
+    }
+  }
+
+  /// Uploads an image for a service request/object — returns URL or empty string
+  Future<String> uploadObjectImage(File file) async {
+    final url = await uploadServiceImage(file, 'objects');
+    return url ?? '';
+  }
+
+  /// Uploads a profile image — alias
+  Future<String?> uploadProfileImageFromFile(File file, String userId) =>
+      uploadProfileImage(file, userId);
 }

@@ -9,7 +9,7 @@ import 'client_requests_screen.dart';
 import 'client_responders_list_screen.dart';
 import 'technician_quotes_screen.dart';
 import 'technicians_directory_screen.dart';
-import '../profile/profile_screen.dart';
+import 'profile_screen.dart';
 import '../../core/config/routes.dart';
 import '../../core/services/firestore_service.dart';
 import '../../core/services/proximity_service.dart';

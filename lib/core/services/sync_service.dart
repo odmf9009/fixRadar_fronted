@@ -13,7 +13,7 @@ class SyncService {
   Future<void> queueRequestOffline(ServiceRequest request) async {
     final prefs = await SharedPreferences.getInstance();
     List<String> queue = prefs.getStringList(_offlineQueueKey) ?? [];
-    queue.add(jsonEncode(request.toMap()));
+    queue.add(jsonEncode(request.toJson()));
     await prefs.setStringList(_offlineQueueKey, queue);
   }
 
@@ -48,7 +48,7 @@ class SyncService {
         
         // 2. Create the real request
         data['imageUrls'] = remoteUrls;
-        final ServiceRequest request = ServiceRequest.fromMap('', data);
+        final ServiceRequest request = ServiceRequest.fromJson(data);
         
         await _firestoreService.createServiceRequest(request);
         

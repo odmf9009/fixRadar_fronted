@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../core/config/service_constants.dart';
+import '../../../core/config/service_constants.dart';
 
 class CategoryBadge extends StatelessWidget {
   final String category;

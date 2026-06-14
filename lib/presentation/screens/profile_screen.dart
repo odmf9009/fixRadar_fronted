@@ -178,8 +178,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
     setState(() => _isUploading = true);
 
     try {
-      final imageUrl = await _uploadService.uploadProfileImage(userId, File(pickedFile.path));
-      await _firestoreService.updateUserProfileImage(userId, imageUrl);
+      final imageUrl = await _uploadService.uploadProfileImage(File(pickedFile.path), userId);
+      if (imageUrl != null) {
+        await _firestoreService.updateUserProfileImage(userId, imageUrl);
+      }
       
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(

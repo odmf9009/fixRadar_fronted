@@ -5,7 +5,7 @@ import '../../core/services/firestore_service.dart';
 import '../../core/services/location_service.dart';
 import '../../core/services/language_service.dart';
 import '../../core/config/routes.dart';
-import '../profile/public_profile_screen.dart';
+import 'public_profile_screen.dart';
 
 import '../../core/config/service_constants.dart';
 

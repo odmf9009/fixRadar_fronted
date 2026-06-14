@@ -3,7 +3,7 @@ import '../../core/models/user_model.dart';
 import '../../core/services/firestore_service.dart';
 import '../../core/services/language_service.dart';
 import '../../core/config/routes.dart';
-import '../profile/public_profile_screen.dart';
+import 'public_profile_screen.dart';
 
 class TopTechniciansScreen extends StatelessWidget {
   const TopTechniciansScreen({super.key});

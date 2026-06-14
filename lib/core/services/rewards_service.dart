@@ -1,31 +1,18 @@
-// Migrated: uses API service instead of Firestore
+// Migrated: stubbed — no backend rewards endpoint yet
+import 'dart:async';
 import '../models/reward_model.dart';
 
 class RewardsService {
-  final FirebaseFirestore _db = /* MongoDB via ApiService */;
-
+  /// Returns XP history — stubbed (empty stream)
   Stream<List<XPTransaction>> getXPHistory(String userId) {
-    return _db
-        .collection('users')
-        .doc(userId)
-        .collection('xp_history')
-        .orderBy('date', descending: true)
-        .snapshots()
-        .map((snapshot) => snapshot.docs
-            .map((doc) => XPTransaction.fromMap(doc.id, doc.data()))
-            .toList());
+    final controller = StreamController<List<XPTransaction>>();
+    controller.add([]);
+    return controller.stream;
   }
 
+  /// Add XP transaction — stubbed (no-op)
   Future<void> addXPTransaction(String userId, String title, int amount) async {
-    await _db
-        .collection('users')
-        .doc(userId)
-        .collection('xp_history')
-        .add({
-      'title': title,
-      'xpAmount': amount,
-      'date': DateTime.now().toIso8601String(),
-    });
+    // No backend endpoint yet — no-op
   }
 
   List<RewardItem> getAvailableRewards() {
@@ -77,7 +64,6 @@ class RewardsService {
   }
 
   static int getXPForNextLevel(int currentLevel) {
-    // Each level requires 500 more XP than the previous one
     return currentLevel * 500;
   }
 }

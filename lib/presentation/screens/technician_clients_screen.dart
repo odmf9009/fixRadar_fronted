@@ -203,9 +203,7 @@ class _TechnicianClientsScreenState extends State<TechnicianClientsScreen> {
           hasUnread = true;
         } else if (lastMessageAt != null) {
           DateTime lastReadDate;
-          if (lastRead is Timestamp) {
-            lastReadDate = lastRead.toDate();
-          } else if (lastRead is DateTime) {
+          if (lastRead is DateTime) {
             lastReadDate = lastRead;
           } else {
             lastReadDate = DateTime(2000);

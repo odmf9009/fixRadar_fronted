@@ -9,9 +9,9 @@ import '../../core/models/service_request.dart';
 import '../../core/models/user_model.dart';
 import '../../core/config/service_constants.dart';
 import '../../core/models/alert_model.dart';
-import 'package:fix_radar/presentation/screens/home/widgets/category_item.dart';
-import 'package:fix_radar/presentation/screens/home/widgets/job_card.dart';
-import 'package:fix_radar/presentation/screens/home/widgets/category_badge.dart';
+import 'widgets/category_item.dart';
+import 'widgets/job_card.dart';
+import 'widgets/category_badge.dart';
 
 class DashboardScreen extends StatefulWidget {
   final Function(ServiceRequest?)? onViewMap;

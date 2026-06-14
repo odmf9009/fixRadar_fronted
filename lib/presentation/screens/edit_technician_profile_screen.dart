@@ -157,9 +157,10 @@ class _EditTechnicianProfileScreenState extends State<EditTechnicianProfileScree
     };
 
     try {
-      await _firestoreService.saveUser(UserModel.fromMap(widget.user.id, {
-        ...widget.user.toMap(),
+      await _firestoreService.saveUser(UserModel.fromJson({
+        ...widget.user.toJson(),
         ...updatedData,
+        '_id': widget.user.id,
       }));
       if (mounted) {
         Navigator.pop(context);
