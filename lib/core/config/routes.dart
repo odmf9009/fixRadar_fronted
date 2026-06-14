@@ -173,9 +173,14 @@ class _SplashScreenState extends State<SplashScreen> {
     final firebaseUser = FirebaseAuth.instance.currentUser;
     if (firebaseUser != null) {
       // Sync with backend to ensure the user exists in MongoDB
-      await AuthService().syncCurrentUser();
+      final userModel = await AuthService().syncCurrentUser();
       if (!mounted) return;
-      Navigator.pushReplacementNamed(context, AppRoutes.home);
+      
+      if (userModel == null || !userModel.onboardingCompleted || userModel.userType == null) {
+        Navigator.pushReplacementNamed(context, AppRoutes.roleSelection);
+      } else {
+        Navigator.pushReplacementNamed(context, AppRoutes.home);
+      }
     } else {
       Navigator.pushReplacementNamed(context, AppRoutes.login);
     }

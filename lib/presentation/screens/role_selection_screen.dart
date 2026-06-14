@@ -14,6 +14,25 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
   final FirestoreService _firestoreService = FirestoreService();
   bool _isLoading = false;
 
+  @override
+  void initState() {
+    super.initState();
+    _checkExistingRole();
+  }
+
+  Future<void> _checkExistingRole() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
+
+    // Optional: add a tiny delay to ensure screen is built
+    final userData = await _firestoreService.getUser(user.uid);
+    if (userData != null && userData.onboardingCompleted && userData.userType != null) {
+      if (mounted) {
+        Navigator.pushReplacementNamed(context, AppRoutes.home);
+      }
+    }
+  }
+
   Future<void> _selectRole(String role) async {
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) return;

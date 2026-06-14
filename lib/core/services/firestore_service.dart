@@ -42,16 +42,24 @@ class FirestoreService {
   Stream<List<ServiceRequest>> getNearbyServiceRequests({
     double? latitude,
     double? longitude,
+    double radius = 30,
     String? userId,
   }) {
     final controller = StreamController<List<ServiceRequest>>();
 
     Future<void> fetchAndEmit() async {
+      // If we don't have location, we can't fetch nearby requests from the backend
+      // because the backend requires latitude and longitude for the $near query.
+      if (latitude == null || longitude == null) {
+        if (!controller.isClosed) controller.add([]);
+        return;
+      }
+
       try {
         final response = await _api.get('/service-requests/nearby', params: {
-          if (latitude != null) 'latitude': latitude,
-          if (longitude != null) 'longitude': longitude,
-          'radius': 30,
+          'latitude': latitude,
+          'longitude': longitude,
+          'radius': radius,
         });
         final list = (response.data as List)
             .map((e) => ServiceRequest.fromJson(e))
@@ -430,7 +438,9 @@ class FirestoreService {
 
   Future<void> updateUserRole(String userId, String role, {List<String>? specialties}) async {
     await _api.put('/users/me', data: {
+      'userType': role,
       'role': role,
+      'onboardingCompleted': true,
       if (specialties != null) 'specialties': specialties,
     });
   }

@@ -72,21 +72,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
       }
     });
 
-    // 2. Escuchar Problemas Cercanos (Abiertos)
-    _nearbySub = _firestoreService.getNearbyServiceRequests(userId: _currentUserId).listen((data) {
-      print('STABLE_DASHBOARD: Received ${data.length} nearby requests');
-      if (mounted) {
-        setState(() {
-          _nearbyRequests = data;
-          _isLoadingNearby = false;
-        });
-      }
-    }, onError: (e) {
-      print('STABLE_DASHBOARD: Error en nearby: $e');
-      if (mounted) {
-        setState(() => _isLoadingNearby = false);
-      }
-    });
+    // 2. Escuchar Problemas Cercanos (Abiertos) - Ahora se inicia en _initLocation tras obtener posición
 
     // 3. Escuchar Técnicos Top
     _techsSub = _firestoreService.getTopRatedTechnicians().listen((data) {
@@ -107,7 +93,44 @@ class _DashboardScreenState extends State<DashboardScreen> {
     });
   }
 
+  void _startNearbyListener(Position pos) {
+    _nearbySub?.cancel();
+    // Use user's service radius if available (convert miles to km if needed, 
+    // but for now we'll assume km for consistency with backend)
+    final double radius = (_user?.serviceRadius ?? 20.0) * 1.6; // Assuming stored in miles, convert to km
+
+    _nearbySub = _firestoreService.getNearbyServiceRequests(
+      userId: _currentUserId,
+      latitude: pos.latitude,
+      longitude: pos.longitude,
+      radius: radius > 50 ? radius : 50.0, // Minimum 50km for safety
+    ).listen((data) {
+      print('STABLE_DASHBOARD: Received ${data.length} nearby requests');
+      if (mounted) {
+        setState(() {
+          _nearbyRequests = data;
+          _isLoadingNearby = false;
+        });
+      }
+    }, onError: (e) {
+      print('STABLE_DASHBOARD: Error en nearby: $e');
+      if (mounted) {
+        setState(() => _isLoadingNearby = false);
+      }
+    });
+  }
+
   Future<void> _initLocation() async {
+    try {
+      final pos = await _locationService.getCurrentLocation();
+      if (mounted && pos != null) {
+        setState(() => _currentPosition = pos);
+        _startNearbyListener(pos);
+      }
+    } catch (e) {
+      print('STABLE_DASHBOARD: Location error: $e');
+    }
+  }
     try {
       final pos = await _locationService.getCurrentLocation();
       if (mounted && pos != null) {

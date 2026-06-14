@@ -3,6 +3,7 @@ import '../../core/services/firestore_service.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../../core/config/routes.dart';
 import '../../core/services/auth_service.dart';
+import '../../core/models/user_model.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -29,13 +30,14 @@ class _LoginScreenState extends State<LoginScreen> {
 
     setState(() => _isLoading = true);
     try {
+      UserModel? userModel;
       if (_isLogin) {
-        await _authService.signInWithEmail(
+        userModel = await _authService.signInWithEmail(
           _emailController.text.trim(),
           _passwordController.text.trim(),
         );
       } else {
-        await _authService.signUpWithEmail(
+        userModel = await _authService.signUpWithEmail(
           _emailController.text.trim(),
           _passwordController.text.trim(),
           _nameController.text.trim(),
@@ -43,10 +45,8 @@ class _LoginScreenState extends State<LoginScreen> {
         );
       }
 
-      if (mounted) {
-        final uid = FirebaseAuth.instance.currentUser?.uid;
-        final userData = uid != null ? await _firestoreService.getUser(uid) : null;
-        if (userData == null || !userData.onboardingCompleted || userData.userType == null) {
+      if (mounted && userModel != null) {
+        if (!userModel.onboardingCompleted || userModel.userType == null) {
           Navigator.pushReplacementNamed(context, AppRoutes.roleSelection);
         } else {
           Navigator.pushReplacementNamed(context, AppRoutes.home);
@@ -206,8 +206,7 @@ class _LoginScreenState extends State<LoginScreen> {
     try {
       final userModel = await _authService.signInWithGoogle();
       if (mounted && userModel != null) {
-        final userData = await _firestoreService.getUser(userModel.id);
-        if (userData == null || !userData.onboardingCompleted || userData.userType == null) {
+        if (!userModel.onboardingCompleted || userModel.userType == null) {
           Navigator.pushReplacementNamed(context, AppRoutes.roleSelection);
         } else {
           Navigator.pushReplacementNamed(context, AppRoutes.home);

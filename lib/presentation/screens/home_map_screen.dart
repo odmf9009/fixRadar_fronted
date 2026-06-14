@@ -74,7 +74,6 @@ class HomeMapScreenState extends State<HomeMapScreen> {
     super.initState();
     _initLocation();
     _listenToUserData();
-    _listenToRequests();
     _listenToTechnicians();
   }
 
@@ -113,8 +112,13 @@ class HomeMapScreenState extends State<HomeMapScreen> {
     });
   }
 
-  void _listenToRequests() {
-    _firestoreService.getNearbyServiceRequests(userId: FirebaseAuth.instance.currentUser?.uid).listen((requests) {
+  void _listenToRequests(Position pos) {
+    _firestoreService.getNearbyServiceRequests(
+      userId: FirebaseAuth.instance.currentUser?.uid,
+      latitude: pos.latitude,
+      longitude: pos.longitude,
+      radius: (_currentUser?.serviceRadius ?? 20.0) * 1.6,
+    ).listen((requests) {
       if (mounted) {
         _allRequests = requests;
         _isInitialLoading = false;
@@ -206,6 +210,7 @@ class HomeMapScreenState extends State<HomeMapScreen> {
           _currentPosition = pos;
           _isLocating = false;
         });
+        _listenToRequests(pos);
         _centerMapOnUser();
         _filterAndRefreshMap();
       } else {

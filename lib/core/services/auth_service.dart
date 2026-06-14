@@ -34,7 +34,6 @@ class AuthService {
       return _syncWithBackend(
         name: userCredential.user!.displayName ?? 'Usuario',
         profileImageUrl: userCredential.user!.photoURL ?? '',
-        userType: 'client',
         referralCode: referralCode,
       );
     } catch (e) {
@@ -53,7 +52,7 @@ class AuthService {
     String password,
     String name, {
     String? referralCode,
-    String userType = 'client',
+    String? userType,
   }) async {
     final cred = await _auth.createUserWithEmailAndPassword(email: email, password: password);
     if (cred.user == null) return null;
