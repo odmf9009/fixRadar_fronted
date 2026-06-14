@@ -36,3 +36,6 @@ ios/**/*.perspectivev3
 .env
 *.log
 pubspec.lock
+
+# Secrets (claves API reales — usar secrets.dart.example como plantilla)
+lib/core/config/secrets.dart
