@@ -2,7 +2,7 @@ class AppConfig {
   // Change this to your deployed backend URL in production
   static const String baseUrl = String.fromEnvironment(
     'API_URL',
-    defaultValue: 'http://10.0.2.2:3000/api', // Android emulator localhost
+    defaultValue: 'http://2.24.77.82:3002/api',
   );
 
   static const String googleMapsApiKey = String.fromEnvironment(
@@ -17,7 +17,7 @@ class AppConfig {
 
   static const String socketUrl = String.fromEnvironment(
     'SOCKET_URL',
-    defaultValue: 'http://10.0.2.2:3000',
+    defaultValue: 'http://2.24.77.82:3002',
   );
 
   static const double defaultSearchRadius = 30.0; // km
