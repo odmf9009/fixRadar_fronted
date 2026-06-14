@@ -1,3 +1,4 @@
+import 'package:dio/dio.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import '../models/user_model.dart';
@@ -6,7 +7,9 @@ import 'socket_service.dart';
 
 class AuthService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
-  final GoogleSignIn _googleSignIn = GoogleSignIn();
+  final GoogleSignIn _googleSignIn = GoogleSignIn(
+    clientId: '528608210144-cajos5fejrd64hjfscv8kq6k9qmo2baa.apps.googleusercontent.com',
+  );
   final ApiService _api = ApiService();
   final SocketService _socket = SocketService();
 
@@ -14,25 +17,30 @@ class AuthService {
   String? get currentUserUid => _auth.currentUser?.uid;
 
   Future<UserModel?> signInWithGoogle({String? referralCode}) async {
-    await _googleSignIn.signOut();
-    final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
-    if (googleUser == null) return null;
+    try {
+      await _googleSignIn.signOut();
+      final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
+      if (googleUser == null) return null;
 
-    final googleAuth = await googleUser.authentication;
-    final credential = GoogleAuthProvider.credential(
-      accessToken: googleAuth.accessToken,
-      idToken: googleAuth.idToken,
-    );
+      final googleAuth = await googleUser.authentication;
+      final credential = GoogleAuthProvider.credential(
+        accessToken: googleAuth.accessToken,
+        idToken: googleAuth.idToken,
+      );
 
-    final userCredential = await _auth.signInWithCredential(credential);
-    if (userCredential.user == null) return null;
+      final userCredential = await _auth.signInWithCredential(credential);
+      if (userCredential.user == null) return null;
 
-    return _syncWithBackend(
-      name: userCredential.user!.displayName ?? 'Usuario',
-      profileImageUrl: userCredential.user!.photoURL ?? '',
-      userType: 'client',
-      referralCode: referralCode,
-    );
+      return _syncWithBackend(
+        name: userCredential.user!.displayName ?? 'Usuario',
+        profileImageUrl: userCredential.user!.photoURL ?? '',
+        userType: 'client',
+        referralCode: referralCode,
+      );
+    } catch (e) {
+      print('Error en signInWithGoogle: $e');
+      return null;
+    }
   }
 
   Future<UserModel?> signInWithEmail(String email, String password) async {
@@ -64,16 +72,24 @@ class AuthService {
     String? referralCode,
   }) async {
     try {
+      print('Sincronizando con el backend...');
       final response = await _api.post('/auth/sync', data: {
         if (name != null) 'name': name,
         if (profileImageUrl != null) 'profileImageUrl': profileImageUrl,
         if (userType != null) 'userType': userType,
         if (referralCode != null) 'referralCode': referralCode,
       });
+      print('Respuesta del backend recibida: ${response.statusCode}');
       final user = UserModel.fromJson(response.data['user']);
       await _socket.connect();
       return user;
     } catch (e) {
+      print('Error en _syncWithBackend: $e');
+      if (e is DioException) {
+        print('Dio error type: ${e.type}');
+        print('Dio error response: ${e.response}');
+        print('Dio error message: ${e.message}');
+      }
       return null;
     }
   }

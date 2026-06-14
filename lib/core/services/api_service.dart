@@ -17,6 +17,12 @@ class ApiService {
       headers: {'Content-Type': 'application/json'},
     ));
 
+    _dio.interceptors.add(LogInterceptor(
+      requestBody: true,
+      responseBody: true,
+      logPrint: (obj) => print('[DIO] $obj'),
+    ));
+
     _dio.interceptors.add(InterceptorsWrapper(
       onRequest: (options, handler) async {
         final user = FirebaseAuth.instance.currentUser;
