@@ -75,10 +75,12 @@ class FirestoreService {
     // Listen for new requests via Socket.io
     _socket.on('request:created', (_) => fetchAndEmit());
     _socket.on('request:status', (_) => fetchAndEmit());
+    _socket.on('request:deleted', (_) => fetchAndEmit());
 
     controller.onCancel = () {
       _socket.off('request:created');
       _socket.off('request:status');
+      _socket.off('request:deleted');
     };
 
     return controller.stream;
@@ -148,11 +150,13 @@ class FirestoreService {
     _socket.on('request:status', (_) => fetch());
     _socket.on('request:created', (_) => fetch());
     _socket.on('request:cancelled', (_) => fetch());
+    _socket.on('request:deleted', (_) => fetch());
 
     controller.onCancel = () {
       _socket.off('request:status');
       _socket.off('request:created');
       _socket.off('request:cancelled');
+      _socket.off('request:deleted');
     };
 
     return controller.stream;
@@ -655,10 +659,12 @@ class FirestoreService {
     fetch();
     _socket.on('request:created', (_) => fetch());
     _socket.on('request:status', (_) => fetch());
+    _socket.on('request:deleted', (_) => fetch());
 
     controller.onCancel = () {
       _socket.off('request:created');
       _socket.off('request:status');
+      _socket.off('request:deleted');
     };
 
     return controller.stream;
