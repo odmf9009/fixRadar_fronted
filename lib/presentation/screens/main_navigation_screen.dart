@@ -75,12 +75,26 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> with Widget
         );
       }
     });
+
+    SocketService().on('alert:new', (data) {
+      if (mounted) {
+        final title = data['requestTitle'] ?? 'Nueva notificación';
+        final type = data['type'] ?? 'system';
+        String body = 'Tienes una nueva alerta en el radar.';
+        
+        if (type == 'nearby') body = 'Hay un nuevo trabajo cerca de ti.';
+        if (type == 'directQuote') body = 'Un cliente te ha solicitado una cotización directa.';
+
+        NotificationService().showLocalAlert(title, body);
+      }
+    });
   }
 
   @override
   void dispose() {
     SocketService().off('quote:new');
     SocketService().off('quote:accepted');
+    SocketService().off('alert:new');
     WidgetsBinding.instance.removeObserver(this);
     _locationSyncTimer?.cancel();
     _connectivitySubscription?.cancel();
