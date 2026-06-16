@@ -471,13 +471,20 @@ class FirestoreService {
 
   // ─── TECHNICIANS ──────────────────────────────────────────────────────────
 
-  /// Returns a stream of all technicians from the nearby-technicians endpoint
-  Stream<List<UserModel>> getTechnicians() {
+  /// Returns a stream of all technicians, optionally filtered by location
+  Stream<List<UserModel>> getTechnicians({double? latitude, double? longitude, double? radius}) {
     final controller = StreamController<List<UserModel>>();
-    _api.get('/users/nearby-technicians').then((response) {
+    
+    final params = <String, dynamic>{};
+    if (latitude != null) params['latitude'] = latitude;
+    if (longitude != null) params['longitude'] = longitude;
+    if (radius != null) params['radius'] = radius;
+
+    _api.get('/users/nearby-technicians', params: params).then((response) {
       final list = (response.data as List).map((e) => UserModel.fromJson(e)).toList();
       if (!controller.isClosed) controller.add(list);
     }).catchError((e) {
+      print('FirestoreService: Error fetching technicians: $e');
       if (!controller.isClosed) controller.add([]);
     });
     return controller.stream;

@@ -131,15 +131,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
       print('STABLE_DASHBOARD: Location error: $e');
     }
   }
-    try {
-      final pos = await _locationService.getCurrentLocation();
-      if (mounted && pos != null) {
-        setState(() => _currentPosition = pos);
-      }
-    } catch (e) {
-      print('STABLE_DASHBOARD: Location error: $e');
-    }
-  }
 
   @override
   Widget build(BuildContext context) {

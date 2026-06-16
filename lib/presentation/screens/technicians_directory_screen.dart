@@ -70,7 +70,10 @@ class _TechniciansDirectoryScreenState extends State<TechniciansDirectoryScreen>
           const Divider(height: 1),
           Expanded(
             child: StreamBuilder<List<UserModel>>(
-              stream: _firestoreService.getTechnicians(),
+              stream: _firestoreService.getTechnicians(
+                latitude: _currentPosition?.latitude,
+                longitude: _currentPosition?.longitude,
+              ),
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
                   return const Center(child: CircularProgressIndicator(color: Color(0xFFFF8A00)));
