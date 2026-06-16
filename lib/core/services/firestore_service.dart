@@ -506,6 +506,36 @@ class FirestoreService {
     return controller.stream;
   }
 
+  /// Returns nearby technicians filtered by location (online only)
+  Stream<List<UserModel>> getNearbyTechniciansStream({
+    required double latitude,
+    required double longitude,
+    double radius = 50,
+  }) {
+    final controller = StreamController<List<UserModel>>.broadcast();
+    _api.get('/users/nearby-technicians', params: {
+      'latitude': latitude,
+      'longitude': longitude,
+      'radius': radius,
+      'onlyOnline': 'true',
+    }).then((response) {
+      final list = (response.data as List).map((e) => UserModel.fromJson(e)).toList();
+      if (!controller.isClosed) controller.add(list);
+    }).catchError((e) {
+      if (!controller.isClosed) controller.add([]);
+    });
+    return controller.stream;
+  }
+
+  /// Updates the current user's online/offline status
+  Future<UserModel?> updateOnlineStatus({required bool isOnline}) async {
+    final response = await _api.put('/users/me', data: {
+      'isOnline': isOnline,
+      'presenceStatus': isOnline ? 'online' : 'offline',
+    });
+    return UserModel.fromJson(response.data);
+  }
+
   /// Returns a stream of active technicians (used for map markers)
   Stream<List<UserModel>> getActiveHunters() {
     final controller = StreamController<List<UserModel>>.broadcast();

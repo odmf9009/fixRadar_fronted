@@ -3,7 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import '../../core/services/auth_service.dart';
 import '../../core/services/firestore_service.dart';
+import '../../core/services/language_service.dart';
 import '../../core/services/location_service.dart';
+import '../../core/services/socket_service.dart';
 import '../../core/config/routes.dart';
 import '../../core/models/service_request.dart';
 import '../../core/models/user_model.dart';
@@ -38,6 +40,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   bool _isLoadingUser = true;
   bool _isLoadingNearby = true;
   bool _isLoadingTechs = true;
+  bool _isUpdatingStatus = false;
 
   // Suscripciones
   StreamSubscription? _userSub;
@@ -85,22 +88,32 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
     // 2. Escuchar Problemas Cercanos (Abiertos) - Ahora se inicia en _initLocation tras obtener posición
 
-    // 3. Escuchar Técnicos Top
-    _techsSub = _firestoreService.getTopRatedTechnicians().listen((data) {
-      print('STABLE_DASHBOARD: Received ${data.length} top technicians');
-      if (mounted) {
-        setState(() {
-          _topTechnicians = data;
-          _isLoadingTechs = false;
-        });
-      }
-    }, onError: (e) => print('STABLE_DASHBOARD: Error en techs: $e'));
+    // 3. Técnicos cercanos — se inicia en _startNearbyTechnicianListener tras obtener posición
 
     // 4. Escuchar Solicitudes Propias (Si es cliente)
     _myRequestsSub = _firestoreService.getClientRequests(_currentUserId).listen((data) {
       if (mounted) {
         setState(() => _myActiveRequests = data);
       }
+    });
+  }
+
+  void _startNearbyTechnicianListener(Position pos) {
+    _techsSub?.cancel();
+    final double radius = (_user?.serviceRadius ?? 20.0);
+    _techsSub = _firestoreService.getNearbyTechniciansStream(
+      latitude: pos.latitude,
+      longitude: pos.longitude,
+      radius: radius < 20 ? 20 : radius,
+    ).listen((data) {
+      if (mounted) {
+        setState(() {
+          _topTechnicians = data;
+          _isLoadingTechs = false;
+        });
+      }
+    }, onError: (_) {
+      if (mounted) setState(() => _isLoadingTechs = false);
     });
   }
 
@@ -137,9 +150,68 @@ class _DashboardScreenState extends State<DashboardScreen> {
       if (mounted && pos != null) {
         setState(() => _currentPosition = pos);
         _startNearbyListener(pos);
+        _startNearbyTechnicianListener(pos);
       }
     } catch (e) {
       print('STABLE_DASHBOARD: Location error: $e');
+    }
+  }
+
+  Future<void> _toggleOnlineStatus() async {
+    final isCurrentlyOnline = _user?.isOnline ?? false;
+
+    if (isCurrentlyOnline) {
+      final confirmed = await showDialog<bool>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          title: Text(tr('go_offline_title'), style: const TextStyle(fontWeight: FontWeight.bold)),
+          content: Text(tr('go_offline_message')),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: Text(tr('cancel'), style: const TextStyle(color: Colors.grey)),
+            ),
+            ElevatedButton(
+              onPressed: () => Navigator.pop(ctx, true),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.grey[700],
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              ),
+              child: Text(tr('go_offline_confirm'), style: const TextStyle(color: Colors.white)),
+            ),
+          ],
+        ),
+      );
+      if (confirmed != true) return;
+    }
+
+    setState(() => _isUpdatingStatus = true);
+    try {
+      final goingOnline = !isCurrentlyOnline;
+      await _firestoreService.updateOnlineStatus(isOnline: goingOnline);
+
+      // Disconnect socket when going offline; reconnect when going online
+      final socket = SocketService();
+      if (goingOnline) {
+        await socket.connect();
+      } else {
+        socket.disconnect();
+      }
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(goingOnline ? tr('status_now_online') : tr('status_now_offline')),
+            backgroundColor: goingOnline ? const Color(0xFFFF8A00) : Colors.grey[700],
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          ),
+        );
+      }
+    } catch (_) {
+    } finally {
+      if (mounted) setState(() => _isUpdatingStatus = false);
     }
   }
 
@@ -179,8 +251,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 if (user.role == 'client') ...[
                   _buildMyRequestsSummary(),
                   const SizedBox(height: 32),
-                  _buildNearbyProblemsList(),
-                  const SizedBox(height: 32),
                   _buildTopTechniciansList(),
                 ] else ...[
                   _buildTechnicianSpecificSection(user),
@@ -205,11 +275,30 @@ class _DashboardScreenState extends State<DashboardScreen> {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Image.asset(
-              'assets/logo_centro.png', 
+              'assets/logo_centro.png',
               height: 120,
               fit: BoxFit.contain,
             ),
-            _buildNotificationBell(),
+            Row(
+              children: [
+                if (user.role == 'technician')
+                  _isUpdatingStatus
+                    ? const SizedBox(
+                        width: 24, height: 24,
+                        child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFFFF8A00)),
+                      )
+                    : IconButton(
+                        icon: Icon(
+                          Icons.airplanemode_active,
+                          color: user.isOnline ? const Color(0xFFFF8A00) : Colors.grey[400],
+                          size: 28,
+                        ),
+                        onPressed: _toggleOnlineStatus,
+                        tooltip: user.isOnline ? 'Activo' : 'Inactivo',
+                      ),
+                _buildNotificationBell(),
+              ],
+            ),
           ],
         ),
         const SizedBox(height: 12),
@@ -367,10 +456,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            const Text('Técnicos mejor valorados', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            Text(tr('technicians_nearby'), style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
             TextButton(
-              onPressed: () => Navigator.pushNamed(context, AppRoutes.topTechnicians), 
-              child: const Text('Ver todos', style: TextStyle(color: Color(0xFFFF8A00)))
+              onPressed: () => Navigator.pushNamed(context, AppRoutes.topTechnicians),
+              child: const Text('Ver todos', style: TextStyle(color: Color(0xFFFF8A00))),
             ),
           ],
         ),
@@ -378,7 +467,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
         if (_isLoadingTechs && _topTechnicians.isEmpty)
           const SizedBox(height: 100, child: Center(child: LinearProgressIndicator()))
         else if (_topTechnicians.isEmpty)
-          const Text('Buscando técnicos...', style: TextStyle(color: Colors.grey))
+          const Text('No hay técnicos activos en tu zona.', style: TextStyle(color: Colors.grey))
         else
           SizedBox(
             height: 110,

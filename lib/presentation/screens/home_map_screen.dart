@@ -349,9 +349,43 @@ class HomeMapScreenState extends State<HomeMapScreen> {
           // Bottom List
           _buildBottomPanel(),
 
+          // Zoom In Button
+          Positioned(
+            bottom: 396,
+            right: 20,
+            child: FloatingActionButton(
+              heroTag: 'zoom_in_btn',
+              onPressed: () async {
+                final controller = await _controller.future;
+                controller.animateCamera(CameraUpdate.zoomIn());
+              },
+              backgroundColor: Colors.white,
+              elevation: 4,
+              mini: true,
+              child: const Icon(Icons.add, color: Color(0xFFFF8A00)),
+            ),
+          ),
+
+          // Zoom Out Button
+          Positioned(
+            bottom: 348,
+            right: 20,
+            child: FloatingActionButton(
+              heroTag: 'zoom_out_btn',
+              onPressed: () async {
+                final controller = await _controller.future;
+                controller.animateCamera(CameraUpdate.zoomOut());
+              },
+              backgroundColor: Colors.white,
+              elevation: 4,
+              mini: true,
+              child: const Icon(Icons.remove, color: Color(0xFFFF8A00)),
+            ),
+          ),
+
           // Location Button
           Positioned(
-            bottom: 300, // Increased from 280
+            bottom: 300,
             right: 20,
             child: FloatingActionButton(
               heroTag: 'location_btn',

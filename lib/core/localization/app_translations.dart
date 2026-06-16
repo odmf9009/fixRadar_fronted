@@ -113,6 +113,15 @@ class AppTranslations {
       'proximamente': 'Próximamente',
       'proximamente_desc': 'Esta función estará disponible muy pronto. ¡Mantente atento!',
 
+      // --- ONLINE/OFFLINE STATUS ---
+      'go_offline_title': '¿Ponerte inactivo?',
+      'go_offline_message': 'No podrán contactarte ni te llegarán las notificaciones mientras estés inactivo.',
+      'go_offline_confirm': 'Ponerme inactivo',
+      'cancel': 'Cancelar',
+      'status_now_online': 'Ahora estás activo. Los clientes pueden contactarte.',
+      'status_now_offline': 'Te has puesto inactivo.',
+      'technicians_nearby': 'Técnicos en tu zona',
+
       // --- LOGROS ES (50) ---
       'ach_post_1_t': 'Primer Reporte', 'ach_post_1_d': 'Publicaste tu primer pedido de servicio.',
       'ach_post_5_t': 'Usuario Activo', 'ach_post_5_d': 'Publicaste 5 pedidos.',
@@ -165,6 +174,14 @@ class AppTranslations {
       'ach_level_100_t': 'Fixer Inmortal', 'ach_level_100_d': 'Alcanzaste el nivel 100.',
     },
     'en': {
+      // --- ONLINE/OFFLINE STATUS (en) ---
+      'go_offline_title': 'Go offline?',
+      'go_offline_message': 'Clients won\'t be able to contact you and you won\'t receive notifications while offline.',
+      'go_offline_confirm': 'Go offline',
+      'cancel': 'Cancel',
+      'status_now_online': 'You\'re now active. Clients can contact you.',
+      'status_now_offline': 'You\'re now offline.',
+      'technicians_nearby': 'Technicians near you',
       'app_title': 'Fix_Radar',
       'radar_on': 'Radar Active',
       'offline_mode': 'Limited Offline Mode',

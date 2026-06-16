@@ -111,8 +111,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           if (isSelected) {
                             tempSpecialties.remove(cat);
                           } else {
-                            // Force only one specialty
-                            tempSpecialties = [cat];
+                            tempSpecialties.add(cat);
                           }
                         });
                       },
