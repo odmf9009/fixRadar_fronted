@@ -1,4 +1,5 @@
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:socket_io_client/socket_io_client.dart' as io;
 import '../config/app_config.dart';
 
@@ -15,10 +16,17 @@ class SocketService {
   Future<void> connect() async {
     if (isConnected) return;
 
-    final user = FirebaseAuth.instance.currentUser;
-    if (user == null) return;
+    String? token;
 
-    final token = await user.getIdToken();
+    final firebaseUser = FirebaseAuth.instance.currentUser;
+    if (firebaseUser != null) {
+      token = await firebaseUser.getIdToken();
+    } else {
+      final prefs = await SharedPreferences.getInstance();
+      token = prefs.getString('backend_jwt');
+    }
+
+    if (token == null) return;
 
     _socket = io.io(
       AppConfig.socketUrl,
