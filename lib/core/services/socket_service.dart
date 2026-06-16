@@ -13,6 +13,9 @@ class SocketService {
   io.Socket? _socket;
   bool get isConnected => _socket?.connected ?? false;
 
+  // Registry so handlers survive socket reconnects
+  final Map<String, List<SocketEventHandler>> _registry = {};
+
   Future<void> connect() async {
     if (isConnected) return;
 
@@ -39,21 +42,31 @@ class SocketService {
           .build(),
     );
 
+    // Re-register all persisted handlers on the new socket instance
+    _registry.forEach((event, handlers) {
+      for (final h in handlers) {
+        _socket!.on(event, h);
+      }
+    });
+
     _socket!.onConnect((_) => print('[Socket] Connected'));
     _socket!.onDisconnect((_) => print('[Socket] Disconnected'));
     _socket!.onConnectError((e) => print('[Socket] Error: $e'));
   }
 
   void disconnect() {
+    _registry.clear();
     _socket?.disconnect();
     _socket = null;
   }
 
   void on(String event, SocketEventHandler handler) {
+    _registry.putIfAbsent(event, () => []).add(handler);
     _socket?.on(event, handler);
   }
 
   void off(String event) {
+    _registry.remove(event);
     _socket?.off(event);
   }
 

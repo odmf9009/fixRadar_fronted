@@ -174,9 +174,15 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> with Widget
       final type = data['type'] as String?;
       final requestId = data['requestId'] as String?;
 
+      // Quote received → switch to proposals tab (index 3)
+      if (type == 'quote_received') {
+        if (mounted) _onTabTapped(3);
+        return;
+      }
+
       if (requestId == null || requestId.isEmpty) return;
 
-      if (type == 'nearby_request' || type == 'chat_message' || type == 'quote_received') {
+      if (type == 'nearby_request' || type == 'chat_message') {
         try {
           final request = await _firestoreService.getServiceRequestById(requestId);
           if (request != null && mounted) {

@@ -49,12 +49,10 @@ class _TechniciansDirectoryScreenState extends State<TechniciansDirectoryScreen>
     if (mounted) {
       setState(() {
         _currentPosition = pos;
-        // Refresh stream with location if needed, 
-        // but getTechnicians is currently simple.
-        // If we want it to react to location, we'd update it here.
         _techsStream = _firestoreService.getTechnicians(
           latitude: pos?.latitude,
           longitude: pos?.longitude,
+          radius: 40.2, // 25 miles in km
         );
       });
     }

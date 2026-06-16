@@ -118,9 +118,15 @@ class ProximityService {
       // Skip old alerts
       if (now.difference(alert.createdAt).inMinutes > 2) continue;
 
-      if (alert.type == AlertType.directQuote) {
+      if (alert.type == AlertType.quoteReceived) {
         _notificationService.showLocalAlert(
           '💼 Nueva cotización recibida',
+          alert.requestTitle,
+          payload: alert.requestId,
+        );
+      } else if (alert.type == AlertType.directQuote) {
+        _notificationService.showLocalAlert(
+          '📋 Solicitud directa',
           'Un cliente quiere contratar tus servicios para: ${alert.requestTitle}',
           payload: alert.requestId,
         );

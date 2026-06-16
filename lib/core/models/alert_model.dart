@@ -1,4 +1,4 @@
-enum AlertType { nearby, directQuote, system }
+enum AlertType { nearby, directQuote, quoteReceived, system }
 
 class AlertModel {
   final String id;
