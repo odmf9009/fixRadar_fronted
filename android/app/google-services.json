@@ -22,6 +22,14 @@
           }
         },
         {
+          "client_id": "528608210144-da51k5jg6oa6bofodijdghucoknuln6i.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.venturesflstudio.fix_radar",
+            "certificate_hash": "5f8714fc2a93819f2f4cbff526bb496a4cb96b06"
+          }
+        },
+        {
           "client_id": "528608210144-cajos5fejrd64hjfscv8kq6k9qmo2baa.apps.googleusercontent.com",
           "client_type": 3
         }
