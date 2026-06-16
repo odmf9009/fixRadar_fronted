@@ -3,7 +3,7 @@ import 'secrets.dart';
 class AppConfig {
   static const String baseUrl = String.fromEnvironment(
     'API_URL',
-    defaultValue: 'http://2.24.77.82:3002/api',
+    defaultValue: 'https://app.fixesradar.com/api',
   );
 
   static String get googleMapsApiKey =>
@@ -18,7 +18,7 @@ class AppConfig {
 
   static const String socketUrl = String.fromEnvironment(
     'SOCKET_URL',
-    defaultValue: 'http://2.24.77.82:3002',
+    defaultValue: 'https://app.fixesradar.com',
   );
 
   static const double defaultSearchRadius = 30.0;
