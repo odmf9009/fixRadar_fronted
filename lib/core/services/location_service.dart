@@ -50,13 +50,25 @@ class LocationService {
   /// Gets the current position once.
   Future<Position?> getCurrentLocation() async {
     try {
+      // First, ensure permissions are granted
+      final hasPermission = await checkAndRequestPermissions();
+      if (!hasPermission) return null;
+
+      // We use 'high' or 'best' for publishing. Best can sometimes be slow.
       return await Geolocator.getCurrentPosition(
         locationSettings: const LocationSettings(
-          accuracy: LocationAccuracy.best,
+          accuracy: LocationAccuracy.high, // High is usually faster and very precise
+          timeLimit: Duration(seconds: 8),
         ),
       );
     } catch (e) {
-      return null;
+      print('LocationService: Error getting current location: $e');
+      try {
+        // Fallback to last known position if current fails
+        return await Geolocator.getLastKnownPosition();
+      } catch (_) {
+        return null;
+      }
     }
   }
 }

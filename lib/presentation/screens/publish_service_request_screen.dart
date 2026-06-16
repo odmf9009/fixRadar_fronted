@@ -38,9 +38,9 @@ class _PublishServiceRequestScreenState extends State<PublishServiceRequestScree
   final List<File> _imageFiles = [];
   final TextEditingController _titleController = TextEditingController();
   final TextEditingController _descriptionController = TextEditingController();
+  final TextEditingController _addressController = TextEditingController(text: 'Detectando ubicación...');
   UrgencyLevel _selectedUrgency = UrgencyLevel.medium;
   Position? _currentPosition;
-  String _currentAddress = 'Detectando ubicación...';
   String? _targetTechnicianId;
   UserModel? _targetTechnician;
 
@@ -87,10 +87,20 @@ class _PublishServiceRequestScreenState extends State<PublishServiceRequestScree
       List<Placemark> placemarks = await placemarkFromCoordinates(position.latitude, position.longitude);
       if (placemarks.isNotEmpty) {
         Placemark place = placemarks[0];
-        setState(() => _currentAddress = '${place.street}, ${place.locality}');
+        // More detailed address: Street Name + Number, City
+        String address = '';
+        if (place.street != null && place.street!.isNotEmpty) {
+          address += place.street!;
+        }
+        if (place.locality != null && place.locality!.isNotEmpty) {
+          if (address.isNotEmpty) address += ', ';
+          address += place.locality!;
+        }
+        
+        setState(() => _addressController.text = address.isNotEmpty ? address : 'Ubicación detectada');
       }
     } catch (e) {
-      setState(() => _currentAddress = 'Ubicación manual');
+      setState(() => _addressController.text = 'Ubicación manual');
     }
   }
 
@@ -156,7 +166,7 @@ class _PublishServiceRequestScreenState extends State<PublishServiceRequestScree
         thumbnailUrls: thumbnailUrls,
         latitude: _currentPosition?.latitude ?? 0.0,
         longitude: _currentPosition?.longitude ?? 0.0,
-        address: _currentAddress,
+        address: _addressController.text,
         status: ServiceRequestStatus.open,
         urgency: _selectedUrgency,
         clientId: user.uid,
@@ -423,18 +433,35 @@ class _PublishServiceRequestScreenState extends State<PublishServiceRequestScree
         const Text('Confirma tu ubicación', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
         const SizedBox(height: 24),
         Container(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
           decoration: BoxDecoration(color: Colors.grey[50], borderRadius: BorderRadius.circular(12), border: Border.all(color: Colors.grey[200]!)),
           child: Row(
             children: [
               const Icon(Icons.location_on, color: Color(0xFFFF8A00)),
               const SizedBox(width: 12),
-              Expanded(child: Text(_currentAddress, style: const TextStyle(fontSize: 16))),
-              IconButton(icon: const Icon(Icons.refresh), onPressed: _initLocation),
+              Expanded(
+                child: TextField(
+                  controller: _addressController,
+                  decoration: const InputDecoration(
+                    border: InputBorder.none,
+                    isDense: true,
+                  ),
+                  style: const TextStyle(fontSize: 16),
+                ),
+              ),
+              IconButton(
+                icon: const Icon(Icons.refresh, color: Colors.grey), 
+                onPressed: () {
+                  _addressController.text = 'Actualizando...';
+                  _initLocation();
+                }
+              ),
             ],
           ),
         ),
         const SizedBox(height: 20),
+        const Text('Puedes corregir el número de casa o calle si es necesario.', style: TextStyle(color: Colors.grey, fontSize: 13)),
+        const SizedBox(height: 4),
         const Text('Un técnico llegará a esta dirección para asistirte.', style: TextStyle(color: Colors.grey)),
       ],
     );
