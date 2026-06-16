@@ -45,7 +45,7 @@ class FirestoreService {
     double radius = 30,
     String? userId,
   }) {
-    final controller = StreamController<List<ServiceRequest>>();
+    final controller = StreamController<List<ServiceRequest>>.broadcast();
 
     Future<void> fetchAndEmit() async {
       // If we don't have location, we can't fetch nearby requests from the backend
@@ -87,7 +87,7 @@ class FirestoreService {
   }
 
   Stream<ServiceRequest?> getServiceRequestStream(String id) {
-    final controller = StreamController<ServiceRequest?>();
+    final controller = StreamController<ServiceRequest?>.broadcast();
 
     Future<void> fetchAndEmit() async {
       try {
@@ -132,7 +132,7 @@ class FirestoreService {
   Future<ServiceRequest?> getObjectById(String id) => getServiceRequestById(id);
 
   Stream<List<ServiceRequest>> getClientRequests(String clientId) {
-    final controller = StreamController<List<ServiceRequest>>();
+    final controller = StreamController<List<ServiceRequest>>.broadcast();
 
     Future<void> fetch() async {
       try {
@@ -190,7 +190,7 @@ class FirestoreService {
   }
 
   Stream<UserModel?> getUserStream(String uid) {
-    final controller = StreamController<UserModel?>();
+    final controller = StreamController<UserModel?>.broadcast();
 
     Future<void> fetch() async {
       try {
@@ -228,7 +228,7 @@ class FirestoreService {
   }
 
   Stream<List<UserModel>> getTopTechniciansStream() {
-    final controller = StreamController<List<UserModel>>();
+    final controller = StreamController<List<UserModel>>.broadcast();
     _api.get('/users/top-technicians').then((response) {
       final list = (response.data as List).map((e) => UserModel.fromJson(e)).toList();
       if (!controller.isClosed) controller.add(list);
@@ -246,7 +246,7 @@ class FirestoreService {
   }
 
   Stream<List<Quote>> getQuotesForRequest(String requestId) {
-    final controller = StreamController<List<Quote>>();
+    final controller = StreamController<List<Quote>>.broadcast();
 
     Future<void> fetch() async {
       try {
@@ -332,7 +332,7 @@ class FirestoreService {
   }
 
   Stream<List<AlertModel>> getUserAlerts(String userId) {
-    final controller = StreamController<List<AlertModel>>();
+    final controller = StreamController<List<AlertModel>>.broadcast();
     final alerts = <AlertModel>[];
 
     _api.get('/alerts').then((response) {
@@ -372,7 +372,7 @@ class FirestoreService {
   }
 
   Stream<List<ReviewModel>> getTechnicianReviewsStream(String technicianId) {
-    final controller = StreamController<List<ReviewModel>>();
+    final controller = StreamController<List<ReviewModel>>.broadcast();
     getTechnicianReviews(technicianId).then((list) {
       if (!controller.isClosed) controller.add(list);
     }).catchError((_) {
@@ -477,7 +477,7 @@ class FirestoreService {
 
   /// Returns a stream of all technicians, optionally filtered by location
   Stream<List<UserModel>> getTechnicians({double? latitude, double? longitude, double? radius}) {
-    final controller = StreamController<List<UserModel>>();
+    final controller = StreamController<List<UserModel>>.broadcast();
     
     final params = <String, dynamic>{};
     if (latitude != null) params['latitude'] = latitude;
@@ -496,7 +496,7 @@ class FirestoreService {
 
   /// Returns a stream of top-rated technicians
   Stream<List<UserModel>> getTopRatedTechnicians({int? limit}) {
-    final controller = StreamController<List<UserModel>>();
+    final controller = StreamController<List<UserModel>>.broadcast();
     _api.get('/users/top-technicians', params: limit != null ? {'limit': limit} : null).then((response) {
       final list = (response.data as List).map((e) => UserModel.fromJson(e)).toList();
       if (!controller.isClosed) controller.add(list);
@@ -508,7 +508,7 @@ class FirestoreService {
 
   /// Returns a stream of active technicians (used for map markers)
   Stream<List<UserModel>> getActiveHunters() {
-    final controller = StreamController<List<UserModel>>();
+    final controller = StreamController<List<UserModel>>.broadcast();
     _api.get('/users/nearby-technicians').then((response) {
       final list = (response.data as List)
           .map((e) => UserModel.fromJson(e))
@@ -522,7 +522,7 @@ class FirestoreService {
   }
 
   Stream<List<UserModel>> getTopUsers({int limit = 20, String? sortBy}) {
-    final controller = StreamController<List<UserModel>>();
+    final controller = StreamController<List<UserModel>>.broadcast();
     _api.get('/users/top-technicians', params: {
       'limit': limit,
       if (sortBy != null) 'sortBy': sortBy,
@@ -560,7 +560,7 @@ class FirestoreService {
   }
 
   Stream<List<Quote>> getQuotesForTechnician(String technicianId) {
-    final controller = StreamController<List<Quote>>();
+    final controller = StreamController<List<Quote>>.broadcast();
 
     Future<void> fetch() async {
       try {
@@ -587,7 +587,7 @@ class FirestoreService {
   }
 
   Stream<List<Quote>> getQuotesForClient(String clientId) {
-    final controller = StreamController<List<Quote>>();
+    final controller = StreamController<List<Quote>>.broadcast();
 
     Future<void> fetch() async {
       try {
@@ -641,7 +641,7 @@ class FirestoreService {
   // ─── SERVICE REQUEST EXTRAS ───────────────────────────────────────────────
 
   Stream<List<ServiceRequest>> getDirectRequestsForTechnician(String technicianId) {
-    final controller = StreamController<List<ServiceRequest>>();
+    final controller = StreamController<List<ServiceRequest>>.broadcast();
 
     Future<void> fetch() async {
       try {
@@ -671,7 +671,7 @@ class FirestoreService {
   }
 
   Stream<List<ServiceRequest>> getTechnicianHistory(String technicianId) {
-    final controller = StreamController<List<ServiceRequest>>();
+    final controller = StreamController<List<ServiceRequest>>.broadcast();
 
     Future<void> fetch() async {
       try {
@@ -740,7 +740,7 @@ class FirestoreService {
   // ─── PORTFOLIO (typed) ────────────────────────────────────────────────────
 
   Stream<List<PortfolioItem>> getPortfolio(String technicianId) {
-    final controller = StreamController<List<PortfolioItem>>();
+    final controller = StreamController<List<PortfolioItem>>.broadcast();
 
     _api.get('/users/$technicianId/portfolio').then((response) {
       final list = (response.data as List)
@@ -819,7 +819,7 @@ class FirestoreService {
   // ─── MISC STUBS ───────────────────────────────────────────────────────────
 
   Stream<Map<String, dynamic>> getGlobalStats() {
-    final controller = StreamController<Map<String, dynamic>>();
+    final controller = StreamController<Map<String, dynamic>>.broadcast();
     _api.get('/stats/global').then((response) {
       if (!controller.isClosed) {
         controller.add(Map<String, dynamic>.from(response.data));
@@ -831,13 +831,13 @@ class FirestoreService {
   }
 
   Stream<List<ActivityModel>> getUserActivities(String userId) {
-    final controller = StreamController<List<ActivityModel>>();
+    final controller = StreamController<List<ActivityModel>>.broadcast();
     controller.add([]);
     return controller.stream;
   }
 
   Stream<List<UserModel>> getAllUsers() {
-    final controller = StreamController<List<UserModel>>();
+    final controller = StreamController<List<UserModel>>.broadcast();
     _api.get('/users/all').then((response) {
       final list = (response.data as List).map((e) => UserModel.fromJson(e)).toList();
       if (!controller.isClosed) controller.add(list);
