@@ -19,12 +19,22 @@ class TechnicianClientsScreen extends StatefulWidget {
 
 class _TechnicianClientsScreenState extends State<TechnicianClientsScreen> {
   final FirestoreService _firestoreService = FirestoreService();
+  final String _currentUserId = FirebaseAuth.instance.currentUser?.uid ?? '';
+  Stream<List<Quote>>? _quotesStream;
+  Stream<List<ServiceRequest>>? _historyStream;
+
+  @override
+  void initState() {
+    super.initState();
+    if (_currentUserId.isNotEmpty) {
+      _quotesStream = _firestoreService.getQuotesForTechnician(_currentUserId);
+      _historyStream = _firestoreService.getTechnicianHistory(_currentUserId);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    final String currentUserId = FirebaseAuth.instance.currentUser?.uid ?? '';
-    
-    print('BUILD_CLIENTS_SCREEN: TechUID: "$currentUserId"');
+    print('BUILD_CLIENTS_SCREEN: TechUID: "$_currentUserId"');
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -36,19 +46,22 @@ class _TechnicianClientsScreenState extends State<TechnicianClientsScreen> {
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh, color: Colors.black),
-            onPressed: () => setState(() {}),
+            onPressed: () => setState(() {
+              _quotesStream = _firestoreService.getQuotesForTechnician(_currentUserId);
+              _historyStream = _firestoreService.getTechnicianHistory(_currentUserId);
+            }),
           ),
         ],
       ),
-      body: currentUserId.isEmpty 
+      body: _currentUserId.isEmpty 
         ? const Center(child: Text('Inicia sesión para ver tus clientes.'))
         : StreamBuilder<List<Quote>>(
-            stream: _firestoreService.getQuotesForTechnician(currentUserId),
+            stream: _quotesStream,
             builder: (context, quotesSnapshot) {
               final List<Quote> myQuotes = quotesSnapshot.data ?? [];
               
               return StreamBuilder<List<ServiceRequest>>(
-                stream: _firestoreService.getTechnicianHistory(currentUserId),
+                stream: _historyStream,
                 builder: (context, snapshot) {
                   if (snapshot.hasError) {
                     print('CLIENTS_STREAM_ERROR: ${snapshot.error}');
@@ -99,7 +112,7 @@ class _TechnicianClientsScreenState extends State<TechnicianClientsScreen> {
                   final activeRequests = allMatchingRequests.where((req) {
                     final myQuote = myQuotes.firstWhere((q) => q.requestId == req.id, orElse: () => Quote(id: '', requestId: '', clientId: '', technicianId: '', technicianName: '', technicianRating: 5, minPrice: 0, maxPrice: 0, message: '', createdAt: DateTime.now()));
                     
-                    if (req.technicianId == currentUserId) return true; // Assigned to me
+                    if (req.technicianId == _currentUserId) return true; // Assigned to me
                     if (req.status == ServiceRequestStatus.open && myQuote.status == QuoteStatus.pending) return true;
                     
                     return false;
@@ -159,8 +172,8 @@ class _TechnicianClientsScreenState extends State<TechnicianClientsScreen> {
                         Expanded(
                           child: TabBarView(
                             children: [
-                              _buildRequestList(activeRequests, myQuotes, currentUserId),
-                              _buildRequestList(historyRequests, myQuotes, currentUserId),
+                              _buildRequestList(activeRequests, myQuotes, _currentUserId),
+                              _buildRequestList(historyRequests, myQuotes, _currentUserId),
                             ],
                           ),
                         ),
@@ -224,7 +237,6 @@ class _TechnicianClientsScreenState extends State<TechnicianClientsScreen> {
     final String clientName = request.clientName ?? 'Cliente sin nombre';
     final String jobTitle = request.title ?? 'Sin título';
     final String jobAddress = request.address ?? 'Dirección no disponible';
-    final ServiceRequestStatus? jobStatus = request.status;
 
     return Material(
       color: Colors.white,
@@ -376,7 +388,7 @@ class _TechnicianClientsScreenState extends State<TechnicianClientsScreen> {
 
   Widget _buildActionRow(ServiceRequest request, Quote myQuote, String currentUserId) {
     final String? assignedTechId = request.technicianId;
-    final ServiceRequestStatus? status = request.status;
+    final ServiceRequestStatus status = request.status;
 
     // If my quote was rejected, I can only see the chat (history), but no more actions
     if (myQuote.status == QuoteStatus.rejected) {

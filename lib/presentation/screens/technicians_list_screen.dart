@@ -5,15 +5,27 @@ import '../../core/services/firestore_service.dart';
 import '../../core/services/language_service.dart';
 import '../../core/config/routes.dart';
 
-class TechniciansListScreen extends StatelessWidget {
+class TechniciansListScreen extends StatefulWidget {
   final ServiceRequest request;
 
   const TechniciansListScreen({super.key, required this.request});
 
   @override
-  Widget build(BuildContext context) {
-    final firestoreService = FirestoreService();
+  State<TechniciansListScreen> createState() => _TechniciansListScreenState();
+}
 
+class _TechniciansListScreenState extends State<TechniciansListScreen> {
+  final FirestoreService _firestoreService = FirestoreService();
+  Stream<List<Quote>>? _quotesStream;
+
+  @override
+  void initState() {
+    super.initState();
+    _quotesStream = _firestoreService.getQuotesForRequest(widget.request.id);
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
@@ -21,7 +33,7 @@ class TechniciansListScreen extends StatelessWidget {
           children: [
             const Text('Técnicos que respondieron', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold, fontSize: 18)),
             StreamBuilder<List<Quote>>(
-              stream: firestoreService.getQuotesForRequest(request.id),
+              stream: _quotesStream,
               builder: (context, snapshot) {
                 final count = snapshot.data?.length ?? 0;
                 return Text('$count técnicos disponibles', style: const TextStyle(color: Colors.grey, fontSize: 13));
@@ -35,7 +47,7 @@ class TechniciansListScreen extends StatelessWidget {
         leading: IconButton(icon: const Icon(Icons.arrow_back, color: Colors.black), onPressed: () => Navigator.pop(context)),
       ),
       body: StreamBuilder<List<Quote>>(
-        stream: firestoreService.getQuotesForRequest(request.id),
+        stream: _quotesStream,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) return const Center(child: CircularProgressIndicator(color: Color(0xFFFF8A00)));
           final quotes = snapshot.data ?? [];
@@ -46,7 +58,7 @@ class TechniciansListScreen extends StatelessWidget {
             itemCount: quotes.length,
             itemBuilder: (context, index) {
               final quote = quotes[index];
-              return _buildQuoteCard(context, quote, firestoreService);
+              return _buildQuoteCard(context, quote, _firestoreService);
             },
           );
         },
@@ -179,7 +191,7 @@ class TechniciansListScreen extends StatelessWidget {
           TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancelar', style: TextStyle(color: Colors.grey))),
           ElevatedButton(
             onPressed: () async {
-              await firestoreService.acceptQuote(request.id, quote);
+              await firestoreService.acceptQuote(widget.request.id, quote);
               if (context.mounted) {
                 Navigator.pop(context); // Close dialog
                 Navigator.pop(context); // Close list
@@ -205,7 +217,7 @@ class TechniciansListScreen extends StatelessWidget {
           TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancelar', style: TextStyle(color: Colors.grey))),
           ElevatedButton(
             onPressed: () async {
-              await firestoreService.rejectQuote(request.id, quote.id);
+              await firestoreService.rejectQuote(widget.request.id, quote.id);
               if (context.mounted) {
                 Navigator.pop(context); // Close dialog
               }

@@ -15,6 +15,13 @@ class TechnicianQuotesScreen extends StatefulWidget {
 class _TechnicianQuotesScreenState extends State<TechnicianQuotesScreen> {
   final FirestoreService _firestoreService = FirestoreService();
   final String _currentUserId = FirebaseAuth.instance.currentUser?.uid ?? '';
+  Stream<List<ServiceRequest>>? _requestsStream;
+
+  @override
+  void initState() {
+    super.initState();
+    _requestsStream = _firestoreService.getDirectRequestsForTechnician(_currentUserId);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -27,7 +34,7 @@ class _TechnicianQuotesScreenState extends State<TechnicianQuotesScreen> {
         centerTitle: true,
       ),
       body: StreamBuilder<List<ServiceRequest>>(
-        stream: _firestoreService.getDirectRequestsForTechnician(_currentUserId),
+        stream: _requestsStream,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator(color: Color(0xFFFF8A00)));

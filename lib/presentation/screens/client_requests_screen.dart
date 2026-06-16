@@ -16,6 +16,13 @@ class ClientRequestsScreen extends StatefulWidget {
 class _ClientRequestsScreenState extends State<ClientRequestsScreen> {
   final FirestoreService _firestoreService = FirestoreService();
   final String _currentUserId = FirebaseAuth.instance.currentUser?.uid ?? '';
+  Stream<List<ServiceRequest>>? _requestsStream;
+
+  @override
+  void initState() {
+    super.initState();
+    _requestsStream = _firestoreService.getClientRequests(_currentUserId);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -28,7 +35,7 @@ class _ClientRequestsScreenState extends State<ClientRequestsScreen> {
         centerTitle: true,
       ),
       body: StreamBuilder<List<ServiceRequest>>(
-        stream: _firestoreService.getClientRequests(_currentUserId),
+        stream: _requestsStream,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator(color: Color(0xFFFF8A00)));

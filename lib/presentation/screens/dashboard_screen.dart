@@ -44,10 +44,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
   StreamSubscription? _techsSub;
   StreamSubscription? _myRequestsSub;
 
+  // Cached Streams for StreamBuilders to avoid re-fetching on build
+  Stream<List<AlertModel>>? _alertsStream;
+
   @override
   void initState() {
     super.initState();
     print('STABLE_DASHBOARD: Starting services...');
+    _alertsStream = _firestoreService.getUserAlerts(_currentUserId);
     _startDataListeners();
     _initLocation();
   }
@@ -506,7 +510,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   Widget _buildNotificationBell() {
     return StreamBuilder<List<AlertModel>>(
-      stream: _firestoreService.getUserAlerts(_currentUserId),
+      stream: _alertsStream,
       builder: (context, snapshot) {
         final alerts = snapshot.data ?? [];
         final unreadCount = alerts.where((a) => !a.isRead).length;
