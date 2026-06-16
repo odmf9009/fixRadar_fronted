@@ -638,98 +638,125 @@ class _RequestDetailScreenState extends State<RequestDetailScreen> {
       context: context,
       isScrollControlled: true,
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
-      builder: (context) => Padding(
-        padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom, left: 24, right: 24, top: 24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(isCounterOffer ? 'Enviar contraoferta' : 'Enviar propuesta', style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-            const SizedBox(height: 20),
-            Row(
-              children: [
-                Expanded(
-                  child: TextField(
-                    controller: minPriceController, 
-                    keyboardType: TextInputType.number, 
-                    decoration: const InputDecoration(labelText: 'Precio Mín (\$)', hintText: 'Ej: 100')
-                  ),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: TextField(
-                    controller: maxPriceController, 
-                    keyboardType: TextInputType.number, 
-                    decoration: const InputDecoration(labelText: 'Precio Máx (\$)', hintText: 'Ej: 200')
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            TextField(controller: quoteController, maxLines: 3, decoration: const InputDecoration(labelText: 'Mensaje para el cliente', hintText: 'Hola, puedo ayudarte con tu problema...')),
-            const SizedBox(height: 24),
-            ElevatedButton(
-              onPressed: () async {
-                if (minPriceController.text.isEmpty) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Por favor, ingresa al menos el precio mínimo.')),
-                  );
-                  return;
-                }
-                
-                final double min = double.tryParse(minPriceController.text) ?? 0.0;
-                final double? maxInput = double.tryParse(maxPriceController.text);
-                
-                if (maxInput != null && maxInput < min) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('El precio máximo no puede ser menor al precio mínimo.'),
-                      backgroundColor: Colors.red,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setSheetState) => Padding(
+          padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom, left: 24, right: 24, top: 24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(isCounterOffer ? 'Enviar contraoferta' : 'Enviar propuesta', style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+              const SizedBox(height: 20),
+              Row(
+                children: [
+                  Expanded(
+                    child: TextField(
+                      controller: minPriceController, 
+                      keyboardType: TextInputType.number, 
+                      decoration: const InputDecoration(labelText: 'Precio Mín (\$)', hintText: 'Ej: 100')
                     ),
-                  );
-                  return;
-                }
-
-                final double max = maxInput ?? min;
-
-                setState(() => _isLoading = true);
-                if (isCounterOffer && _myQuote != null) {
-                  await _firestoreService.sendCounterOffer(_myQuote!.id, min, max, quoteController.text, null);
-                  // Refresh my quote locally
-                  final updated = await _firestoreService.getQuoteById(_myQuote!.id);
-                  if (mounted) setState(() => _myQuote = updated);
-                } else {
-                  final quote = Quote(
-                    id: '',
-                    requestId: request.id,
-                    clientId: request.clientId,
-                    technicianId: _currentUserId,
-                    technicianName: _currentUser?.displayName ?? 'Técnico',
-                    technicianPhotoUrl: _currentUser?.profileImageUrl,
-                    technicianRating: _currentUser?.rating ?? 5.0,
-                    price: min,
-                    minPrice: min,
-                    maxPrice: max,
-                    message: quoteController.text,
-                    estimatedTime: null,
-                    createdAt: DateTime.now(),
-                  );
-                  await _firestoreService.sendQuote(quote);
-                  if (mounted) setState(() => _myQuote = quote);
-                }
-                
-                if (context.mounted) Navigator.pop(context);
-                setState(() => _isLoading = false);
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFFFF8A00),
-                minimumSize: const Size(double.infinity, 50),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: TextField(
+                      controller: maxPriceController, 
+                      keyboardType: TextInputType.number, 
+                      decoration: const InputDecoration(labelText: 'Precio Máx (\$)', hintText: 'Ej: 200')
+                    ),
+                  ),
+                ],
               ),
-              child: Text(isCounterOffer ? 'Enviar contraoferta' : 'Enviar propuesta', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-            ),
-            const SizedBox(height: 40),
-          ],
+              const SizedBox(height: 16),
+              TextField(controller: quoteController, maxLines: 3, decoration: const InputDecoration(labelText: 'Mensaje para el cliente', hintText: 'Hola, puedo ayudarte con tu problema...')),
+              const SizedBox(height: 24),
+              ElevatedButton(
+                onPressed: _isLoading ? null : () async {
+                  if (minPriceController.text.isEmpty) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Por favor, ingresa al menos el precio mínimo.')),
+                    );
+                    return;
+                  }
+                  
+                  final double min = double.tryParse(minPriceController.text) ?? 0.0;
+                  final double? maxInput = double.tryParse(maxPriceController.text);
+                  
+                  if (maxInput != null && maxInput < min) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('El precio máximo no puede ser menor al precio mínimo.'),
+                        backgroundColor: Colors.red,
+                      ),
+                    );
+                    return;
+                  }
+
+                  final double max = maxInput ?? min;
+
+                  setState(() => _isLoading = true);
+                  setSheetState(() {});
+                  
+                  try {
+                    if (isCounterOffer && _myQuote != null) {
+                      await _firestoreService.sendCounterOffer(_myQuote!.id, min, max, quoteController.text, null);
+                      // Refresh my quote locally
+                      final updated = await _firestoreService.getQuoteById(_myQuote!.id);
+                      if (mounted) setState(() => _myQuote = updated);
+                    } else {
+                      final quote = Quote(
+                        id: '',
+                        requestId: request.id,
+                        clientId: request.clientId,
+                        technicianId: _currentUserId,
+                        technicianName: _currentUser?.displayName ?? 'Técnico',
+                        technicianPhotoUrl: _currentUser?.profileImageUrl,
+                        technicianRating: _currentUser?.rating ?? 5.0,
+                        price: min,
+                        minPrice: min,
+                        maxPrice: max,
+                        message: quoteController.text,
+                        estimatedTime: null,
+                        createdAt: DateTime.now(),
+                      );
+                      await _firestoreService.sendQuote(quote);
+                      if (mounted) setState(() => _myQuote = quote);
+                    }
+                    
+                    if (context.mounted) Navigator.pop(context);
+                  } catch (e) {
+                    print('Error sending quote: $e');
+                    String errorMsg = 'Error al enviar la propuesta. Inténtalo de nuevo.';
+                    if (e.toString().contains('already sent')) {
+                      errorMsg = 'Ya has enviado una propuesta para este pedido.';
+                      // If we get this error, we should probably refresh the quote to reflect the state in UI
+                      final quote = await _firestoreService.getQuoteByTechnician(request.id, _currentUserId);
+                      if (mounted) setState(() => _myQuote = quote);
+                    }
+                    
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text(errorMsg), backgroundColor: Colors.red),
+                      );
+                    }
+                  } finally {
+                    if (mounted) {
+                      setState(() => _isLoading = false);
+                      setSheetState(() {});
+                    }
+                  }
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFFFF8A00),
+                  minimumSize: const Size(double.infinity, 50),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+                child: _isLoading 
+                  ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                  : Text(isCounterOffer ? 'Enviar contraoferta' : 'Enviar propuesta', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+              ),
+              const SizedBox(height: 40),
+            ],
+          ),
         ),
       ),
     );
