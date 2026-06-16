@@ -308,6 +308,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
           const Text('No hay problemas reportados cerca.', style: TextStyle(color: Colors.grey))
         else
           ..._nearbyRequests.where((req) {
+            // Only show open requests
+            if (req.status != ServiceRequestStatus.open) return false;
+
             if (user?.role == 'technician') {
                // Apply skills filter
                final bool isHandyman = user!.specialties.contains('Handyman');
