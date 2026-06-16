@@ -120,8 +120,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> with Widget
       if (!_isOnline || _connectivityStatus == ConnectivityStatus.offline) return;
       final pos = await _locationService.getCurrentLocation();
       if (pos != null) {
-        final uid = FirebaseAuth.instance.currentUser?.uid ?? '';
-        await _firestoreService.updateUserLocation(uid, pos.latitude, pos.longitude);
+        SocketService().updateLocation(pos.latitude, pos.longitude);
       }
     });
   }

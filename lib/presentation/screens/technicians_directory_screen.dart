@@ -26,6 +26,8 @@ class _TechniciansDirectoryScreenState extends State<TechniciansDirectoryScreen>
   bool _onlyVerified = false;
   bool _onlyAvailable = false;
 
+  Stream<List<UserModel>>? _techsStream;
+
   final List<Map<String, dynamic>> _categories = [
     {'name': 'Todos', 'icon': Icons.all_inclusive},
     ...ServiceConstants.allCategories,
@@ -35,6 +37,11 @@ class _TechniciansDirectoryScreenState extends State<TechniciansDirectoryScreen>
   void initState() {
     super.initState();
     _loadLocation();
+    _initStream();
+  }
+
+  void _initStream() {
+    _techsStream = _firestoreService.getTechnicians();
   }
 
   Future<void> _loadLocation() async {
@@ -42,6 +49,13 @@ class _TechniciansDirectoryScreenState extends State<TechniciansDirectoryScreen>
     if (mounted) {
       setState(() {
         _currentPosition = pos;
+        // Refresh stream with location if needed, 
+        // but getTechnicians is currently simple.
+        // If we want it to react to location, we'd update it here.
+        _techsStream = _firestoreService.getTechnicians(
+          latitude: pos?.latitude,
+          longitude: pos?.longitude,
+        );
       });
     }
   }
@@ -70,10 +84,7 @@ class _TechniciansDirectoryScreenState extends State<TechniciansDirectoryScreen>
           const Divider(height: 1),
           Expanded(
             child: StreamBuilder<List<UserModel>>(
-              stream: _firestoreService.getTechnicians(
-                latitude: _currentPosition?.latitude,
-                longitude: _currentPosition?.longitude,
-              ),
+              stream: _techsStream,
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
                   return const Center(child: CircularProgressIndicator(color: Color(0xFFFF8A00)));

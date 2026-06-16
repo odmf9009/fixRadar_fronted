@@ -15,6 +15,13 @@ class ClientRespondersListScreen extends StatefulWidget {
 class _ClientRespondersListScreenState extends State<ClientRespondersListScreen> {
   final FirestoreService _firestoreService = FirestoreService();
   final String _currentUserId = FirebaseAuth.instance.currentUser?.uid ?? '';
+  Stream<List<Quote>>? _quotesStream;
+
+  @override
+  void initState() {
+    super.initState();
+    _quotesStream = _firestoreService.getQuotesForClient(_currentUserId);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -26,7 +33,7 @@ class _ClientRespondersListScreenState extends State<ClientRespondersListScreen>
             const Text('Técnicos que respondieron',
                 style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold, fontSize: 18)),
             StreamBuilder<List<Quote>>(
-              stream: _firestoreService.getQuotesForClient(_currentUserId),
+              stream: _quotesStream,
               builder: (context, snapshot) {
                 final count = snapshot.data?.length ?? 0;
                 return Text('$count técnicos disponibles', style: const TextStyle(color: Colors.grey, fontSize: 13));
@@ -39,7 +46,7 @@ class _ClientRespondersListScreenState extends State<ClientRespondersListScreen>
         centerTitle: true,
       ),
       body: StreamBuilder<List<Quote>>(
-        stream: _firestoreService.getQuotesForClient(_currentUserId),
+        stream: _quotesStream,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator(color: Color(0xFFFF8A00)));
@@ -49,7 +56,9 @@ class _ClientRespondersListScreenState extends State<ClientRespondersListScreen>
 
           if (quotes.isEmpty) {
             return RefreshIndicator(
-              onRefresh: () async => setState(() {}),
+              onRefresh: () async => setState(() {
+                _quotesStream = _firestoreService.getQuotesForClient(_currentUserId);
+              }),
               child: SingleChildScrollView(
                 physics: const AlwaysScrollableScrollPhysics(),
                 child: Container(
@@ -73,7 +82,9 @@ class _ClientRespondersListScreenState extends State<ClientRespondersListScreen>
                       ),
                       const SizedBox(height: 24),
                       TextButton.icon(
-                        onPressed: () => setState(() {}),
+                        onPressed: () => setState(() {
+                          _quotesStream = _firestoreService.getQuotesForClient(_currentUserId);
+                        }),
                         icon: const Icon(Icons.refresh, color: Color(0xFFFF8A00)),
                         label: const Text('Actualizar', style: TextStyle(color: Color(0xFFFF8A00))),
                       )
