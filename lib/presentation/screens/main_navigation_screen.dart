@@ -17,6 +17,8 @@ import '../../core/services/location_service.dart';
 import '../../core/services/connectivity_service.dart';
 import '../../core/services/sync_service.dart';
 import '../../core/services/language_service.dart';
+import '../../core/services/socket_service.dart';
+import '../../core/services/notification_service.dart';
 import '../../core/models/user_model.dart';
 import '../../core/models/service_request.dart';
 
@@ -52,10 +54,33 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> with Widget
     _syncOnlineStatus();
     _initConnectivity();
     _listenToUser();
+    _initSocketListeners();
+  }
+
+  void _initSocketListeners() {
+    SocketService().on('quote:new', (data) {
+      if (mounted) {
+        NotificationService().showLocalAlert(
+          '¡Nueva propuesta!',
+          'Un técnico ha enviado un presupuesto para tu pedido.',
+        );
+      }
+    });
+
+    SocketService().on('quote:accepted', (data) {
+      if (mounted) {
+        NotificationService().showLocalAlert(
+          '¡Propuesta aceptada!',
+          'Tu presupuesto ha sido aceptado por el cliente.',
+        );
+      }
+    });
   }
 
   @override
   void dispose() {
+    SocketService().off('quote:new');
+    SocketService().off('quote:accepted');
     WidgetsBinding.instance.removeObserver(this);
     _locationSyncTimer?.cancel();
     _connectivitySubscription?.cancel();
