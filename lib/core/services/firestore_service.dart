@@ -587,7 +587,7 @@ class FirestoreService {
 
     Future<void> fetch() async {
       try {
-        final response = await _api.get('/quotes/client/$clientId');
+        final response = await _api.get('/quotes/client');
         final list = (response.data as List).map((e) => Quote.fromJson(e)).toList();
         if (!controller.isClosed) controller.add(list);
       } catch (_) {
