@@ -47,12 +47,22 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> with Widget
 
   @override
   void initState() {
-    super.didChangeAppLifecycleState(AppLifecycleState.resumed); // Dummy to avoid unused import if needed
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     _initConnectivity();
     _initSocketListeners();
     _initWithUser();
+    _initNotificationTapHandler();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      // Reconnect socket (iOS/Android kill TCP connections in background)
+      SocketService().connect();
+      // Refresh map data
+      _mapScreenKey.currentState?.centerOnUser();
+    }
   }
 
   Future<void> _initWithUser() async {
@@ -157,6 +167,24 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> with Widget
 
   void _startRadar() {
     ProximityService().startMonitoring();
+  }
+
+  void _initNotificationTapHandler() {
+    NotificationService().onNotificationTap = (data) async {
+      final type = data['type'] as String?;
+      final requestId = data['requestId'] as String?;
+
+      if (requestId == null || requestId.isEmpty) return;
+
+      if (type == 'nearby_request' || type == 'chat_message' || type == 'quote_received') {
+        try {
+          final request = await _firestoreService.getServiceRequestById(requestId);
+          if (request != null && mounted) {
+            Navigator.pushNamed(context, AppRoutes.requestDetail, arguments: request);
+          }
+        } catch (_) {}
+      }
+    };
   }
 
   void _onTabTapped(int index, {ServiceRequest? focusRequest}) {

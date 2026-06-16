@@ -10,6 +10,9 @@ class NotificationService {
   final FirebaseMessaging _fcm = FirebaseMessaging.instance;
   final FlutterLocalNotificationsPlugin _local = FlutterLocalNotificationsPlugin();
 
+  // Called when user taps a notification. Set by MainNavigationScreen.
+  void Function(Map<String, dynamic> data)? onNotificationTap;
+
   Future<void> init() async {
     await _fcm.requestPermission(alert: true, badge: true, sound: true);
 
@@ -33,6 +36,20 @@ class NotificationService {
 
     // Foreground notifications
     FirebaseMessaging.onMessage.listen(_showLocalNotification);
+
+    // App was in background and user tapped notification
+    FirebaseMessaging.onMessageOpenedApp.listen((message) {
+      if (message.data.isNotEmpty) onNotificationTap?.call(message.data);
+    });
+
+    // App was terminated and user tapped notification to open it
+    final initial = await _fcm.getInitialMessage();
+    if (initial != null && initial.data.isNotEmpty) {
+      // Delay to let the widget tree build first
+      Future.delayed(const Duration(milliseconds: 800), () {
+        onNotificationTap?.call(initial.data);
+      });
+    }
   }
 
   Future<void> _showLocalNotification(RemoteMessage message) async {
