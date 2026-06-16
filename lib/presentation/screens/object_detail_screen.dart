@@ -726,11 +726,21 @@ class _RequestDetailScreenState extends State<RequestDetailScreen> {
                   } catch (e) {
                     print('Error sending quote: $e');
                     String errorMsg = 'Error al enviar la propuesta. Inténtalo de nuevo.';
-                    if (e.toString().contains('already sent')) {
+                    
+                    if (e is DioException) {
+                      final dynamic serverData = e.response?.data;
+                      if (serverData is Map && serverData['error'] != null) {
+                        final String serverError = serverData['error'].toString().toLowerCase();
+                        if (serverError.contains('already sent')) {
+                          errorMsg = 'Ya has enviado una propuesta para este pedido.';
+                          final quote = await _firestoreService.getQuoteByTechnician(request.id, _currentUserId);
+                          if (mounted) setState(() => _myQuote = quote);
+                        } else {
+                          errorMsg = serverData['error'].toString();
+                        }
+                      }
+                    } else if (e.toString().contains('already sent')) {
                       errorMsg = 'Ya has enviado una propuesta para este pedido.';
-                      // If we get this error, we should probably refresh the quote to reflect the state in UI
-                      final quote = await _firestoreService.getQuoteByTechnician(request.id, _currentUserId);
-                      if (mounted) setState(() => _myQuote = quote);
                     }
                     
                     if (context.mounted) {
