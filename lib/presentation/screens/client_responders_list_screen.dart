@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import '../../core/models/quote_model.dart';
+import '../../core/services/auth_service.dart';
 import '../../core/services/firestore_service.dart';
 import '../../core/services/language_service.dart';
 import '../../core/config/routes.dart';
@@ -14,7 +14,7 @@ class ClientRespondersListScreen extends StatefulWidget {
 
 class _ClientRespondersListScreenState extends State<ClientRespondersListScreen> {
   final FirestoreService _firestoreService = FirestoreService();
-  final String _currentUserId = FirebaseAuth.instance.currentUser?.uid ?? '';
+  final String _currentUserId = AuthService.currentUidSync;
   Stream<List<Quote>>? _quotesStream;
 
   @override

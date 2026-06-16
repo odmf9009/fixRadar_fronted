@@ -1,6 +1,6 @@
 import 'dart:io';
 import 'dart:async';
-import 'package:firebase_auth/firebase_auth.dart';
+import '../../core/services/auth_service.dart';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:image_picker/image_picker.dart';
@@ -26,7 +26,7 @@ class _RequestDetailScreenState extends State<RequestDetailScreen> {
   final LocationService _locationService = LocationService();
   final UploadService _uploadService = UploadService();
   final ImagePicker _picker = ImagePicker();
-  final String _currentUserId = FirebaseAuth.instance.currentUser?.uid ?? '';
+  final String _currentUserId = AuthService.currentUidSync;
   
   UserModel? _currentUser;
   Quote? _myQuote;

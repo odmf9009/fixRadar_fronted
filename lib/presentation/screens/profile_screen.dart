@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../core/config/routes.dart';
+import '../../core/services/auth_service.dart';
 import '../../core/services/firestore_service.dart';
 import '../../core/services/upload_service.dart';
 import '../../core/services/language_service.dart';
@@ -201,7 +202,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final String currentUserId = FirebaseAuth.instance.currentUser?.uid ?? '';
+    final String currentUserId = AuthService.currentUidSync;
     final String? currentUserEmail = FirebaseAuth.instance.currentUser?.email;
     final bool isAdmin = currentUserEmail == 'krvillamil1990@gmail.com';
 

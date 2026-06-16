@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+import '../../core/services/auth_service.dart';
 import 'package:intl/intl.dart';
 import 'package:shimmer/shimmer.dart';
 import '../../core/models/activity_model.dart';
@@ -19,7 +19,7 @@ class ActivityHistoryScreen extends StatefulWidget {
 class _ActivityHistoryScreenState extends State<ActivityHistoryScreen> {
   final FirestoreService _firestoreService = FirestoreService();
   final AchievementService _achievementService = AchievementService();
-  final String _currentUserId = FirebaseAuth.instance.currentUser?.uid ?? '';
+  final String _currentUserId = AuthService.currentUidSync;
   String _activeFilter = 'All';
 
   final List<String> _filters = [

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:share_plus/share_plus.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+import '../../core/services/auth_service.dart';
 import '../../core/services/referral_service.dart';
 import '../../core/services/firestore_service.dart';
 import '../../core/services/language_service.dart';
@@ -17,7 +17,7 @@ class ReferralScreen extends StatefulWidget {
 class _ReferralScreenState extends State<ReferralScreen> {
   final ReferralService _referralService = ReferralService();
   final FirestoreService _firestoreService = FirestoreService();
-  final String _currentUid = FirebaseAuth.instance.currentUser?.uid ?? '';
+  final String _currentUid = AuthService.currentUidSync;
 
   void _shareCode(String code) {
     final message = '¡Únete a FixRadar y encuentra los mejores técnicos para tu hogar! Usa mi código de referido: $code\n\nDescarga la app aquí: https://fixradar.app';

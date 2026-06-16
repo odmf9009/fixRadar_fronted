@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:geolocator/geolocator.dart';
+import '../../core/services/auth_service.dart';
 import 'package:geocoding/geocoding.dart';
 import '../../core/models/service_request.dart';
 import '../../core/models/alert_model.dart';
@@ -73,7 +73,7 @@ class _AlertsScreenState extends State<AlertsScreen> {
             ),
             body: TabBarView(
               children: [
-                _RadarTab(currentUserId: FirebaseAuth.instance.currentUser?.uid ?? ''),
+                _RadarTab(currentUserId: AuthService.currentUidSync),
                 _NovedadesTab(currentPosition: _currentPosition, city: _currentCity),
               ],
             ),
@@ -93,8 +93,8 @@ class _AlertsScreenState extends State<AlertsScreen> {
           TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancelar')),
           ElevatedButton(
             onPressed: () async {
-              final uid = FirebaseAuth.instance.currentUser?.uid;
-              if (uid != null) {
+              final uid = AuthService.currentUidSync;
+              if (uid.isNotEmpty) {
                 await FirestoreService().clearAllUserAlerts(uid);
               }
               if (mounted) {
@@ -241,8 +241,8 @@ class _NovedadesTabState extends State<_NovedadesTab> with AutomaticKeepAliveCli
   }
 
   void _loadUser() async {
-    final String? uid = FirebaseAuth.instance.currentUser?.uid;
-    if (uid != null) {
+    final String uid = AuthService.currentUidSync;
+    if (uid.isNotEmpty) {
       final user = await _fs.getUser(uid);
       if (mounted) setState(() => _currentUser = user);
     }
@@ -254,7 +254,7 @@ class _NovedadesTabState extends State<_NovedadesTab> with AutomaticKeepAliveCli
     if (_currentUser == null) return const Center(child: CircularProgressIndicator());
 
     return StreamBuilder<List<ServiceRequest>>(
-      stream: _fs.getNearbyServiceRequests(userId: FirebaseAuth.instance.currentUser?.uid),
+      stream: _fs.getNearbyServiceRequests(userId: AuthService.currentUidSync),
       builder: (context, snapshot) {
         if (snapshot.hasError) {
           return Center(child: Text('Error: ${snapshot.error}'));

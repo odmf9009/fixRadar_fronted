@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+import '../../core/services/auth_service.dart';
 import '../../core/models/service_request.dart';
 import '../../core/services/firestore_service.dart';
 import '../../core/config/routes.dart';
@@ -14,7 +14,7 @@ class MyPostsScreen extends StatefulWidget {
 class _MyPostsScreenState extends State<MyPostsScreen> {
   final FirestoreService _firestoreService = FirestoreService();
   String _activeFilter = 'Activas';
-  final String _currentUserId = FirebaseAuth.instance.currentUser?.uid ?? '';
+  final String _currentUserId = AuthService.currentUidSync;
 
   @override
   Widget build(BuildContext context) {

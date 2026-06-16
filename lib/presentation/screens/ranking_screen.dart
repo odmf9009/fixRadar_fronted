@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+import '../../core/services/auth_service.dart';
 import 'package:shimmer/shimmer.dart';
 import '../../core/models/user_model.dart';
 import '../../core/services/firestore_service.dart';
@@ -16,7 +16,7 @@ class _RankingScreenState extends State<RankingScreen> {
   final FirestoreService _firestoreService = FirestoreService();
   String _activeTab = 'local'; // local, nacional, global
   String _activeSubFilter = 'points'; // points, postsCount, confirmationsCount
-  final String _currentUserId = FirebaseAuth.instance.currentUser?.uid ?? '';
+  final String _currentUserId = AuthService.currentUidSync;
 
   @override
   Widget build(BuildContext context) {

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+import '../../core/services/auth_service.dart';
 import 'package:intl/intl.dart';
 import '../../core/models/service_request.dart';
 import '../../core/services/firestore_service.dart';
@@ -14,7 +14,7 @@ class TechnicianQuotesScreen extends StatefulWidget {
 
 class _TechnicianQuotesScreenState extends State<TechnicianQuotesScreen> {
   final FirestoreService _firestoreService = FirestoreService();
-  final String _currentUserId = FirebaseAuth.instance.currentUser?.uid ?? '';
+  final String _currentUserId = AuthService.currentUidSync;
   Stream<List<ServiceRequest>>? _requestsStream;
 
   @override

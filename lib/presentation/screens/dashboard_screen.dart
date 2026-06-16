@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:geolocator/geolocator.dart';
+import '../../core/services/auth_service.dart';
 import '../../core/services/firestore_service.dart';
 import '../../core/services/location_service.dart';
 import '../../core/config/routes.dart';
@@ -23,9 +23,10 @@ class DashboardScreen extends StatefulWidget {
 
 class _DashboardScreenState extends State<DashboardScreen> {
   final FirestoreService _firestoreService = FirestoreService();
+  final AuthService _authService = AuthService();
   final LocationService _locationService = LocationService();
-  final String _currentUserId = FirebaseAuth.instance.currentUser?.uid ?? '';
-  
+  String _currentUserId = '';
+
   // Estado de Datos
   UserModel? _user;
   List<ServiceRequest> _nearbyRequests = [];
@@ -51,6 +52,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
   void initState() {
     super.initState();
     print('STABLE_DASHBOARD: Starting services...');
+    _initWithUser();
+  }
+
+  Future<void> _initWithUser() async {
+    _currentUserId = await _authService.getCurrentUserId();
+    if (!mounted) return;
     _alertsStream = _firestoreService.getUserAlerts(_currentUserId);
     _startDataListeners();
     _initLocation();

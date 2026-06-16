@@ -2,8 +2,8 @@ import 'dart:async';
 import 'dart:typed_data';
 import 'dart:ui' as ui;
 import 'package:http/http.dart' as http;
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import '../../core/services/auth_service.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -86,7 +86,7 @@ class HomeMapScreenState extends State<HomeMapScreen> {
   }
 
   void _listenToUserData() {
-    final String uid = FirebaseAuth.instance.currentUser?.uid ?? '';
+    final String uid = AuthService.currentUidSync;
     if (uid.isNotEmpty) {
       _userSubscription = _firestoreService.getUserStream(uid).listen((user) {
         if (mounted) {
@@ -105,7 +105,7 @@ class HomeMapScreenState extends State<HomeMapScreen> {
   void _listenToTechnicians() {
     _techniciansSubscription = _firestoreService.getActiveHunters().listen((users) {
       if (mounted) {
-        final String uid = FirebaseAuth.instance.currentUser?.uid ?? '';
+        final String uid = AuthService.currentUidSync;
         _activeTechnicians = users.where((u) => u.id != uid && u.role == 'technician').toList();
         _filterAndRefreshMap();
       }
@@ -114,7 +114,7 @@ class HomeMapScreenState extends State<HomeMapScreen> {
 
   void _listenToRequests(Position pos) {
     _firestoreService.getNearbyServiceRequests(
-      userId: FirebaseAuth.instance.currentUser?.uid,
+      userId: AuthService.currentUidSync,
       latitude: pos.latitude,
       longitude: pos.longitude,
       radius: (_currentUser?.serviceRadius ?? 20.0) * 1.6,

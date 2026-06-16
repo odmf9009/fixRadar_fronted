@@ -8,8 +8,18 @@ import 'api_service.dart';
 import 'socket_service.dart';
 
 const _kBackendTokenKey = 'backend_jwt';
+const _kBackendUserIdKey = 'backend_user_id';
 
 class AuthService {
+  // Static cache so build() methods can read the uid synchronously for both auth providers.
+  // Set on login/register and on splash sync; cleared on sign-out.
+  static String _cachedBackendUserId = '';
+
+  /// Returns the current user ID synchronously.
+  /// Prefer Firebase UID when available (Google sign-in); falls back to cached backend UUID.
+  static String get currentUidSync =>
+      FirebaseAuth.instance.currentUser?.uid ?? _cachedBackendUserId;
+
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final GoogleSignIn _googleSignIn = GoogleSignIn(
     clientId: '528608210144-cajos5fejrd64hjfscv8kq6k9qmo2baa.apps.googleusercontent.com',
@@ -101,6 +111,7 @@ class AuthService {
       final token = response.data['token'] as String;
       await _saveBackendToken(token);
       final user = UserModel.fromJson(response.data['user']);
+      await _saveBackendUserId(user.id);
       await _socket.connect();
       return user;
     } catch (e) {
@@ -120,6 +131,7 @@ class AuthService {
       final token = response.data['token'] as String;
       await _saveBackendToken(token);
       final user = UserModel.fromJson(response.data['user']);
+      await _saveBackendUserId(user.id);
       await _socket.connect();
       return user;
     } catch (e) {
@@ -135,6 +147,7 @@ class AuthService {
     await _auth.signOut();
     await _googleSignIn.signOut();
     await _clearBackendToken();
+    await _clearBackendUserId();
   }
 
   /// Called on splash for Google-auth users.
@@ -153,6 +166,7 @@ class AuthService {
       final response = await _api.get('/users/me');
       final data = response.data;
       final user = UserModel.fromJson(data['user'] ?? data);
+      await _saveBackendUserId(user.id); // populate sync cache for build() methods
       await _socket.connect();
       return user;
     } catch (e) {
@@ -174,6 +188,17 @@ class AuthService {
 
   // ─── Helpers ─────────────────────────────────────────────────────────────────
 
+  Future<String?> getBackendUserId() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString(_kBackendUserIdKey);
+  }
+
+  Future<String> getCurrentUserId() async {
+    final firebaseUid = _auth.currentUser?.uid;
+    if (firebaseUid != null && firebaseUid.isNotEmpty) return firebaseUid;
+    return await getBackendUserId() ?? '';
+  }
+
   Future<void> _saveBackendToken(String token) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_kBackendTokenKey, token);
@@ -182,5 +207,17 @@ class AuthService {
   Future<void> _clearBackendToken() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove(_kBackendTokenKey);
+  }
+
+  Future<void> _saveBackendUserId(String userId) async {
+    AuthService._cachedBackendUserId = userId;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_kBackendUserIdKey, userId);
+  }
+
+  Future<void> _clearBackendUserId() async {
+    AuthService._cachedBackendUserId = '';
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove(_kBackendUserIdKey);
   }
 }

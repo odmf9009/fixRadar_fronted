@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:intl/intl.dart';
 import '../../core/models/service_request.dart';
+import '../../core/services/auth_service.dart';
 import '../../core/services/firestore_service.dart';
 import '../../core/config/routes.dart';
 
@@ -15,7 +15,7 @@ class ClientRequestsScreen extends StatefulWidget {
 
 class _ClientRequestsScreenState extends State<ClientRequestsScreen> {
   final FirestoreService _firestoreService = FirestoreService();
-  final String _currentUserId = FirebaseAuth.instance.currentUser?.uid ?? '';
+  final String _currentUserId = AuthService.currentUidSync;
   Stream<List<ServiceRequest>>? _requestsStream;
 
   @override

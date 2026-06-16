@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'package:geolocator/geolocator.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'auth_service.dart';
 import 'location_service.dart';
 import 'firestore_service.dart';
 import 'notification_service.dart';
@@ -33,8 +33,8 @@ class ProximityService {
   Future<void> startMonitoring() async {
     await _loadNotifiedIDs();
 
-    final String? uid = FirebaseAuth.instance.currentUser?.uid;
-    if (uid != null) {
+    final String uid = AuthService.currentUidSync;
+    if (uid.isNotEmpty) {
       _userSubscription = _firestoreService.getUserStream(uid).listen((user) {
         _currentUser = user;
         _runImmediateCheck();
@@ -46,7 +46,7 @@ class ProximityService {
       });
     }
 
-    _requestsSubscription = _firestoreService.getNearbyServiceRequests(userId: uid).listen((requests) {
+    _requestsSubscription = _firestoreService.getNearbyServiceRequests(userId: uid.isNotEmpty ? uid : null).listen((requests) {
       _availableRequests = requests.where((r) => r.status == ServiceRequestStatus.open).toList();
       Future.delayed(const Duration(seconds: 1), () => _runImmediateCheck());
       _cleanupStaleNotifiedIDs(requests);

@@ -1,6 +1,6 @@
 // Migrated: Firestore replaced by MongoDB+Socket.io via FirestoreService facade
 import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+import '../../core/services/auth_service.dart';
 import 'package:intl/intl.dart';
 import '../../core/models/service_request.dart';
 import '../../core/models/quote_model.dart';
@@ -19,7 +19,7 @@ class TechnicianClientsScreen extends StatefulWidget {
 
 class _TechnicianClientsScreenState extends State<TechnicianClientsScreen> {
   final FirestoreService _firestoreService = FirestoreService();
-  final String _currentUserId = FirebaseAuth.instance.currentUser?.uid ?? '';
+  final String _currentUserId = AuthService.currentUidSync;
   Stream<List<Quote>>? _quotesStream;
   Stream<List<ServiceRequest>>? _historyStream;
 

@@ -1,7 +1,5 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:geolocator/geolocator.dart';
 import 'home_map_screen.dart';
 import 'dashboard_screen.dart';
 import 'technician_clients_screen.dart';
@@ -11,6 +9,7 @@ import 'technician_quotes_screen.dart';
 import 'technicians_directory_screen.dart';
 import 'profile_screen.dart';
 import '../../core/config/routes.dart';
+import '../../core/services/auth_service.dart';
 import '../../core/services/firestore_service.dart';
 import '../../core/services/proximity_service.dart';
 import '../../core/services/location_service.dart';
@@ -33,10 +32,11 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> with Widget
   int _currentIndex = 0;
   final GlobalKey<HomeMapScreenState> _mapScreenKey = GlobalKey<HomeMapScreenState>();
   final FirestoreService _firestoreService = FirestoreService();
+  final AuthService _authService = AuthService();
   final LocationService _locationService = LocationService();
   final ConnectivityService _connectivityService = ConnectivityService();
-  final String _currentUserId = FirebaseAuth.instance.currentUser?.uid ?? '';
-  
+  String _currentUserId = '';
+
   ConnectivityStatus _connectivityStatus = ConnectivityStatus.online;
   StreamSubscription<ConnectivityStatus>? _connectivitySubscription;
   StreamSubscription<UserModel?>? _userSubscription;
@@ -50,11 +50,16 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> with Widget
     super.didChangeAppLifecycleState(AppLifecycleState.resumed); // Dummy to avoid unused import if needed
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    _initConnectivity();
+    _initSocketListeners();
+    _initWithUser();
+  }
+
+  Future<void> _initWithUser() async {
+    _currentUserId = await _authService.getCurrentUserId();
     _startRadar();
     _syncOnlineStatus();
-    _initConnectivity();
     _listenToUser();
-    _initSocketListeners();
   }
 
   void _initSocketListeners() {
@@ -119,12 +124,10 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> with Widget
   }
 
   Future<void> _syncOnlineStatus() async {
-    final uid = FirebaseAuth.instance.currentUser?.uid ?? '';
-    if (uid.isEmpty) return;
-    
+    if (_currentUserId.isEmpty) return;
     setState(() => _isOnline = true);
     final pos = await _locationService.getCurrentLocation();
-    await _firestoreService.updateUserOnlineStatus(uid, true, lat: pos?.latitude, lng: pos?.longitude);
+    await _firestoreService.updateUserOnlineStatus(_currentUserId, true, lat: pos?.latitude, lng: pos?.longitude);
     _startLocationSync();
   }
 
@@ -140,15 +143,14 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> with Widget
   }
 
   Future<void> _toggleOnlineStatus(bool value) async {
-    final uid = FirebaseAuth.instance.currentUser?.uid ?? '';
-    if (uid.isEmpty) return;
+    if (_currentUserId.isEmpty) return;
     setState(() => _isOnline = value);
     if (value) {
       final pos = await _locationService.getCurrentLocation();
-      await _firestoreService.updateUserOnlineStatus(uid, true, lat: pos?.latitude, lng: pos?.longitude);
+      await _firestoreService.updateUserOnlineStatus(_currentUserId, true, lat: pos?.latitude, lng: pos?.longitude);
       _startLocationSync();
     } else {
-      await _firestoreService.updateUserOnlineStatus(uid, false);
+      await _firestoreService.updateUserOnlineStatus(_currentUserId, false);
       _locationSyncTimer?.cancel();
     }
   }

@@ -1,7 +1,7 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+import '../../core/services/auth_service.dart';
 import 'package:intl/intl.dart';
 import '../../core/models/portfolio_item.dart';
 import '../../core/models/user_model.dart';
@@ -21,22 +21,9 @@ class _ManagePortfolioScreenState extends State<ManagePortfolioScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return StreamBuilder<User?>(
-      stream: FirebaseAuth.instance.authStateChanges(),
-      builder: (context, authSnapshot) {
-        final user = authSnapshot.data;
-        final userId = user?.uid ?? '';
-        
-        print('DEBUG_PORTFOLIO: Auth state: ${authSnapshot.connectionState}, UID: "$userId"');
+    final String userId = AuthService.currentUidSync;
 
-        if (userId.isEmpty && authSnapshot.connectionState != ConnectionState.waiting) {
-          return Scaffold(
-            appBar: AppBar(title: const Text('Mi Portafolio')),
-            body: const Center(child: Text('Inicia sesión para ver tu portafolio.')),
-          );
-        }
-
-        return Scaffold(
+    return Scaffold(
           backgroundColor: Colors.white,
           appBar: AppBar(
             title: const Text('Mi Portafolio', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
@@ -90,8 +77,6 @@ class _ManagePortfolioScreenState extends State<ManagePortfolioScreen> {
             child: const Icon(Icons.add, color: Colors.white),
           ),
         );
-      },
-    );
   }
 
   Widget _buildProgressHeader(int count) {
@@ -446,7 +431,7 @@ class _ManagePortfolioScreenState extends State<ManagePortfolioScreen> {
   }
 
   void _showAddItemSheet({PortfolioItem? item}) async {
-    final userId = FirebaseAuth.instance.currentUser?.uid ?? '';
+    final userId = AuthService.currentUidSync;
     if (userId.isEmpty) return;
 
     // Fetch user to get specialties
@@ -761,7 +746,7 @@ class _AddPortfolioItemSheetState extends State<AddPortfolioItemSheet> {
     }
 
     setState(() => _isUploading = true);
-    final String userId = FirebaseAuth.instance.currentUser?.uid ?? '';
+    final String userId = AuthService.currentUidSync;
 
     try {
       final List<String> fullUrls = [];

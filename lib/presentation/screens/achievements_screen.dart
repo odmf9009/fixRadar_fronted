@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+import '../../core/services/auth_service.dart';
 import '../../core/models/user_model.dart';
 import '../../core/models/achievement_model.dart';
 import '../../core/services/firestore_service.dart';
@@ -11,7 +11,7 @@ class AchievementsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final String currentUserId = FirebaseAuth.instance.currentUser?.uid ?? '';
+    final String currentUserId = AuthService.currentUidSync;
     final FirestoreService firestoreService = FirestoreService();
     final AchievementService achievementService = AchievementService();
 

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import '../../core/services/auth_service.dart';
 import '../../core/services/firestore_service.dart';
 
 class PrivacySettingsScreen extends StatefulWidget {
@@ -116,8 +117,8 @@ class _PrivacySettingsScreenState extends State<PrivacySettingsScreen> {
   }
 
   void _showDeleteAccountDialog(BuildContext context) {
-    final user = FirebaseAuth.instance.currentUser;
-    if (user == null) return;
+    final uid = AuthService.currentUidSync;
+    if (uid.isEmpty) return;
 
     showDialog(
       context: context,
@@ -134,9 +135,9 @@ class _PrivacySettingsScreenState extends State<PrivacySettingsScreen> {
           ElevatedButton(
             onPressed: () async {
               try {
-                final firestoreService = FirestoreService(); 
-                await firestoreService.deleteUserAccount(user.uid);
-                await user.delete();
+                final firestoreService = FirestoreService();
+                await firestoreService.deleteUserAccount(uid);
+                await FirebaseAuth.instance.currentUser?.delete();
                 
                 if (mounted) {
                   Navigator.of(context).pushNamedAndRemoveUntil('/', (route) => false);

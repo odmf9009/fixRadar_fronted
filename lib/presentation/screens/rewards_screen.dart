@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+import '../../core/services/auth_service.dart';
 import '../../core/services/rewards_service.dart';
 import '../../core/services/firestore_service.dart';
 import '../../core/services/language_service.dart';
@@ -16,7 +16,7 @@ class RewardsScreen extends StatefulWidget {
 class _RewardsScreenState extends State<RewardsScreen> {
   final RewardsService _rewardsService = RewardsService();
   final FirestoreService _firestoreService = FirestoreService();
-  final String _currentUid = FirebaseAuth.instance.currentUser?.uid ?? '';
+  final String _currentUid = AuthService.currentUidSync;
 
   @override
   Widget build(BuildContext context) {

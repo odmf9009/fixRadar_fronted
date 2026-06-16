@@ -1,4 +1,4 @@
-import 'package:firebase_auth/firebase_auth.dart';
+import '../../../core/services/auth_service.dart';
 import 'package:flutter/material.dart';
 import '../../../core/models/service_request.dart';
 import '../../../core/config/routes.dart';
@@ -14,7 +14,7 @@ class JobCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final String currentUserId = FirebaseAuth.instance.currentUser?.uid ?? '';
+    final String currentUserId = AuthService.currentUidSync;
     final bool alreadyQuoted = request.interestedTechnicians.contains(currentUserId);
 
     return GestureDetector(

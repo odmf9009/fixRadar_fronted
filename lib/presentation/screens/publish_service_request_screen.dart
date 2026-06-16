@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:geocoding/geocoding.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+import '../../core/services/auth_service.dart';
 import '../../core/models/service_request.dart';
 import '../../core/models/user_model.dart';
 import '../../core/models/alert_model.dart';
@@ -139,8 +139,8 @@ class _PublishServiceRequestScreenState extends State<PublishServiceRequestScree
     
     setState(() => _isLoading = true);
     try {
-      final user = FirebaseAuth.instance.currentUser;
-      if (user == null) {
+      final uid = AuthService.currentUidSync;
+      if (uid.isEmpty) {
         throw Exception('Debes estar autenticado para publicar.');
       }
 
@@ -169,8 +169,8 @@ class _PublishServiceRequestScreenState extends State<PublishServiceRequestScree
         address: _addressController.text,
         status: ServiceRequestStatus.open,
         urgency: _selectedUrgency,
-        clientId: user.uid,
-        clientName: user.displayName ?? 'Cliente',
+        clientId: uid,
+        clientName: 'Cliente',
         createdAt: DateTime.now(),
         updatedAt: DateTime.now(),
         targetTechnicianId: _targetTechnicianId,

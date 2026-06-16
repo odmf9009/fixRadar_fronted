@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+import '../../core/services/auth_service.dart';
 import '../../core/models/user_model.dart';
 import '../../core/services/firestore_service.dart';
 import '../../core/services/location_service.dart';
@@ -31,7 +31,7 @@ class _FavoriteTechniciansScreenState extends State<FavoriteTechniciansScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final String currentUserId = FirebaseAuth.instance.currentUser?.uid ?? '';
+    final String currentUserId = AuthService.currentUidSync;
 
     return Scaffold(
       backgroundColor: Colors.white,
