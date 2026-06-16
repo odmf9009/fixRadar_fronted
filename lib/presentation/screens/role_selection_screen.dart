@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../../core/services/firestore_service.dart';
+import '../../core/services/auth_service.dart';
 import '../../core/config/routes.dart';
 
 class RoleSelectionScreen extends StatefulWidget {
@@ -12,6 +13,7 @@ class RoleSelectionScreen extends StatefulWidget {
 
 class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
   final FirestoreService _firestoreService = FirestoreService();
+  final AuthService _authService = AuthService();
   bool _isLoading = false;
 
   @override
@@ -21,25 +23,28 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
   }
 
   Future<void> _checkExistingRole() async {
-    final user = FirebaseAuth.instance.currentUser;
-    if (user == null) return;
-
-    // Optional: add a tiny delay to ensure screen is built
-    final userData = await _firestoreService.getUser(user.uid);
-    if (userData != null && userData.onboardingCompleted && userData.userType != null) {
-      if (mounted) {
-        Navigator.pushReplacementNamed(context, AppRoutes.home);
+    final firebaseUser = FirebaseAuth.instance.currentUser;
+    if (firebaseUser != null) {
+      final userData = await _firestoreService.getUser(firebaseUser.uid);
+      if (userData != null && userData.onboardingCompleted && userData.userType != null) {
+        if (mounted) Navigator.pushReplacementNamed(context, AppRoutes.home);
+      }
+    } else {
+      final token = await _authService.getBackendToken();
+      if (token != null) {
+        final userData = await _authService.syncCurrentUserFromBackend();
+        if (userData != null && userData.onboardingCompleted && userData.userType != null) {
+          if (mounted) Navigator.pushReplacementNamed(context, AppRoutes.home);
+        }
       }
     }
   }
 
   Future<void> _selectRole(String role) async {
-    final user = FirebaseAuth.instance.currentUser;
-    if (user == null) return;
-
     setState(() => _isLoading = true);
     try {
-      await _firestoreService.updateUserRole(user.uid, role);
+      // PUT /users/me uses the token identity — uid param is ignored by the backend
+      await _firestoreService.updateUserRole('', role);
       if (mounted) {
         Navigator.pushReplacementNamed(context, AppRoutes.home);
       }
