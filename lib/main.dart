@@ -7,10 +7,11 @@ import 'core/services/language_service.dart';
 import 'core/services/notification_service.dart';
 import 'core/theme/app_theme.dart';
 import 'core/localization/app_translations.dart';
+import 'firebase_options.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp();
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   ApiService().init();
   await NotificationService().init();
   runApp(const FixRadarApp());

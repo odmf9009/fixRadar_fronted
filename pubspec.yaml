@@ -41,6 +41,10 @@ dependencies:
   # Push Notifications local
   flutter_local_notifications: ^18.0.1
 
+  # Encryption
+  encrypt: ^5.0.3
+  pointycastle: ^3.9.1
+
   # State & Utilities
   provider: ^6.1.2
   shared_preferences: ^2.4.23

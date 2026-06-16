@@ -1,9 +1,13 @@
 import 'package:dio/dio.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../models/user_model.dart';
+import '../utils/rsa_encryptor.dart';
 import 'api_service.dart';
 import 'socket_service.dart';
+
+const _kBackendTokenKey = 'backend_jwt';
 
 class AuthService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
@@ -16,10 +20,12 @@ class AuthService {
   Stream<User?> get userStream => _auth.authStateChanges();
   String? get currentUserUid => _auth.currentUser?.uid;
 
+  // ─── Google Sign-In (Firebase) ──────────────────────────────────────────────
+
   Future<UserModel?> signInWithGoogle({String? referralCode}) async {
     try {
       await _googleSignIn.signOut();
-      final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
+      final googleUser = await _googleSignIn.signIn();
       if (googleUser == null) return null;
 
       final googleAuth = await googleUser.authentication;
@@ -28,12 +34,12 @@ class AuthService {
         idToken: googleAuth.idToken,
       );
 
-      final userCredential = await _auth.signInWithCredential(credential);
-      if (userCredential.user == null) return null;
+      final userCred = await _auth.signInWithCredential(credential);
+      if (userCred.user == null) return null;
 
-      return _syncWithBackend(
-        name: userCredential.user!.displayName ?? 'Usuario',
-        profileImageUrl: userCredential.user!.photoURL ?? '',
+      return _syncGoogleWithBackend(
+        name: userCred.user!.displayName ?? 'Usuario',
+        profileImageUrl: userCred.user!.photoURL ?? '',
         referralCode: referralCode,
       );
     } catch (e) {
@@ -42,75 +48,139 @@ class AuthService {
     }
   }
 
-  Future<UserModel?> signInWithEmail(String email, String password) async {
-    await _auth.signInWithEmailAndPassword(email: email, password: password);
-    return _syncWithBackend();
-  }
-
-  Future<UserModel?> signUpWithEmail(
-    String email,
-    String password,
-    String name, {
-    String? referralCode,
-    String? userType,
-  }) async {
-    final cred = await _auth.createUserWithEmailAndPassword(email: email, password: password);
-    if (cred.user == null) return null;
-
-    return _syncWithBackend(
-      name: name,
-      userType: userType,
-      referralCode: referralCode,
-    );
-  }
-
-  Future<UserModel?> _syncWithBackend({
+  Future<UserModel?> _syncGoogleWithBackend({
     String? name,
     String? profileImageUrl,
     String? userType,
     String? referralCode,
   }) async {
     try {
-      print('Sincronizando con el backend...');
       final response = await _api.post('/auth/sync', data: {
         if (name != null) 'name': name,
         if (profileImageUrl != null) 'profileImageUrl': profileImageUrl,
         if (userType != null) 'userType': userType,
         if (referralCode != null) 'referralCode': referralCode,
       });
-      print('Respuesta del backend recibida: ${response.statusCode}');
       final user = UserModel.fromJson(response.data['user']);
       await _socket.connect();
       return user;
     } catch (e) {
-      print('Error en _syncWithBackend: $e');
+      print('Error en _syncGoogleWithBackend: $e');
       if (e is DioException) {
-        print('Dio error type: ${e.type}');
-        print('Dio error response: ${e.response}');
-        print('Dio error message: ${e.message}');
+        print('Dio error: ${e.type} | ${e.message} | ${e.response}');
       }
       return null;
     }
   }
 
+  // ─── Email Auth (Backend-managed) ───────────────────────────────────────────
+
+  /// Sends a 6-digit verification code to [email].
+  Future<void> sendVerificationCode(String email) async {
+    await _api.post('/auth/send-verification', data: {'email': email});
+  }
+
+  /// Registers a new user. Password is RSA-encrypted before sending.
+  Future<UserModel?> signUpWithEmailBackend(
+    String email,
+    String password,
+    String name,
+    String verificationCode, {
+    String? referralCode,
+  }) async {
+    try {
+      final encryptedPassword = await RsaEncryptor.encryptPassword(password);
+      final response = await _api.post('/auth/register', data: {
+        'email': email,
+        'encryptedPassword': encryptedPassword,
+        'name': name,
+        'verificationCode': verificationCode,
+        if (referralCode != null && referralCode.isNotEmpty)
+          'referralCode': referralCode,
+      });
+      final token = response.data['token'] as String;
+      await _saveBackendToken(token);
+      final user = UserModel.fromJson(response.data['user']);
+      await _socket.connect();
+      return user;
+    } catch (e) {
+      print('Error en signUpWithEmailBackend: $e');
+      rethrow;
+    }
+  }
+
+  /// Logs in with email. Password is RSA-encrypted before sending.
+  Future<UserModel?> signInWithEmailBackend(String email, String password) async {
+    try {
+      final encryptedPassword = await RsaEncryptor.encryptPassword(password);
+      final response = await _api.post('/auth/login', data: {
+        'email': email,
+        'encryptedPassword': encryptedPassword,
+      });
+      final token = response.data['token'] as String;
+      await _saveBackendToken(token);
+      final user = UserModel.fromJson(response.data['user']);
+      await _socket.connect();
+      return user;
+    } catch (e) {
+      print('Error en signInWithEmailBackend: $e');
+      rethrow;
+    }
+  }
+
+  // ─── Session management ──────────────────────────────────────────────────────
+
   Future<void> signOut() async {
     _socket.disconnect();
     await _auth.signOut();
     await _googleSignIn.signOut();
+    await _clearBackendToken();
   }
 
+  /// Called on splash for Google-auth users.
   Future<UserModel?> syncCurrentUser() async {
     final firebaseUser = _auth.currentUser;
     if (firebaseUser == null) return null;
-    return _syncWithBackend(
+    return _syncGoogleWithBackend(
       name: firebaseUser.displayName,
       profileImageUrl: firebaseUser.photoURL,
     );
+  }
+
+  /// Called on splash for backend-email users.
+  Future<UserModel?> syncCurrentUserFromBackend() async {
+    try {
+      final response = await _api.get('/users/me');
+      final data = response.data;
+      final user = UserModel.fromJson(data['user'] ?? data);
+      await _socket.connect();
+      return user;
+    } catch (e) {
+      await _clearBackendToken();
+      return null;
+    }
+  }
+
+  Future<String?> getBackendToken() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString(_kBackendTokenKey);
   }
 
   Future<void> updateFcmToken(String token) async {
     try {
       await _api.put('/auth/fcm-token', data: {'token': token});
     } catch (_) {}
+  }
+
+  // ─── Helpers ─────────────────────────────────────────────────────────────────
+
+  Future<void> _saveBackendToken(String token) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_kBackendTokenKey, token);
+  }
+
+  Future<void> _clearBackendToken() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove(_kBackendTokenKey);
   }
 }

@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../config/app_config.dart';
 
 class ApiService {
@@ -25,15 +26,25 @@ class ApiService {
 
     _dio.interceptors.add(InterceptorsWrapper(
       onRequest: (options, handler) async {
-        final user = FirebaseAuth.instance.currentUser;
-        if (user != null) {
-          final token = await user.getIdToken();
+        // Google login → Firebase ID token
+        final firebaseUser = FirebaseAuth.instance.currentUser;
+        if (firebaseUser != null) {
+          final token = await firebaseUser.getIdToken();
           options.headers['Authorization'] = 'Bearer $token';
+        } else {
+          // Email/backend login → stored JWT
+          final prefs = await SharedPreferences.getInstance();
+          final backendToken = prefs.getString('backend_jwt');
+          if (backendToken != null) {
+            options.headers['Authorization'] = 'Bearer $backendToken';
+          }
         }
         handler.next(options);
       },
-      onError: (error, handler) {
+      onError: (error, handler) async {
         if (error.response?.statusCode == 401) {
+          final prefs = await SharedPreferences.getInstance();
+          await prefs.remove('backend_jwt');
           FirebaseAuth.instance.signOut();
         }
         handler.next(error);

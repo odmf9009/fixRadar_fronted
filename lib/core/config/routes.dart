@@ -170,19 +170,35 @@ class _SplashScreenState extends State<SplashScreen> {
     await Future.delayed(const Duration(milliseconds: 1500));
     if (!mounted) return;
 
+    final authService = AuthService();
     final firebaseUser = FirebaseAuth.instance.currentUser;
+
     if (firebaseUser != null) {
-      // Sync with backend to ensure the user exists in MongoDB
-      final userModel = await AuthService().syncCurrentUser();
+      // Google login user
+      final userModel = await authService.syncCurrentUser();
       if (!mounted) return;
-      
-      if (userModel == null || !userModel.onboardingCompleted || userModel.userType == null) {
-        Navigator.pushReplacementNamed(context, AppRoutes.roleSelection);
-      } else {
-        Navigator.pushReplacementNamed(context, AppRoutes.home);
-      }
+      _navigate(userModel);
     } else {
+      // Check for backend JWT (email/password user)
+      final backendToken = await authService.getBackendToken();
+      if (backendToken != null) {
+        final userModel = await authService.syncCurrentUserFromBackend();
+        if (!mounted) return;
+        if (userModel != null) {
+          _navigate(userModel);
+          return;
+        }
+      }
+      if (!mounted) return;
       Navigator.pushReplacementNamed(context, AppRoutes.login);
+    }
+  }
+
+  void _navigate(UserModel? userModel) {
+    if (userModel == null || !userModel.onboardingCompleted || userModel.userType == null) {
+      Navigator.pushReplacementNamed(context, AppRoutes.roleSelection);
+    } else {
+      Navigator.pushReplacementNamed(context, AppRoutes.home);
     }
   }
 

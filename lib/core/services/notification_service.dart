@@ -19,11 +19,13 @@ class NotificationService {
       const InitializationSettings(android: androidSettings, iOS: iosSettings),
     );
 
-    // Upload token to backend
-    final token = await _fcm.getToken();
-    if (token != null) {
-      await AuthService().updateFcmToken(token);
-    }
+    // Upload token to backend (simulators don't have APNS token, skip gracefully)
+    try {
+      final token = await _fcm.getToken();
+      if (token != null) {
+        await AuthService().updateFcmToken(token);
+      }
+    } catch (_) {}
 
     _fcm.onTokenRefresh.listen((newToken) {
       AuthService().updateFcmToken(newToken);
