@@ -384,9 +384,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFFFF8A00)),
                       )
                     : IconButton(
-                        icon: _buildRadarIcon(user.isOnline && _isWithinWorkHours(user)),
+                        icon: _buildRadarIcon(user.isOnline),
                         onPressed: _toggleOnlineStatus,
-                        tooltip: user.isOnline && _isWithinWorkHours(user)
+                        tooltip: user.isOnline
                             ? tr('radar_tooltip_on')
                             : tr('radar_tooltip_off'),
                       ),

@@ -189,22 +189,16 @@ class FirestoreService {
     await _api.put('/users/me', data: user.toJson());
   }
 
-  Stream<UserModel?> getUserStream(String uid) {
-    final controller = StreamController<UserModel?>.broadcast();
-
-    Future<void> fetch() async {
+  Stream<UserModel?> getUserStream(String uid) async* {
+    while (true) {
       try {
         final response = await _api.get('/users/$uid');
-        if (!controller.isClosed) {
-          controller.add(UserModel.fromJson(response.data));
-        }
+        yield UserModel.fromJson(response.data);
       } catch (_) {
-        if (!controller.isClosed) controller.add(null);
+        yield null;
       }
+      await Future.delayed(const Duration(seconds: 5));
     }
-
-    fetch();
-    return controller.stream;
   }
 
   Future<List<UserModel>> getNearbyTechnicians({
