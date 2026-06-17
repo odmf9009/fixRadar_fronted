@@ -32,15 +32,24 @@ class LocationService {
     return true;
   }
 
-  /// Returns a stream of real-time location updates.
+  /// General location stream — no foreground notification (for map/clients).
   Stream<Position> get locationStream {
+    return Geolocator.getPositionStream(
+      locationSettings: const LocationSettings(
+        accuracy: LocationAccuracy.high,
+        distanceFilter: 10,
+      ),
+    );
+  }
+
+  /// Technician radar stream — shows a persistent notification while active.
+  Stream<Position> get technicianLocationStream {
     final LocationSettings locationSettings = AndroidSettings(
       accuracy: LocationAccuracy.best,
-      distanceFilter: 1,
-      // Configuración para que el servicio siga vivo en segundo plano
+      distanceFilter: 5,
       foregroundNotificationConfig: const ForegroundNotificationConfig(
-        notificationText: "El Radar de Proximidad está activo buscando trabajos cercanos.",
-        notificationTitle: "FixRadar en Segundo Plano",
+        notificationText: "Radar activo buscando trabajos en tu zona.",
+        notificationTitle: "FixRadar — Radar activo",
         enableWakeLock: true,
       ),
     );

@@ -6,6 +6,7 @@ import '../../core/services/firestore_service.dart';
 import '../../core/services/language_service.dart';
 import '../../core/services/location_service.dart';
 import '../../core/services/socket_service.dart';
+import '../../core/services/proximity_service.dart';
 import '../../core/config/routes.dart';
 import '../../core/models/service_request.dart';
 import '../../core/models/user_model.dart';
@@ -157,6 +158,59 @@ class _DashboardScreenState extends State<DashboardScreen> {
     }
   }
 
+  Widget _buildRadarIcon(bool isOnline) {
+    if (isOnline) {
+      return const Icon(Icons.radar, color: Color(0xFFFF8A00), size: 28);
+    }
+    return Stack(
+      alignment: Alignment.center,
+      children: [
+        Icon(Icons.radar, color: Colors.grey[400], size: 28),
+        Transform.rotate(
+          angle: -0.7854, // -45 degrees
+          child: Container(
+            width: 30,
+            height: 2.5,
+            decoration: BoxDecoration(
+              color: Colors.grey[500],
+              borderRadius: BorderRadius.circular(2),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  bool _isWithinWorkHours(UserModel user) {
+    final workHours = user.workHours;
+    if (workHours == null || workHours.isEmpty) return true;
+
+    final now = DateTime.now();
+    final isWeekend = now.weekday == DateTime.saturday || now.weekday == DateTime.sunday;
+    if (isWeekend && !user.weekendAvailability) return false;
+
+    final parts = workHours.split(' - ');
+    if (parts.length != 2) return true;
+
+    int? parseTime(String timeStr) {
+      final match = RegExp(r'^(\d+):(\d+)\s*(AM|PM)$', caseSensitive: false).firstMatch(timeStr.trim());
+      if (match == null) return null;
+      int hours = int.parse(match.group(1)!);
+      final minutes = int.parse(match.group(2)!);
+      final period = match.group(3)!.toUpperCase();
+      if (period == 'PM' && hours != 12) hours += 12;
+      if (period == 'AM' && hours == 12) hours = 0;
+      return hours * 60 + minutes;
+    }
+
+    final start = parseTime(parts[0]);
+    final end = parseTime(parts[1]);
+    if (start == null || end == null) return true;
+
+    final nowMinutes = now.hour * 60 + now.minute;
+    return nowMinutes >= start && nowMinutes <= end;
+  }
+
   Future<void> _toggleOnlineStatus() async {
     final isCurrentlyOnline = _user?.isOnline ?? false;
 
@@ -191,11 +245,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
       final goingOnline = !isCurrentlyOnline;
       await _firestoreService.updateOnlineStatus(isOnline: goingOnline);
 
-      // Disconnect socket when going offline; reconnect when going online
+      // Manage socket and radar based on online status
       final socket = SocketService();
       if (goingOnline) {
         await socket.connect();
+        await ProximityService().startMonitoring(isTechnician: true);
       } else {
+        await ProximityService().stopMonitoring();
         socket.disconnect();
       }
 
@@ -288,13 +344,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFFFF8A00)),
                       )
                     : IconButton(
-                        icon: Icon(
-                          Icons.airplanemode_active,
-                          color: user.isOnline ? const Color(0xFFFF8A00) : Colors.grey[400],
-                          size: 28,
-                        ),
+                        icon: _buildRadarIcon(user.isOnline && _isWithinWorkHours(user)),
                         onPressed: _toggleOnlineStatus,
-                        tooltip: user.isOnline ? 'Activo' : 'Inactivo',
+                        tooltip: user.isOnline && _isWithinWorkHours(user)
+                            ? tr('radar_tooltip_on')
+                            : tr('radar_tooltip_off'),
                       ),
                 _buildNotificationBell(),
               ],

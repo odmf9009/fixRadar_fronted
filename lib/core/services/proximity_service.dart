@@ -29,8 +29,12 @@ class ProximityService {
   final Set<String> _notifiedRequestIds = {};
   final Set<String> _notifiedAlertIds = {};
 
-  /// Starts monitoring proximity to service requests
-  Future<void> startMonitoring() async {
+  bool _isMonitoring = false;
+
+  /// Starts monitoring. Only subscribes to foreground location stream for technicians.
+  Future<void> startMonitoring({bool isTechnician = false}) async {
+    if (_isMonitoring) return;
+    _isMonitoring = true;
     await _loadNotifiedIDs();
 
     final String uid = AuthService.currentUidSync;
@@ -40,21 +44,40 @@ class ProximityService {
         _runImmediateCheck();
       });
 
-      // Listen for direct alerts (Quotes, assignments, etc)
+      // Listen for alerts (quotes, assignments, etc.)
       _alertsSubscription = _firestoreService.getUserAlerts(uid).listen((alerts) {
         _handleNewAlerts(alerts);
       });
     }
 
-    _requestsSubscription = _firestoreService.getNearbyServiceRequests(userId: uid.isNotEmpty ? uid : null).listen((requests) {
-      _availableRequests = requests.where((r) => r.status == ServiceRequestStatus.open).toList();
-      Future.delayed(const Duration(seconds: 1), () => _runImmediateCheck());
-      _cleanupStaleNotifiedIDs(requests);
-    });
+    // Only technicians need real-time nearby request tracking and foreground GPS
+    if (isTechnician) {
+      _requestsSubscription = _firestoreService.getNearbyServiceRequests(userId: uid.isNotEmpty ? uid : null).listen((requests) {
+        _availableRequests = requests.where((r) => r.status == ServiceRequestStatus.open).toList();
+        Future.delayed(const Duration(seconds: 1), () => _runImmediateCheck());
+        _cleanupStaleNotifiedIDs(requests);
+      });
 
-    _positionSubscription = _locationService.locationStream.listen((position) {
-      _checkProximity(position);
-    });
+      // Foreground location stream keeps radar alive in background
+      _positionSubscription = _locationService.technicianLocationStream.listen((position) {
+        _checkProximity(position);
+      });
+    }
+  }
+
+  /// Stops all monitoring (called when technician goes offline or app signs out).
+  Future<void> stopMonitoring() async {
+    _isMonitoring = false;
+    await _positionSubscription?.cancel();
+    _positionSubscription = null;
+    await _requestsSubscription?.cancel();
+    _requestsSubscription = null;
+    await _userSubscription?.cancel();
+    _userSubscription = null;
+    await _alertsSubscription?.cancel();
+    _alertsSubscription = null;
+    _availableRequests = [];
+    _currentUser = null;
   }
 
   Future<void> _runImmediateCheck() async {
@@ -94,13 +117,6 @@ class ProximityService {
     } catch (e) {
       print('Error persistiendo ID de notificación: $e');
     }
-  }
-
-  void stopMonitoring() {
-    _positionSubscription?.cancel();
-    _requestsSubscription?.cancel();
-    _userSubscription?.cancel();
-    _alertsSubscription?.cancel();
   }
 
   void _handleNewAlerts(List<AlertModel> alerts) {

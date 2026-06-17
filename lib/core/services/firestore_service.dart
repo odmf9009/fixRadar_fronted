@@ -527,11 +527,13 @@ class FirestoreService {
     return controller.stream;
   }
 
-  /// Updates the current user's online/offline status
+  /// Updates the current user's online/offline status.
+  /// Also toggles notificationsEnabled so manual offline blocks push.
   Future<UserModel?> updateOnlineStatus({required bool isOnline}) async {
     final response = await _api.put('/users/me', data: {
       'isOnline': isOnline,
       'presenceStatus': isOnline ? 'online' : 'offline',
+      'notificationsEnabled': isOnline,
     });
     return UserModel.fromJson(response.data);
   }

@@ -42,6 +42,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> with Widget
   StreamSubscription<UserModel?>? _userSubscription;
 
   bool _isOnline = false;
+  bool _radarStarted = false;
   UserModel? _currentUser;
   Timer? _locationSyncTimer;
 
@@ -67,7 +68,6 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> with Widget
 
   Future<void> _initWithUser() async {
     _currentUserId = await _authService.getCurrentUserId();
-    _startRadar();
     _syncOnlineStatus();
     _listenToUser();
   }
@@ -122,6 +122,12 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> with Widget
       _userSubscription = _firestoreService.getUserStream(_currentUserId).listen((user) {
         if (mounted) {
           setState(() => _currentUser = user);
+          // Start radar once, only for technicians
+          if (!_radarStarted && user != null &&
+              (user.role == 'technician' || user.userType == 'technician')) {
+            _radarStarted = true;
+            ProximityService().startMonitoring(isTechnician: true);
+          }
         }
       });
     }
@@ -163,10 +169,6 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> with Widget
       await _firestoreService.updateUserOnlineStatus(_currentUserId, false);
       _locationSyncTimer?.cancel();
     }
-  }
-
-  void _startRadar() {
-    ProximityService().startMonitoring();
   }
 
   void _initNotificationTapHandler() {

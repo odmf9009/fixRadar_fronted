@@ -113,6 +113,12 @@ class AppTranslations {
       'proximamente': 'Próximamente',
       'proximamente_desc': 'Esta función estará disponible muy pronto. ¡Mantente atento!',
 
+      // --- RADAR / ONLINE STATUS ---
+      'radar_tooltip_on': 'Radar activo — toca para desactivar',
+      'radar_tooltip_off': 'Radar inactivo — toca para activar',
+      'push_new_incident_title': '¡Nueva incidencia en tu área!',
+      'push_new_incident_body': 'Se ha publicado un nuevo problema cerca de tu zona.',
+
       // --- ONLINE/OFFLINE STATUS ---
       'go_offline_title': '¿Ponerte inactivo?',
       'go_offline_message': 'No podrán contactarte ni te llegarán las notificaciones mientras estés inactivo.',
@@ -174,6 +180,12 @@ class AppTranslations {
       'ach_level_100_t': 'Fixer Inmortal', 'ach_level_100_d': 'Alcanzaste el nivel 100.',
     },
     'en': {
+      // --- RADAR / ONLINE STATUS (en) ---
+      'radar_tooltip_on': 'Radar active — tap to deactivate',
+      'radar_tooltip_off': 'Radar inactive — tap to activate',
+      'push_new_incident_title': 'New incident in your area!',
+      'push_new_incident_body': 'A new problem has been posted near your zone.',
+
       // --- ONLINE/OFFLINE STATUS (en) ---
       'go_offline_title': 'Go offline?',
       'go_offline_message': 'Clients won\'t be able to contact you and you won\'t receive notifications while offline.',
