@@ -130,9 +130,9 @@ class _PublishServiceRequestScreenState extends State<PublishServiceRequestScree
   }
 
   Future<void> _publish() async {
-    if (_imageFiles.isEmpty || _titleController.text.isEmpty || _selectedCategory == null) {
+    if (_titleController.text.isEmpty || _selectedCategory == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Por favor completa todos los campos y añade una foto.')),
+        const SnackBar(content: Text('Por favor selecciona una categoría y escribe un título.')),
       );
       return;
     }
@@ -470,7 +470,7 @@ class _PublishServiceRequestScreenState extends State<PublishServiceRequestScree
   Widget _buildBottomButton() {
     bool canProceed = false;
     if (_currentStep == 1 && _selectedCategory != null) canProceed = true;
-    if (_currentStep == 2 && _imageFiles.isNotEmpty && _titleController.text.isNotEmpty) canProceed = true;
+    if (_currentStep == 2 && _titleController.text.isNotEmpty) canProceed = true;
     if (_currentStep == 3) canProceed = true;
 
     return Padding(
