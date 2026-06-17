@@ -18,6 +18,10 @@ class FirestoreService {
   final ApiService _api = ApiService();
   final SocketService _socket = SocketService();
 
+  // Singleton broadcast streams per uid — all subscribers share ONE polling loop
+  static final Map<String, StreamController<UserModel?>> _userStreamControllers = {};
+  static final Map<String, UserModel?> _cachedUserValues = {};
+
   // ─── SERVICE REQUESTS ─────────────────────────────────────────────────────
 
   Future<String> createServiceRequest(ServiceRequest request) async {
@@ -189,15 +193,49 @@ class FirestoreService {
     await _api.put('/users/me', data: user.toJson());
   }
 
-  Stream<UserModel?> getUserStream(String uid) async* {
-    while (true) {
+  Stream<UserModel?> getUserStream(String uid) {
+    // Reuse existing broadcast stream — all callers share ONE polling loop
+    final existing = _userStreamControllers[uid];
+    if (existing != null && !existing.isClosed) {
+      // Emit last known value immediately so late subscribers get data right away
+      final cached = _cachedUserValues[uid];
+      if (cached != null) {
+        Future.microtask(() {
+          if (!existing.isClosed) existing.add(cached);
+        });
+      }
+      return existing.stream;
+    }
+
+    late StreamController<UserModel?> controller;
+    controller = StreamController<UserModel?>.broadcast(
+      onCancel: () {
+        _userStreamControllers.remove(uid);
+        _cachedUserValues.remove(uid);
+        if (!controller.isClosed) controller.close();
+      },
+    );
+    _userStreamControllers[uid] = controller;
+    _pollUser(uid, controller);
+    return controller.stream;
+  }
+
+  void _pollUser(String uid, StreamController<UserModel?> controller) async {
+    while (!controller.isClosed) {
       try {
         final response = await _api.get('/users/$uid');
-        yield UserModel.fromJson(response.data);
+        if (!controller.isClosed) {
+          final user = UserModel.fromJson(response.data);
+          _cachedUserValues[uid] = user;
+          controller.add(user);
+        }
       } catch (_) {
-        yield null;
+        // On error (including 429), keep last known value — do NOT emit null
+        // This prevents the UI from reverting to a loading/error state on blips
       }
-      await Future.delayed(const Duration(seconds: 5));
+      if (!controller.isClosed) {
+        await Future.delayed(const Duration(seconds: 30));
+      }
     }
   }
 
