@@ -215,6 +215,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     final isCurrentlyOnline = _user?.isOnline ?? false;
 
     if (isCurrentlyOnline) {
+      // Confirm going offline
       final confirmed = await showDialog<bool>(
         context: context,
         builder: (ctx) => AlertDialog(
@@ -238,12 +239,51 @@ class _DashboardScreenState extends State<DashboardScreen> {
         ),
       );
       if (confirmed != true) return;
+    } else {
+      // Going online — warn if outside configured work hours
+      final user = _user;
+      if (user != null && user.workHours != null && !_isWithinWorkHours(user)) {
+        final confirmed = await showDialog<bool>(
+          context: context,
+          builder: (ctx) => AlertDialog(
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            title: Row(
+              children: [
+                const Icon(Icons.schedule, color: Color(0xFFFF8A00)),
+                const SizedBox(width: 8),
+                Text(tr('outside_work_hours_title'), style: const TextStyle(fontWeight: FontWeight.bold)),
+              ],
+            ),
+            content: Text(tr('outside_work_hours_message')),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(ctx, false),
+                child: Text(tr('cancel'), style: const TextStyle(color: Colors.grey)),
+              ),
+              ElevatedButton(
+                onPressed: () => Navigator.pop(ctx, true),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFFFF8A00),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                ),
+                child: Text(tr('outside_work_hours_confirm'), style: const TextStyle(color: Colors.white)),
+              ),
+            ],
+          ),
+        );
+        if (confirmed != true) return;
+      }
     }
 
     setState(() => _isUpdatingStatus = true);
     try {
       final goingOnline = !isCurrentlyOnline;
-      await _firestoreService.updateOnlineStatus(isOnline: goingOnline);
+      final updatedUser = await _firestoreService.updateOnlineStatus(isOnline: goingOnline);
+
+      // Update local user immediately so icon refreshes without waiting for stream
+      if (updatedUser != null && mounted) {
+        setState(() => _user = updatedUser);
+      }
 
       // Manage socket and radar based on online status
       final socket = SocketService();

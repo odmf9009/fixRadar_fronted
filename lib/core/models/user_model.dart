@@ -110,7 +110,7 @@ class UserModel {
     this.badges = const [],
     this.freeQuote = true,
     this.emergencyService = false,
-    this.workHours = '9:00 AM - 6:00 PM',
+    this.workHours,
     this.weekendAvailability = false,
     this.phoneNumber,
   });
@@ -177,7 +177,7 @@ class UserModel {
       badges: List<String>.from(json['badges'] ?? []),
       freeQuote: json['freeQuote'] ?? true,
       emergencyService: json['emergencyService'] ?? false,
-      workHours: json['workHours'] ?? '9:00 AM - 6:00 PM',
+      workHours: json['workHours'],
       weekendAvailability: json['weekendAvailability'] ?? false,
       phoneNumber: json['phoneNumber'],
     );

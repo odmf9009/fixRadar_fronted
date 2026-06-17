@@ -517,7 +517,6 @@ class FirestoreService {
       'latitude': latitude,
       'longitude': longitude,
       'radius': radius,
-      'onlyOnline': 'true',
     }).then((response) {
       final list = (response.data as List).map((e) => UserModel.fromJson(e)).toList();
       if (!controller.isClosed) controller.add(list);

@@ -127,6 +127,9 @@ class AppTranslations {
       'status_now_online': 'Ahora estás activo. Los clientes pueden contactarte.',
       'status_now_offline': 'Te has puesto inactivo.',
       'technicians_nearby': 'Técnicos en tu zona',
+      'outside_work_hours_title': 'Fuera de tu horario',
+      'outside_work_hours_message': 'Estás fuera del horario que configuraste en tu perfil. ¿Deseas activar el radar de todas formas?',
+      'outside_work_hours_confirm': 'Activar de todas formas',
 
       // --- LOGROS ES (50) ---
       'ach_post_1_t': 'Primer Reporte', 'ach_post_1_d': 'Publicaste tu primer pedido de servicio.',
@@ -192,6 +195,9 @@ class AppTranslations {
       'go_offline_confirm': 'Go offline',
       'cancel': 'Cancel',
       'status_now_online': 'You\'re now active. Clients can contact you.',
+      'outside_work_hours_title': 'Outside your work hours',
+      'outside_work_hours_message': 'You\'re outside the work hours configured in your profile. Do you want to activate the radar anyway?',
+      'outside_work_hours_confirm': 'Activate anyway',
       'status_now_offline': 'You\'re now offline.',
       'technicians_nearby': 'Technicians near you',
       'app_title': 'Fix_Radar',
