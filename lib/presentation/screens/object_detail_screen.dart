@@ -746,13 +746,21 @@ class _RequestDetailScreenState extends State<RequestDetailScreen> {
                         if (serverError.contains('already sent')) {
                           errorMsg = 'Ya has enviado una propuesta para este pedido.';
                           final quote = await _firestoreService.getQuoteByTechnician(request.id, _currentUserId);
-                          if (mounted) setState(() => _myQuote = quote);
+                          if (mounted) {
+                            setState(() => _myQuote = quote);
+                            Navigator.pop(context); // Also close if already exists
+                          }
                         } else {
                           errorMsg = serverData['error'].toString();
                         }
                       }
                     } else if (e.toString().contains('already sent')) {
                       errorMsg = 'Ya has enviado una propuesta para este pedido.';
+                      if (mounted) {
+                        final quote = await _firestoreService.getQuoteByTechnician(request.id, _currentUserId);
+                        setState(() => _myQuote = quote);
+                        Navigator.pop(context);
+                      }
                     }
                     
                     if (context.mounted) {
