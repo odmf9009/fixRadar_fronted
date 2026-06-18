@@ -65,9 +65,14 @@ class SocketService {
     _socket?.on(event, handler);
   }
 
-  void off(String event) {
-    _registry.remove(event);
-    _socket?.off(event);
+  void off(String event, [SocketEventHandler? handler]) {
+    if (handler != null) {
+      _registry[event]?.remove(handler);
+      _socket?.off(event, handler);
+    } else {
+      _registry.remove(event);
+      _socket?.off(event);
+    }
   }
 
   void emit(String event, dynamic data) {

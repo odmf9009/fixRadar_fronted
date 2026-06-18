@@ -74,17 +74,20 @@ class FirestoreService {
       }
     }
 
+    void onUpdate(_) => fetchAndEmit();
+
     fetchAndEmit();
 
     // Listen for new requests via Socket.io
-    _socket.on('request:created', (_) => fetchAndEmit());
-    _socket.on('request:status', (_) => fetchAndEmit());
-    _socket.on('request:deleted', (_) => fetchAndEmit());
+    _socket.on('request:created', onUpdate);
+    _socket.on('request:status', onUpdate);
+    _socket.on('request:deleted', onUpdate);
 
     controller.onCancel = () {
-      _socket.off('request:created');
-      _socket.off('request:status');
-      _socket.off('request:deleted');
+      _socket.off('request:created', onUpdate);
+      _socket.off('request:status', onUpdate);
+      _socket.off('request:deleted', onUpdate);
+      if (!controller.isClosed) controller.close();
     };
 
     return controller.stream;
@@ -104,21 +107,25 @@ class FirestoreService {
       }
     }
 
-    fetchAndEmit();
-    _socket.joinRequest(id);
-    _socket.on('request:status', (data) {
+    void onStatus(data) {
       if (data['requestId'] == id) fetchAndEmit();
-    });
-    _socket.on('request:assigned', (data) {
+    }
+    void onAssigned(data) {
       if (data['_id'] == id || data['id'] == id) {
         if (!controller.isClosed) controller.add(ServiceRequest.fromJson(data));
       }
-    });
+    }
+
+    fetchAndEmit();
+    _socket.joinRequest(id);
+    _socket.on('request:status', onStatus);
+    _socket.on('request:assigned', onAssigned);
 
     controller.onCancel = () {
       _socket.leaveRequest(id);
-      _socket.off('request:status');
-      _socket.off('request:assigned');
+      _socket.off('request:status', onStatus);
+      _socket.off('request:assigned', onAssigned);
+      if (!controller.isClosed) controller.close();
     };
 
     return controller.stream;
@@ -150,17 +157,24 @@ class FirestoreService {
       }
     }
 
+    // Named handlers to allow surgical removal
+    void onStatus(_) => fetch();
+    void onCreate(_) => fetch();
+    void onCancel(_) => fetch();
+    void onDelete(_) => fetch();
+
     fetch();
-    _socket.on('request:status', (_) => fetch());
-    _socket.on('request:created', (_) => fetch());
-    _socket.on('request:cancelled', (_) => fetch());
-    _socket.on('request:deleted', (_) => fetch());
+    _socket.on('request:status', onStatus);
+    _socket.on('request:created', onCreate);
+    _socket.on('request:cancelled', onCancel);
+    _socket.on('request:deleted', onDelete);
 
     controller.onCancel = () {
-      _socket.off('request:status');
-      _socket.off('request:created');
-      _socket.off('request:cancelled');
-      _socket.off('request:deleted');
+      _socket.off('request:status', onStatus);
+      _socket.off('request:created', onCreate);
+      _socket.off('request:cancelled', onCancel);
+      _socket.off('request:deleted', onDelete);
+      if (!controller.isClosed) controller.close();
     };
 
     return controller.stream;
@@ -367,24 +381,34 @@ class FirestoreService {
     final controller = StreamController<List<AlertModel>>.broadcast();
     final alerts = <AlertModel>[];
 
-    _api.get('/alerts').then((response) {
-      alerts.addAll((response.data as List).map((e) => AlertModel.fromJson(e)));
-      if (!controller.isClosed) controller.add(List.from(alerts));
-    });
+    Future<void> fetch() async {
+      try {
+        final response = await _api.get('/alerts');
+        final list = (response.data as List).map((e) => AlertModel.fromJson(e)).toList();
+        alerts.clear();
+        alerts.addAll(list);
+        if (!controller.isClosed) controller.add(List.from(alerts));
+      } catch (_) {}
+    }
 
-    _socket.on('alert:new', (data) {
+    void onNewAlert(data) {
       alerts.insert(0, AlertModel.fromJson(data));
       if (!controller.isClosed) controller.add(List.from(alerts));
-    });
+    }
 
-    _socket.on('alerts:cleared', (_) {
+    void onCleared(_) {
       alerts.clear();
       if (!controller.isClosed) controller.add(List.from(alerts));
-    });
+    }
+
+    fetch();
+    _socket.on('alert:new', onNewAlert);
+    _socket.on('alerts:cleared', onCleared);
 
     controller.onCancel = () {
-      _socket.off('alert:new');
-      _socket.off('alerts:cleared');
+      _socket.off('alert:new', onNewAlert);
+      _socket.off('alerts:cleared', onCleared);
+      if (!controller.isClosed) controller.close();
     };
 
     return controller.stream;
@@ -672,19 +696,22 @@ class FirestoreService {
       }
     }
 
+    void onQuoteEvent(_) => fetch();
+
     fetch();
-    _socket.on('quote:new', (_) => fetch());
-    _socket.on('quote:accepted', (_) => fetch());
-    _socket.on('quote:rejected', (_) => fetch());
-    _socket.on('quote:status', (_) => fetch());
-    _socket.on('request:cancelled', (_) => fetch());
+    _socket.on('quote:new', onQuoteEvent);
+    _socket.on('quote:accepted', onQuoteEvent);
+    _socket.on('quote:rejected', onQuoteEvent);
+    _socket.on('quote:status', onQuoteEvent);
+    _socket.on('request:cancelled', onQuoteEvent);
 
     controller.onCancel = () {
-      _socket.off('quote:new');
-      _socket.off('quote:accepted');
-      _socket.off('quote:rejected');
-      _socket.off('quote:status');
-      _socket.off('request:cancelled');
+      _socket.off('quote:new', onQuoteEvent);
+      _socket.off('quote:accepted', onQuoteEvent);
+      _socket.off('quote:rejected', onQuoteEvent);
+      _socket.off('quote:status', onQuoteEvent);
+      _socket.off('request:cancelled', onQuoteEvent);
+      if (!controller.isClosed) controller.close();
     };
 
     return controller.stream;
