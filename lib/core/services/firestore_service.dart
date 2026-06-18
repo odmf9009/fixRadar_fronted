@@ -639,12 +639,14 @@ class FirestoreService {
     _socket.on('quote:new', (_) => fetch());
     _socket.on('quote:accepted', (_) => fetch());
     _socket.on('quote:rejected', (_) => fetch());
+    _socket.on('quote:status', (_) => fetch());
     _socket.on('request:cancelled', (_) => fetch());
 
     controller.onCancel = () {
       _socket.off('quote:new');
       _socket.off('quote:accepted');
       _socket.off('quote:rejected');
+      _socket.off('quote:status');
       _socket.off('request:cancelled');
     };
 
@@ -668,12 +670,14 @@ class FirestoreService {
     _socket.on('quote:new', (_) => fetch());
     _socket.on('quote:accepted', (_) => fetch());
     _socket.on('quote:rejected', (_) => fetch());
+    _socket.on('quote:status', (_) => fetch());
     _socket.on('request:cancelled', (_) => fetch());
 
     controller.onCancel = () {
       _socket.off('quote:new');
       _socket.off('quote:accepted');
       _socket.off('quote:rejected');
+      _socket.off('quote:status');
       _socket.off('request:cancelled');
     };
 

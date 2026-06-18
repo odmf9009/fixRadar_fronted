@@ -243,9 +243,24 @@ class _ClientRespondersListScreenState extends State<ClientRespondersListScreen>
           TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancelar', style: TextStyle(color: Colors.grey))),
           ElevatedButton(
             onPressed: () async {
-              await _firestoreService.rejectQuote(quote.requestId, quote.id);
-              if (mounted) {
-                Navigator.pop(context); // Close dialog
+              try {
+                await _firestoreService.rejectQuote(quote.requestId, quote.id);
+                if (mounted) {
+                  Navigator.pop(context); // Close dialog
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Propuesta rechazada'), backgroundColor: Colors.orange),
+                  );
+                  // Force a manual refresh in case socket is slow
+                  setState(() {
+                    _quotesStream = _firestoreService.getQuotesForClient(_currentUserId);
+                  });
+                }
+              } catch (e) {
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
+                  );
+                }
               }
             },
             style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
