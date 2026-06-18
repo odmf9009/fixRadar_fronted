@@ -18,9 +18,11 @@ class FirestoreService {
   final ApiService _api = ApiService();
   final SocketService _socket = SocketService();
 
-  // Singleton broadcast streams per uid — all subscribers share ONE polling loop
+  // Singleton broadcast streams to share data and minimize API requests
   static final Map<String, StreamController<UserModel?>> _userStreamControllers = {};
   static final Map<String, UserModel?> _cachedUserValues = {};
+  static final Map<String, StreamController<List<ServiceRequest>>> _requestStreamControllers = {};
+  static final Map<String, List<ServiceRequest>> _cachedRequestValues = {};
 
   // ─── SERVICE REQUESTS ─────────────────────────────────────────────────────
 
@@ -69,9 +71,7 @@ class FirestoreService {
             .map((e) => ServiceRequest.fromJson(e))
             .toList();
         if (!controller.isClosed) controller.add(list);
-      } catch (e) {
-        if (!controller.isClosed) controller.addError(e);
-      }
+      } catch (_) {}
     }
 
     void onUpdate(_) => fetchAndEmit();
@@ -87,6 +87,56 @@ class FirestoreService {
       _socket.off('request:created', onUpdate);
       _socket.off('request:status', onUpdate);
       _socket.off('request:deleted', onUpdate);
+      if (!controller.isClosed) controller.close();
+    };
+
+    return controller.stream;
+  }
+
+  Stream<List<ServiceRequest>> getClientRequests(String clientId) {
+    if (_requestStreamControllers.containsKey(clientId)) {
+      final existing = _requestStreamControllers[clientId]!;
+      if (!existing.isClosed) {
+        if (_cachedRequestValues.containsKey(clientId)) {
+          Future.microtask(() => existing.add(_cachedRequestValues[clientId]!));
+        }
+        return existing.stream;
+      }
+    }
+
+    final controller = StreamController<List<ServiceRequest>>.broadcast();
+    _requestStreamControllers[clientId] = controller;
+
+    Future<void> fetch() async {
+      try {
+        final response = await _api.get('/service-requests/my');
+        final list = (response.data as List)
+            .map((e) => ServiceRequest.fromJson(e))
+            .toList();
+        _cachedRequestValues[clientId] = list;
+        if (!controller.isClosed) controller.add(list);
+      } catch (_) {}
+    }
+
+    // Named handlers to allow surgical removal
+    void onStatus(_) => fetch();
+    void onCreate(_) => fetch();
+    void onCancel(_) => fetch();
+    void onDelete(_) => fetch();
+
+    fetch();
+    _socket.on('request:status', onStatus);
+    _socket.on('request:created', onCreate);
+    _socket.on('request:cancelled', onCancel);
+    _socket.on('request:deleted', onDelete);
+
+    controller.onCancel = () {
+      _socket.off('request:status', onStatus);
+      _socket.off('request:created', onCreate);
+      _socket.off('request:cancelled', onCancel);
+      _socket.off('request:deleted', onDelete);
+      _requestStreamControllers.remove(clientId);
+      _cachedRequestValues.remove(clientId);
       if (!controller.isClosed) controller.close();
     };
 
@@ -125,55 +175,6 @@ class FirestoreService {
       _socket.leaveRequest(id);
       _socket.off('request:status', onStatus);
       _socket.off('request:assigned', onAssigned);
-      if (!controller.isClosed) controller.close();
-    };
-
-    return controller.stream;
-  }
-
-  Future<ServiceRequest?> getServiceRequestById(String id) async {
-    try {
-      final response = await _api.get('/service-requests/$id');
-      return ServiceRequest.fromJson(response.data);
-    } catch (_) {
-      return null;
-    }
-  }
-
-  Future<ServiceRequest?> getObjectById(String id) => getServiceRequestById(id);
-
-  Stream<List<ServiceRequest>> getClientRequests(String clientId) {
-    final controller = StreamController<List<ServiceRequest>>.broadcast();
-
-    Future<void> fetch() async {
-      try {
-        final response = await _api.get('/service-requests/my');
-        final list = (response.data as List)
-            .map((e) => ServiceRequest.fromJson(e))
-            .toList();
-        if (!controller.isClosed) controller.add(list);
-      } catch (e) {
-        if (!controller.isClosed) controller.addError(e);
-      }
-    }
-
-    // Named handlers to allow surgical removal
-    void onStatus(_) => fetch();
-    void onCreate(_) => fetch();
-    void onCancel(_) => fetch();
-    void onDelete(_) => fetch();
-
-    fetch();
-    _socket.on('request:status', onStatus);
-    _socket.on('request:created', onCreate);
-    _socket.on('request:cancelled', onCancel);
-    _socket.on('request:deleted', onDelete);
-
-    controller.onCancel = () {
-      _socket.off('request:status', onStatus);
-      _socket.off('request:created', onCreate);
-      _socket.off('request:cancelled', onCancel);
-      _socket.off('request:deleted', onDelete);
       if (!controller.isClosed) controller.close();
     };
 
@@ -248,7 +249,8 @@ class FirestoreService {
         // This prevents the UI from reverting to a loading/error state on blips
       }
       if (!controller.isClosed) {
-        await Future.delayed(const Duration(seconds: 30));
+        // Increased from 30s to 60s since sockets handle real-time updates
+        await Future.delayed(const Duration(seconds: 60));
       }
     }
   }

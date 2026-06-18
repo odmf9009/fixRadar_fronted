@@ -46,6 +46,9 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> with Widget
   UserModel? _currentUser;
   Timer? _locationSyncTimer;
 
+  // Cache screens to avoid constant recreation and redundant initState/listeners
+  List<Widget>? _screens;
+
   @override
   void initState() {
     super.initState();
@@ -54,6 +57,33 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> with Widget
     _initSocketListeners();
     _initWithUser();
     _initNotificationTapHandler();
+  }
+
+  void _initScreens() {
+    if (_currentUser == null) return;
+    
+    final bool isTechnician = _currentUser?.role == 'technician';
+    
+    _screens = isTechnician 
+      ? [
+          DashboardScreen(onViewMap: (req) => _onTabTapped(1, focusRequest: req)),
+          HomeMapScreen(
+            key: _mapScreenKey,
+            isOnline: _isOnline,
+            onToggleOnline: _toggleOnlineStatus,
+            connectivityStatus: _connectivityStatus,
+          ),
+          const TechnicianQuotesScreen(),
+          TechnicianClientsScreen(onViewMap: (req) => _onTabTapped(1, focusRequest: req)),
+          const ProfileScreen(),
+        ]
+      : [
+          DashboardScreen(onViewMap: (req) => _onTabTapped(1, focusRequest: req)),
+          TechniciansDirectoryScreen(),
+          ClientRequestsScreen(onViewMap: (req) => _onTabTapped(1, focusRequest: req)),
+          const ClientRespondersListScreen(),
+          const ProfileScreen(),
+        ];
   }
 
   @override
@@ -121,7 +151,13 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> with Widget
     if (_currentUserId.isNotEmpty) {
       _userSubscription = _firestoreService.getUserStream(_currentUserId).listen((user) {
         if (mounted) {
+          final bool wasNull = _currentUser == null;
           setState(() => _currentUser = user);
+          
+          if (wasNull && user != null) {
+            _initScreens();
+          }
+
           // Start radar once, only for technicians
           if (!_radarStarted && user != null &&
               (user.role == 'technician' || user.userType == 'technician')) {
@@ -149,7 +185,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> with Widget
 
   void _startLocationSync() {
     _locationSyncTimer?.cancel();
-    _locationSyncTimer = Timer.periodic(const Duration(seconds: 15), (timer) async {
+    _locationSyncTimer = Timer.periodic(const Duration(seconds: 30), (timer) async {
       if (!_isOnline || _connectivityStatus == ConnectivityStatus.offline) return;
       final pos = await _locationService.getCurrentLocation();
       if (pos != null) {
@@ -212,53 +248,16 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> with Widget
 
   @override
   Widget build(BuildContext context) {
-    if (_currentUser == null) {
+    if (_currentUser == null || _screens == null) {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 
     final bool isTechnician = _currentUser?.role == 'technician';
 
-    final List<Widget> screens = isTechnician 
-      ? [
-          DashboardScreen(onViewMap: (req) => _onTabTapped(1, focusRequest: req)),
-          HomeMapScreen(
-            key: _mapScreenKey,
-            isOnline: _isOnline,
-            onToggleOnline: _toggleOnlineStatus,
-            connectivityStatus: _connectivityStatus,
-          ),
-          const TechnicianQuotesScreen(),
-          TechnicianClientsScreen(onViewMap: (req) => _onTabTapped(1, focusRequest: req)),
-          const ProfileScreen(),
-        ]
-      : [
-          DashboardScreen(onViewMap: (req) => _onTabTapped(1, focusRequest: req)),
-          TechniciansDirectoryScreen(),
-          ClientRequestsScreen(onViewMap: (req) => _onTabTapped(1, focusRequest: req)),
-          const ClientRespondersListScreen(),
-          const ProfileScreen(),
-        ];
-
-    final List<BottomNavigationBarItem> navItems = isTechnician
-      ? const [
-          BottomNavigationBarItem(icon: Icon(Icons.home_outlined), activeIcon: Icon(Icons.home), label: 'Inicio'),
-          BottomNavigationBarItem(icon: Icon(Icons.work_outline), activeIcon: Icon(Icons.work), label: 'Mapa'),
-          BottomNavigationBarItem(icon: Icon(Icons.request_quote_outlined), activeIcon: Icon(Icons.request_quote), label: 'Cotizaciones'),
-          BottomNavigationBarItem(icon: Icon(Icons.people_outline), activeIcon: Icon(Icons.people), label: 'Clientes'),
-          BottomNavigationBarItem(icon: Icon(Icons.person_outline), activeIcon: Icon(Icons.person), label: 'Perfil'),
-        ]
-      : const [
-          BottomNavigationBarItem(icon: Icon(Icons.home_outlined), activeIcon: Icon(Icons.home), label: 'Inicio'),
-          BottomNavigationBarItem(icon: Icon(Icons.engineering_outlined), activeIcon: Icon(Icons.engineering), label: 'Técnicos'),
-          BottomNavigationBarItem(icon: Icon(Icons.history_outlined), activeIcon: Icon(Icons.history), label: 'Mis Pedidos'),
-          BottomNavigationBarItem(icon: Icon(Icons.assignment_ind_outlined), activeIcon: Icon(Icons.assignment_ind), label: 'Propuestas'),
-          BottomNavigationBarItem(icon: Icon(Icons.person_outline), activeIcon: Icon(Icons.person), label: 'Perfil'),
-        ];
-
     return Scaffold(
       body: IndexedStack(
         index: _currentIndex,
-        children: screens,
+        children: _screens!,
       ),
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
@@ -275,7 +274,21 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> with Widget
           unselectedItemColor: Colors.grey,
           showSelectedLabels: true,
           showUnselectedLabels: true,
-          items: navItems,
+          items: isTechnician
+            ? const [
+                BottomNavigationBarItem(icon: Icon(Icons.home_outlined), activeIcon: Icon(Icons.home), label: 'Inicio'),
+                BottomNavigationBarItem(icon: Icon(Icons.work_outline), activeIcon: Icon(Icons.work), label: 'Mapa'),
+                BottomNavigationBarItem(icon: Icon(Icons.request_quote_outlined), activeIcon: Icon(Icons.request_quote), label: 'Cotizaciones'),
+                BottomNavigationBarItem(icon: Icon(Icons.people_outline), activeIcon: Icon(Icons.people), label: 'Clientes'),
+                BottomNavigationBarItem(icon: Icon(Icons.person_outline), activeIcon: Icon(Icons.person), label: 'Perfil'),
+              ]
+            : const [
+                BottomNavigationBarItem(icon: Icon(Icons.home_outlined), activeIcon: Icon(Icons.home), label: 'Inicio'),
+                BottomNavigationBarItem(icon: Icon(Icons.engineering_outlined), activeIcon: Icon(Icons.engineering), label: 'Técnicos'),
+                BottomNavigationBarItem(icon: Icon(Icons.history_outlined), activeIcon: Icon(Icons.history), label: 'Mis Pedidos'),
+                BottomNavigationBarItem(icon: Icon(Icons.assignment_ind_outlined), activeIcon: Icon(Icons.assignment_ind), label: 'Propuestas'),
+                BottomNavigationBarItem(icon: Icon(Icons.person_outline), activeIcon: Icon(Icons.person), label: 'Perfil'),
+              ],
         ),
       ),
     );
