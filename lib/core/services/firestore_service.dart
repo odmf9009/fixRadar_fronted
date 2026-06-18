@@ -377,8 +377,14 @@ class FirestoreService {
       if (!controller.isClosed) controller.add(List.from(alerts));
     });
 
+    _socket.on('alerts:cleared', (_) {
+      alerts.clear();
+      if (!controller.isClosed) controller.add(List.from(alerts));
+    });
+
     controller.onCancel = () {
       _socket.off('alert:new');
+      _socket.off('alerts:cleared');
     };
 
     return controller.stream;
@@ -883,7 +889,7 @@ class FirestoreService {
 
   Future<void> clearAllUserAlerts(String userId) async {
     try {
-      await _api.put('/alerts/read-all');
+      await _api.delete('/alerts/clear-all');
     } catch (_) {}
   }
 
