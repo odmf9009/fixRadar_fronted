@@ -93,7 +93,12 @@ class _ClientRequestsScreenState extends State<ClientRequestsScreen> {
       child: InkWell(
         onTap: () async {
           final result = await Navigator.pushNamed(context, AppRoutes.requestDetail, arguments: request);
-          if (result is ServiceRequest && mounted) {
+          if (result == true && mounted) {
+            // Force a refresh if something was changed in the detail screen (like cancellation)
+            setState(() {
+              _requestsStream = _firestoreService.getClientRequests(_currentUserId);
+            });
+          } else if (result is ServiceRequest && mounted) {
             widget.onViewMap?.call(result);
           }
         },
