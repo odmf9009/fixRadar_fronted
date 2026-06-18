@@ -957,13 +957,22 @@ class _RequestDetailScreenState extends State<RequestDetailScreen> {
             onPressed: () async {
               Navigator.pop(context); // Close dialog
               setState(() => _isLoading = true);
-              await _firestoreService.updateRequestStatus(request.id, ServiceRequestStatus.cancelled);
-              if (mounted) {
-                setState(() => _isLoading = false);
-                Navigator.pop(context); // Go back from detail screen
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Pedido cancelado correctamente'))
-                );
+              try {
+                await _firestoreService.cancelServiceRequest(request.id);
+                if (mounted) {
+                  setState(() => _isLoading = false);
+                  Navigator.pop(context, true); // Go back with success
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Pedido cancelado correctamente'))
+                  );
+                }
+              } catch (e) {
+                if (mounted) {
+                  setState(() => _isLoading = false);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Error al cancelar: $e'), backgroundColor: Colors.red)
+                  );
+                }
               }
             },
             style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
