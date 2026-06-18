@@ -41,7 +41,13 @@ class _ClientRequestsScreenState extends State<ClientRequestsScreen> {
             return const Center(child: CircularProgressIndicator(color: Color(0xFFFF8A00)));
           }
 
-          final requests = snapshot.data ?? [];
+          final allRequests = snapshot.data ?? [];
+          
+          // Filter out cancelled and completed from THIS specific view
+          final requests = allRequests.where((r) => 
+            r.status != ServiceRequestStatus.cancelled && 
+            r.status != ServiceRequestStatus.completed
+          ).toList();
 
           if (requests.isEmpty) {
             return Center(
