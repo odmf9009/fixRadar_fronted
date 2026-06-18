@@ -181,6 +181,17 @@ class FirestoreService {
     return controller.stream;
   }
 
+  Future<ServiceRequest?> getServiceRequestById(String id) async {
+    try {
+      final response = await _api.get('/service-requests/$id');
+      return ServiceRequest.fromJson(response.data);
+    } catch (_) {
+      return null;
+    }
+  }
+
+  Future<ServiceRequest?> getObjectById(String id) => getServiceRequestById(id);
+
   Future<void> updateRequestStatus(String requestId, ServiceRequestStatus status) async {
     await _api.put('/service-requests/$requestId/status', data: {'status': status.name});
   }
