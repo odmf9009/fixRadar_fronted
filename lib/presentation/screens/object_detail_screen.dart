@@ -720,10 +720,21 @@ class _RequestDetailScreenState extends State<RequestDetailScreen> {
                         createdAt: DateTime.now(),
                       );
                       await _firestoreService.sendQuote(quote);
-                      if (mounted) setState(() => _myQuote = quote);
+                      // Don't set state immediately with incomplete quote, 
+                      // fetching the real one from server is safer if we want to show it.
+                      // For now, at least refresh visibility
+                      if (mounted) {
+                        final realQuote = await _firestoreService.getQuoteByTechnician(request.id, _currentUserId);
+                        setState(() => _myQuote = realQuote);
+                      }
                     }
                     
-                    if (context.mounted) Navigator.pop(context);
+                    if (context.mounted) {
+                      Navigator.pop(context); // Close bottom sheet
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('¡Propuesta enviada con éxito!'), backgroundColor: Colors.green),
+                      );
+                    }
                   } catch (e) {
                     print('Error sending quote: $e');
                     String errorMsg = 'Error al enviar la propuesta. Inténtalo de nuevo.';
