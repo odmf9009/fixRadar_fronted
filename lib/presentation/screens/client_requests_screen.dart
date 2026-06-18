@@ -34,49 +34,67 @@ class _ClientRequestsScreenState extends State<ClientRequestsScreen> {
         elevation: 0,
         centerTitle: true,
       ),
-      body: StreamBuilder<List<ServiceRequest>>(
-        stream: _requestsStream,
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator(color: Color(0xFFFF8A00)));
-          }
-
-          final allRequests = snapshot.data ?? [];
-          
-          // Filter out cancelled and completed from THIS specific view
-          final requests = allRequests.where((r) => 
-            r.status != ServiceRequestStatus.cancelled && 
-            r.status != ServiceRequestStatus.completed
-          ).toList();
-
-          if (requests.isEmpty) {
-            return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.assignment_outlined, size: 64, color: Colors.grey[300]),
-                  const SizedBox(height: 16),
-                  const Text('Aún no has publicado pedidos', style: TextStyle(color: Colors.grey, fontSize: 16)),
-                  const SizedBox(height: 24),
-                  ElevatedButton(
-                    onPressed: () => Navigator.pushNamed(context, AppRoutes.publish),
-                    style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFFF8A00)),
-                    child: const Text('Publicar primer pedido', style: TextStyle(color: Colors.white)),
-                  ),
-                ],
-              ),
-            );
-          }
-
-          return ListView.builder(
-            padding: const EdgeInsets.all(16),
-            itemCount: requests.length,
-            itemBuilder: (context, index) {
-              final request = requests[index];
-              return _buildRequestCard(request);
-            },
-          );
+      body: RefreshIndicator(
+        onRefresh: () async {
+          setState(() {
+            _requestsStream = _firestoreService.getClientRequests(_currentUserId);
+          });
         },
+        color: const Color(0xFFFF8A00),
+        child: StreamBuilder<List<ServiceRequest>>(
+          stream: _requestsStream,
+          builder: (context, snapshot) {
+            if (snapshot.hasError) {
+              return Center(child: Text('Error: ${snapshot.error}'));
+            }
+
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return const Center(child: CircularProgressIndicator(color: Color(0xFFFF8A00)));
+            }
+
+            final allRequests = snapshot.data ?? [];
+            
+            // Filter out cancelled and completed from THIS specific view
+            final requests = allRequests.where((r) => 
+              r.status != ServiceRequestStatus.cancelled && 
+              r.status != ServiceRequestStatus.completed
+            ).toList();
+
+            if (requests.isEmpty) {
+              return SingleChildScrollView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                child: Container(
+                  height: MediaQuery.of(context).size.height * 0.7,
+                  alignment: Alignment.center,
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.assignment_outlined, size: 64, color: Colors.grey[300]),
+                      const SizedBox(height: 16),
+                      const Text('Aún no has publicado pedidos', style: TextStyle(color: Colors.grey, fontSize: 16)),
+                      const SizedBox(height: 24),
+                      ElevatedButton(
+                        onPressed: () => Navigator.pushNamed(context, AppRoutes.publish),
+                        style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFFF8A00)),
+                        child: const Text('Publicar primer pedido', style: TextStyle(color: Colors.white)),
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            }
+
+            return ListView.builder(
+              physics: const AlwaysScrollableScrollPhysics(),
+              padding: const EdgeInsets.all(16),
+              itemCount: requests.length,
+              itemBuilder: (context, index) {
+                final request = requests[index];
+                return _buildRequestCard(request);
+              },
+            );
+          },
+        ),
       ),
     );
   }
