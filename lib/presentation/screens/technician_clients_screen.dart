@@ -40,8 +40,11 @@ class _TechnicianClientsScreenState extends State<TechnicianClientsScreen> {
   @override
   Widget build(BuildContext context) {
     if (_currentUserId.isEmpty) {
-      _currentUserId = AuthService.currentUidSync;
-      if (_currentUserId.isNotEmpty) _initStreams();
+      final uid = AuthService.currentUidSync;
+      if (uid.isNotEmpty) {
+        _currentUserId = uid;
+        _initStreams();
+      }
     }
 
     return Scaffold(
@@ -82,18 +85,27 @@ class _TechnicianClientsScreenState extends State<TechnicianClientsScreen> {
                   
                   // Filter requests based on my status
                   final activeRequests = allMatchingRequests.where((req) {
-                    // 1. Jobs assigned to me
+                    final myQuote = myQuotes.firstWhere(
+                      (q) => q.requestId == req.id, 
+                      orElse: () => Quote(id: '', requestId: '', clientId: '', technicianId: '', technicianName: '', technicianRating: 5, minPrice: 0, maxPrice: 0, message: '', createdAt: DateTime.now())
+                    );
+                    
+                    // 1. Explicitly assigned to me in the request object (active states)
                     if (req.technicianId == _currentUserId && 
                        (req.status == ServiceRequestStatus.assigned || 
                         req.status == ServiceRequestStatus.inProgress || 
                         req.status == ServiceRequestStatus.finishedByTechnician)) {
                       return true;
                     }
-                    // 2. Jobs where I have a pending quote
-                    final myQuote = myQuotes.firstWhere((q) => q.requestId == req.id, orElse: () => Quote(id: '', requestId: '', clientId: '', technicianId: '', technicianName: '', technicianRating: 5, minPrice: 0, maxPrice: 0, message: '', createdAt: DateTime.now()));
+                    
+                    // 2. Quote accepted (even if request object status is not yet 'assigned' locally)
+                    if (myQuote.status == QuoteStatus.accepted) return true;
+
+                    // 3. Pending quote on an open request
                     if (req.status == ServiceRequestStatus.open && myQuote.status == QuoteStatus.pending) {
                       return true;
                     }
+
                     return false;
                   }).toList();
 
