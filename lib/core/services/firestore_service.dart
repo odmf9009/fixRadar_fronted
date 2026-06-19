@@ -830,9 +830,7 @@ class FirestoreService {
   }
 
   Future<void> cancelAssignment(String requestId) async {
-    try {
-      await _api.put('/service-requests/$requestId/cancel-assignment');
-    } catch (_) {}
+    await _api.put('/service-requests/$requestId/cancel-assignment');
   }
 
   Future<void> finishWorkByTechnician(String requestId) async {

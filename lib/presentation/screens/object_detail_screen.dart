@@ -899,8 +899,22 @@ class _RequestDetailScreenState extends State<RequestDetailScreen> {
             onPressed: () async {
               Navigator.pop(context);
               setState(() => _isLoading = true);
-              await _firestoreService.cancelAssignment(request.id);
-              setState(() => _isLoading = false);
+              try {
+                await _firestoreService.cancelAssignment(request.id);
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Asignación cancelada. El pedido vuelve a estar abierto.'))
+                  );
+                }
+              } catch (e) {
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red)
+                  );
+                }
+              } finally {
+                if (mounted) setState(() => _isLoading = false);
+              }
             },
             style: ElevatedButton.styleFrom(backgroundColor: Colors.orange),
             child: const Text('Sí, cancelar'),
