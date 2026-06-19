@@ -83,23 +83,24 @@ class _TechnicianClientsScreenState extends State<TechnicianClientsScreen> {
 
                   final allMatchingRequests = snapshot.data ?? [];
                   
-                  // Filter requests based on my status
+                  // Filter requests based on status and involvement
                   final activeRequests = allMatchingRequests.where((req) {
                     final myQuote = myQuotes.firstWhere(
                       (q) => q.requestId == req.id, 
                       orElse: () => Quote(id: '', requestId: '', clientId: '', technicianId: '', technicianName: '', technicianRating: 5, minPrice: 0, maxPrice: 0, message: '', createdAt: DateTime.now())
                     );
                     
-                    // 1. Explicitly assigned to me in the request object (active states)
+                    // 1. Explicitly assigned to me (Active states)
                     if (req.technicianId == _currentUserId && 
                        (req.status == ServiceRequestStatus.assigned || 
-                        req.status == ServiceRequestStatus.inProgress || 
-                        req.status == ServiceRequestStatus.finishedByTechnician)) {
+                        req.status == ServiceRequestStatus.inProgress)) {
                       return true;
                     }
                     
-                    // 2. Quote accepted (even if request object status is not yet 'assigned' locally)
-                    if (myQuote.status == QuoteStatus.accepted) return true;
+                    // 2. Quote accepted by client, even if req.status isn't updated locally yet
+                    if (myQuote.status == QuoteStatus.accepted && req.status != ServiceRequestStatus.completed && req.status != ServiceRequestStatus.cancelled) {
+                      return true;
+                    }
 
                     // 3. Pending quote on an open request
                     if (req.status == ServiceRequestStatus.open && myQuote.status == QuoteStatus.pending) {
@@ -236,6 +237,7 @@ class _TechnicianClientsScreenState extends State<TechnicianClientsScreen> {
     final String clientName = request.clientName;
     final String jobTitle = request.title;
     final String jobAddress = request.address;
+    final double acceptedPrice = myQuote.price ?? myQuote.minPrice;
 
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -301,12 +303,30 @@ class _TechnicianClientsScreenState extends State<TechnicianClientsScreen> {
                         ],
                       ),
                       const SizedBox(height: 4),
-                      CategoryBadge(category: request.category, fontSize: 10),
+                      Row(
+                        children: [
+                          CategoryBadge(category: request.category, fontSize: 10),
+                          if (acceptedPrice > 0) ...[
+                            const SizedBox(width: 8),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: Colors.green[50],
+                                borderRadius: BorderRadius.circular(4),
+                              ),
+                              child: Text(
+                                '\$${acceptedPrice.toStringAsFixed(0)}',
+                                style: const TextStyle(color: Colors.green, fontWeight: FontWeight.bold, fontSize: 10),
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
                       const SizedBox(height: 8),
                       Text(
                         jobTitle,
                         style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
-                        maxLines: 1,
+                        maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                       ),
                       const SizedBox(height: 4),
@@ -341,7 +361,7 @@ class _TechnicianClientsScreenState extends State<TechnicianClientsScreen> {
   }
 
   Widget _buildActionRow(ServiceRequest request, Quote myQuote, String currentUserId) {
-    final bool isAssigned = request.technicianId == currentUserId;
+    final bool isAssigned = request.technicianId == currentUserId || myQuote.status == QuoteStatus.accepted;
     final bool isRejected = myQuote.status == QuoteStatus.rejected || myQuote.status == QuoteStatus.final_rejected;
 
     if (isRejected) {
@@ -365,10 +385,10 @@ class _TechnicianClientsScreenState extends State<TechnicianClientsScreen> {
         TextButton.icon(
           onPressed: () => Navigator.pushNamed(context, AppRoutes.requestDetail, arguments: request),
           icon: const Icon(Icons.visibility_outlined, size: 18),
-          label: const Text('Ver Detalle'),
+          label: const Text('Detalles'),
         ),
         const Spacer(),
-        if (isAssigned && (request.status == ServiceRequestStatus.assigned || request.status == ServiceRequestStatus.inProgress)) ...[
+        if (isAssigned && (request.status == ServiceRequestStatus.assigned || request.status == ServiceRequestStatus.inProgress || myQuote.status == QuoteStatus.accepted)) ...[
           IconButton(
             onPressed: () => Navigator.pushNamed(context, AppRoutes.chat, arguments: request),
             icon: const Icon(Icons.chat_bubble_outline, color: Color(0xFFFF8A00)),
@@ -383,7 +403,7 @@ class _TechnicianClientsScreenState extends State<TechnicianClientsScreen> {
               padding: const EdgeInsets.symmetric(horizontal: 12),
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
             ),
-            child: const Text('Finalizar', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+            child: const Text('Finalizar trabajo', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
           ),
         ] else if (request.status == ServiceRequestStatus.open) ...[
           TextButton.icon(
@@ -401,7 +421,7 @@ class _TechnicianClientsScreenState extends State<TechnicianClientsScreen> {
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('¿Finalizar trabajo?'),
-        content: const Text('¿Confirmas que ya terminaste este trabajo? El cliente recibirá una notificación para validar.'),
+        content: const Text('¿Confirmas que ya terminaste este trabajo? El cliente recibirá una notificación y el pedido pasará al historial.'),
         actions: [
           TextButton(onPressed: () => Navigator.pop(context), child: const Text('Aún no')),
           ElevatedButton(
@@ -411,8 +431,12 @@ class _TechnicianClientsScreenState extends State<TechnicianClientsScreen> {
                 await _firestoreService.finishWorkByTechnician(request.id);
                 if (mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Trabajo marcado como finalizado. Esperando validación del cliente.'))
+                    const SnackBar(content: Text('Trabajo completado con éxito. Pasando al historial.'))
                   );
+                  // Refresh streams
+                  setState(() {
+                    _initStreams();
+                  });
                 }
               } catch (e) {
                 if (mounted) {
@@ -474,16 +498,14 @@ class _TechnicianClientsScreenState extends State<TechnicianClientsScreen> {
       if (myQuote.status == QuoteStatus.rejected) {
         badgeColor = Colors.red;
         badgeLabel = 'Rechazada';
+      } else if (myQuote.status == QuoteStatus.accepted || status == ServiceRequestStatus.assigned || status == ServiceRequestStatus.inProgress) {
+        badgeColor = Colors.green;
+        badgeLabel = 'Trabajo en proceso';
       } else {
         switch (status) {
           case ServiceRequestStatus.open:
             badgeColor = Colors.orange;
-            badgeLabel = 'Pendiente';
-            break;
-          case ServiceRequestStatus.assigned:
-          case ServiceRequestStatus.inProgress:
-            badgeColor = Colors.green;
-            badgeLabel = 'Asignado';
+            badgeLabel = 'Propuesta enviada';
             break;
           case ServiceRequestStatus.finishedByTechnician:
             badgeColor = Colors.blue;
@@ -497,6 +519,9 @@ class _TechnicianClientsScreenState extends State<TechnicianClientsScreen> {
             badgeColor = Colors.red;
             badgeLabel = 'Cancelado';
             break;
+          default:
+            badgeColor = Colors.grey;
+            badgeLabel = status.name;
         }
       }
     } catch (e) {
