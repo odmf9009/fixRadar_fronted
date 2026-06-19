@@ -200,11 +200,29 @@ class _ClientRequestsScreenState extends State<ClientRequestsScreen> {
                 Row(
                   children: [
                     if (request.technicianId != null) ...[
-                      const Icon(Icons.engineering_outlined, size: 16, color: Colors.green),
-                      const SizedBox(width: 4),
-                      const Text(
-                        'Técnico trabajando',
-                        style: TextStyle(color: Colors.green, fontWeight: FontWeight.bold, fontSize: 13),
+                      CircleAvatar(
+                        radius: 12,
+                        backgroundImage: request.technicianPhotoUrl != null ? NetworkImage(request.technicianPhotoUrl!) : null,
+                        child: request.technicianPhotoUrl == null ? const Icon(Icons.person, size: 12) : null,
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              request.technicianName ?? 'Técnico asignado',
+                              style: const TextStyle(color: Colors.green, fontWeight: FontWeight.bold, fontSize: 13),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            if (request.budget != null)
+                              Text(
+                                'Por \$${request.budget!.toInt()}',
+                                style: TextStyle(color: Colors.grey[600], fontSize: 11),
+                              ),
+                          ],
+                        ),
                       ),
                     ] else if (request.responsesCount > 0) ...[
                     const Icon(Icons.people_outline, size: 16, color: Color(0xFFFF8A00)),
@@ -221,18 +239,20 @@ class _ClientRequestsScreenState extends State<ClientRequestsScreen> {
                     const SizedBox(width: 4),
                     const Text('Buscando técnicos...', style: TextStyle(color: Colors.grey, fontSize: 13)),
                   ],
-                  const Spacer(),
-                  if (request.status == ServiceRequestStatus.assigned || request.status == ServiceRequestStatus.inProgress)
+                  if (request.status == ServiceRequestStatus.assigned || request.status == ServiceRequestStatus.inProgress) ...[
+                    const Spacer(),
                     Stack(
                       children: [
                         IconButton(
                           onPressed: () => Navigator.pushNamed(context, AppRoutes.chat, arguments: request),
                           icon: const Icon(Icons.chat_bubble_outline, color: Color(0xFFFF8A00)),
+                          constraints: const BoxConstraints(),
+                          padding: const EdgeInsets.all(8),
                         ),
                         if (hasUnread)
                           Positioned(
-                            right: 10,
-                            top: 10,
+                            right: 4,
+                            top: 4,
                             child: Container(
                               width: 10,
                               height: 10,
@@ -241,6 +261,7 @@ class _ClientRequestsScreenState extends State<ClientRequestsScreen> {
                           ),
                       ],
                     ),
+                  ],
                 ],
               ),
             ],

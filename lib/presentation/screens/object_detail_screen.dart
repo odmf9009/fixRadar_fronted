@@ -118,8 +118,11 @@ class _RequestDetailScreenState extends State<RequestDetailScreen> {
                           const SizedBox(height: 24),
                           _buildDescription(request),
                           const SizedBox(height: 24),
-                          if (request.status == ServiceRequestStatus.assigned || request.status == ServiceRequestStatus.inProgress)
+                          if (request.status == ServiceRequestStatus.assigned || request.status == ServiceRequestStatus.inProgress || request.status == ServiceRequestStatus.finishedByTechnician) ...[
                             _buildAcceptedBudget(request),
+                            const SizedBox(height: 16),
+                            _buildAssignedTechnicianCard(request),
+                          ],
                           if (isClient && _selectedQuote != null && request.status == ServiceRequestStatus.open)
                             _buildSelectedQuoteBanner(request),
                           const SizedBox(height: 32),
