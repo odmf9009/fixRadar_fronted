@@ -48,7 +48,6 @@ class _TechnicianClientsScreenState extends State<TechnicianClientsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // Safety check if UID was not available at initState
     if (_currentUserId.isEmpty) {
       final uid = AuthService.currentUidSync;
       if (uid.isNotEmpty) {
@@ -73,9 +72,12 @@ class _TechnicianClientsScreenState extends State<TechnicianClientsScreen> {
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh, color: Colors.black),
-            onPressed: () => setState(() {
-              _initStreams();
-            }),
+            onPressed: () {
+              _checkAuthAndInit();
+              setState(() {
+                _initStreams();
+              });
+            },
           ),
         ],
       ),
@@ -100,35 +102,45 @@ class _TechnicianClientsScreenState extends State<TechnicianClientsScreen> {
                   final allMatchingRequests = snapshot.data ?? [];
                   
                   // Filter requests based on status and involvement
-                  final activeRequests = allMatchingRequests.where((req) {
+                  final activeRequests = <ServiceRequest>[];
+                  final historyRequests = <ServiceRequest>[];
+
+                  for (final req in allMatchingRequests) {
+                    final String reqId = req.id.toString();
+                    
+                    // Robust quote finding
                     final myQuote = myQuotes.firstWhere(
-                      (q) => q.requestId == req.id, 
-                      orElse: () => Quote(id: '', requestId: '', clientId: '', technicianId: '', technicianName: '', technicianRating: 5, minPrice: 0, maxPrice: 0, message: '', createdAt: DateTime.now())
+                      (q) => q.requestId.toString() == reqId, 
+                      orElse: () => Quote(id: '', requestId: reqId, clientId: '', technicianId: '', technicianName: '', technicianRating: 5, minPrice: 0, maxPrice: 0, message: '', createdAt: DateTime.now())
                     );
                     
+                    bool isActive = false;
+                    
                     // 1. Explicitly assigned to me (Active states)
-                    if (req.technicianId == _currentUserId && 
+                    if (req.technicianId?.toString() == _currentUserId && 
                        (req.status == ServiceRequestStatus.assigned || 
                         req.status == ServiceRequestStatus.inProgress)) {
-                      return true;
+                      isActive = true;
                     }
                     
-                    // 2. Quote accepted by client, even if req.status isn't updated locally yet
-                    if (myQuote.status == QuoteStatus.accepted && req.status != ServiceRequestStatus.completed && req.status != ServiceRequestStatus.cancelled) {
-                      return true;
+                    // 2. Quote accepted by client
+                    else if (myQuote.status == QuoteStatus.accepted && 
+                        req.status != ServiceRequestStatus.completed && 
+                        req.status != ServiceRequestStatus.cancelled) {
+                      isActive = true;
                     }
 
                     // 3. Pending quote on an open request
-                    if (req.status == ServiceRequestStatus.open && myQuote.status == QuoteStatus.pending) {
-                      return true;
+                    else if (req.status == ServiceRequestStatus.open && myQuote.status == QuoteStatus.pending) {
+                      isActive = true;
                     }
 
-                    return false;
-                  }).toList();
-
-                  final historyRequests = allMatchingRequests.where((req) {
-                    return !activeRequests.any((active) => active.id == req.id);
-                  }).toList();
+                    if (isActive) {
+                      activeRequests.add(req);
+                    } else {
+                      historyRequests.add(req);
+                    }
+                  }
 
                   if (activeRequests.isEmpty && historyRequests.isEmpty) {
                     return _buildEmptyState();
@@ -215,7 +227,11 @@ class _TechnicianClientsScreenState extends State<TechnicianClientsScreen> {
       itemCount: requests.length,
       itemBuilder: (context, index) {
         final req = requests[index];
-        final myQuote = myQuotes.firstWhere((q) => q.requestId == req.id, orElse: () => Quote(id: '', requestId: '', clientId: '', technicianId: '', technicianName: '', technicianRating: 5, minPrice: 0, maxPrice: 0, message: '', createdAt: DateTime.now()));
+        final String reqId = req.id.toString();
+        final myQuote = myQuotes.firstWhere(
+          (q) => q.requestId.toString() == reqId, 
+          orElse: () => Quote(id: '', requestId: reqId, clientId: '', technicianId: '', technicianName: '', technicianRating: 5, minPrice: 0, maxPrice: 0, message: '', createdAt: DateTime.now())
+        );
         return _buildClientCard(req, myQuote, currentUserId);
       },
     );
@@ -246,8 +262,8 @@ class _TechnicianClientsScreenState extends State<TechnicianClientsScreen> {
       print('Error calculating unread: $e');
     }
 
-    final String? photoUrl = (request.clientPhotoUrl != null && request.clientPhotoUrl!.isNotEmpty) 
-        ? request.clientPhotoUrl 
+    final String? photoUrl = (request.clientPhotoUrl != null && request.clientPhotoUrl!.toString().isNotEmpty) 
+        ? request.clientPhotoUrl!.toString() 
         : null;
 
     final String clientName = request.clientName;
@@ -353,7 +369,7 @@ class _TechnicianClientsScreenState extends State<TechnicianClientsScreen> {
                       const SizedBox(height: 4),
                       if (dateToShow != null)
                         Text(
-                          'Aceptado: ${DateFormat('dd/MM/yyyy HH:mm').format(dateToShow)}',
+                          'Actualizado: ${DateFormat('dd/MM/yyyy HH:mm').format(dateToShow)}',
                           style: TextStyle(color: Colors.grey[600], fontSize: 11),
                         ),
                       const SizedBox(height: 4),
@@ -388,7 +404,7 @@ class _TechnicianClientsScreenState extends State<TechnicianClientsScreen> {
   }
 
   Widget _buildActionRow(ServiceRequest request, Quote myQuote, String currentUserId) {
-    final bool isAssigned = request.technicianId == currentUserId || myQuote.status == QuoteStatus.accepted;
+    final bool isAssigned = request.technicianId?.toString() == currentUserId || myQuote.status == QuoteStatus.accepted;
     final bool isRejected = myQuote.status == QuoteStatus.rejected || myQuote.status == QuoteStatus.final_rejected;
 
     if (isRejected) {
