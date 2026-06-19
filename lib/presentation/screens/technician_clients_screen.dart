@@ -26,8 +26,17 @@ class _TechnicianClientsScreenState extends State<TechnicianClientsScreen> {
   @override
   void initState() {
     super.initState();
-    _currentUserId = AuthService.currentUidSync;
-    _initStreams();
+    _checkAuthAndInit();
+  }
+
+  void _checkAuthAndInit() {
+    final uid = AuthService.currentUidSync;
+    if (uid.isNotEmpty) {
+      setState(() {
+        _currentUserId = uid;
+        _initStreams();
+      });
+    }
   }
 
   void _initStreams() {
@@ -39,11 +48,18 @@ class _TechnicianClientsScreenState extends State<TechnicianClientsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // Safety check if UID was not available at initState
     if (_currentUserId.isEmpty) {
       final uid = AuthService.currentUidSync;
       if (uid.isNotEmpty) {
-        _currentUserId = uid;
-        _initStreams();
+        Future.microtask(() {
+          if (mounted) {
+            setState(() {
+              _currentUserId = uid;
+              _initStreams();
+            });
+          }
+        });
       }
     }
 
@@ -64,7 +80,7 @@ class _TechnicianClientsScreenState extends State<TechnicianClientsScreen> {
         ],
       ),
       body: _currentUserId.isEmpty 
-        ? const Center(child: Text('Inicia sesión para ver tus clientes.'))
+        ? const Center(child: CircularProgressIndicator(color: Color(0xFFFF8A00)))
         : StreamBuilder<List<Quote>>(
             stream: _quotesStream,
             builder: (context, quotesSnapshot) {
@@ -77,7 +93,7 @@ class _TechnicianClientsScreenState extends State<TechnicianClientsScreen> {
                     return _buildErrorState(snapshot.error.toString());
                   }
 
-                  if (snapshot.connectionState == ConnectionState.waiting || quotesSnapshot.connectionState == ConnectionState.waiting) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
                     return const Center(child: CircularProgressIndicator(color: Color(0xFFFF8A00)));
                   }
 
@@ -237,7 +253,12 @@ class _TechnicianClientsScreenState extends State<TechnicianClientsScreen> {
     final String clientName = request.clientName;
     final String jobTitle = request.title;
     final String jobAddress = request.address;
-    final double acceptedPrice = myQuote.price ?? myQuote.minPrice;
+    
+    // Use request.budget as primary price (accepted price)
+    final double acceptedPrice = request.budget ?? myQuote.price ?? myQuote.minPrice;
+    
+    // Acceptance date
+    final DateTime? dateToShow = request.assignedAt ?? myQuote.statusUpdatedAt ?? request.updatedAt;
 
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -246,7 +267,7 @@ class _TechnicianClientsScreenState extends State<TechnicianClientsScreen> {
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: Colors.grey[200]!),
         boxShadow: [
-          BoxShadow(color: Colors.black.withValues(alpha: 0.03), blurRadius: 10, offset: const Offset(0, 4))
+          BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 10, offset: const Offset(0, 4))
         ],
       ),
       child: Column(
@@ -330,6 +351,12 @@ class _TechnicianClientsScreenState extends State<TechnicianClientsScreen> {
                         overflow: TextOverflow.ellipsis,
                       ),
                       const SizedBox(height: 4),
+                      if (dateToShow != null)
+                        Text(
+                          'Aceptado: ${DateFormat('dd/MM/yyyy HH:mm').format(dateToShow)}',
+                          style: TextStyle(color: Colors.grey[600], fontSize: 11),
+                        ),
+                      const SizedBox(height: 4),
                       Row(
                         children: [
                           const Icon(Icons.location_on_outlined, size: 14, color: Colors.grey),
@@ -385,7 +412,7 @@ class _TechnicianClientsScreenState extends State<TechnicianClientsScreen> {
         TextButton.icon(
           onPressed: () => Navigator.pushNamed(context, AppRoutes.requestDetail, arguments: request),
           icon: const Icon(Icons.visibility_outlined, size: 18),
-          label: const Text('Detalles'),
+          label: const Text('Ver detalle'),
         ),
         const Spacer(),
         if (isAssigned && (request.status == ServiceRequestStatus.assigned || request.status == ServiceRequestStatus.inProgress || myQuote.status == QuoteStatus.accepted)) ...[
@@ -509,7 +536,7 @@ class _TechnicianClientsScreenState extends State<TechnicianClientsScreen> {
             break;
           case ServiceRequestStatus.finishedByTechnician:
             badgeColor = Colors.blue;
-            badgeLabel = 'Finalizado (Técnico)';
+            badgeLabel = 'Por validar';
             break;
           case ServiceRequestStatus.completed:
             badgeColor = Colors.grey;
