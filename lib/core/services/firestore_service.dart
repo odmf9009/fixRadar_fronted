@@ -94,12 +94,12 @@ class FirestoreService {
   }
 
   Stream<List<ServiceRequest>> getClientRequests(String clientId) {
+    // If the stream controller already exists and is open, trigger a refresh and return it.
     if (_requestStreamControllers.containsKey(clientId)) {
       final existing = _requestStreamControllers[clientId]!;
       if (!existing.isClosed) {
-        if (_cachedRequestValues.containsKey(clientId)) {
-          Future.microtask(() => existing.add(_cachedRequestValues[clientId]!));
-        }
+        // Trigger an asynchronous fetch to update the stream
+        _fetchClientRequests(clientId);
         return existing.stream;
       }
     }
@@ -107,40 +107,46 @@ class FirestoreService {
     final controller = StreamController<List<ServiceRequest>>.broadcast();
     _requestStreamControllers[clientId] = controller;
 
-    Future<void> fetch() async {
-      try {
-        final response = await _api.get('/service-requests/my');
-        final list = (response.data as List)
-            .map((e) => ServiceRequest.fromJson(e))
-            .toList();
-        _cachedRequestValues[clientId] = list;
-        if (!controller.isClosed) controller.add(list);
-      } catch (_) {}
-    }
+    _fetchClientRequests(clientId);
 
     // Named handlers to allow surgical removal
-    void onStatus(_) => fetch();
-    void onCreate(_) => fetch();
-    void onCancel(_) => fetch();
-    void onDelete(_) => fetch();
+    void onUpdate(_) => _fetchClientRequests(clientId);
 
-    fetch();
-    _socket.on('request:status', onStatus);
-    _socket.on('request:created', onCreate);
-    _socket.on('request:cancelled', onCancel);
-    _socket.on('request:deleted', onDelete);
+    _socket.on('request:status', onUpdate);
+    _socket.on('request:created', onUpdate);
+    _socket.on('request:cancelled', onUpdate);
+    _socket.on('request:deleted', onUpdate);
 
     controller.onCancel = () {
-      _socket.off('request:status', onStatus);
-      _socket.off('request:created', onCreate);
-      _socket.off('request:cancelled', onCancel);
-      _socket.off('request:deleted', onDelete);
+      _socket.off('request:status', onUpdate);
+      _socket.off('request:created', onUpdate);
+      _socket.off('request:cancelled', onUpdate);
+      _socket.off('request:deleted', onUpdate);
       _requestStreamControllers.remove(clientId);
       _cachedRequestValues.remove(clientId);
       if (!controller.isClosed) controller.close();
     };
 
     return controller.stream;
+  }
+
+  Future<void> _fetchClientRequests(String clientId) async {
+    final controller = _requestStreamControllers[clientId];
+    if (controller == null || controller.isClosed) return;
+
+    try {
+      final response = await _api.get('/service-requests/my');
+      final list = (response.data as List)
+          .map((e) => ServiceRequest.fromJson(e))
+          .toList();
+      _cachedRequestValues[clientId] = list;
+      if (!controller.isClosed) controller.add(list);
+    } catch (_) {
+      // If we have cached values, we can at least show those
+      if (_cachedRequestValues.containsKey(clientId)) {
+        if (!controller.isClosed) controller.add(_cachedRequestValues[clientId]!);
+      }
+    }
   }
 
   Stream<ServiceRequest?> getServiceRequestStream(String id) {
