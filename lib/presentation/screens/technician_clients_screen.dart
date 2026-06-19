@@ -544,7 +544,7 @@ class _TechnicianClientsScreenState extends State<TechnicianClientsScreen> {
         badgeLabel = 'Rechazada';
       } else if (myQuote.status == QuoteStatus.accepted || status == ServiceRequestStatus.assigned || status == ServiceRequestStatus.inProgress) {
         badgeColor = Colors.green;
-        badgeLabel = 'Trabajo en proceso';
+        badgeLabel = 'Trabajando';
       } else {
         switch (status) {
           case ServiceRequestStatus.open:
