@@ -40,7 +40,6 @@ class _TechnicianClientsScreenState extends State<TechnicianClientsScreen> {
   @override
   Widget build(BuildContext context) {
     if (_currentUserId.isEmpty) {
-      // In case it was empty at initState, try to get it again
       _currentUserId = AuthService.currentUidSync;
       if (_currentUserId.isNotEmpty) _initStreams();
     }
@@ -81,16 +80,13 @@ class _TechnicianClientsScreenState extends State<TechnicianClientsScreen> {
 
                   final allMatchingRequests = snapshot.data ?? [];
                   
-                  // Filter requests based on my status
                   final activeRequests = allMatchingRequests.where((req) {
-                    // 1. Jobs assigned to me
                     if (req.technicianId == _currentUserId && 
                        (req.status == ServiceRequestStatus.assigned || 
                         req.status == ServiceRequestStatus.inProgress || 
                         req.status == ServiceRequestStatus.finishedByTechnician)) {
                       return true;
                     }
-                    // 2. Jobs where I have a pending quote
                     final myQuote = myQuotes.firstWhere((q) => q.requestId == req.id, orElse: () => Quote(id: '', requestId: '', clientId: '', technicianId: '', technicianName: '', technicianRating: 5, minPrice: 0, maxPrice: 0, message: '', createdAt: DateTime.now()));
                     if (req.status == ServiceRequestStatus.open && myQuote.status == QuoteStatus.pending) {
                       return true;
@@ -177,46 +173,14 @@ class _TechnicianClientsScreenState extends State<TechnicianClientsScreen> {
     );
   }
 
-                  return DefaultTabController(
-                    length: 2,
-                    child: Column(
-                      children: [
-                        const TabBar(
-                          labelColor: Color(0xFFFF8A00),
-                          unselectedLabelColor: Colors.grey,
-                          indicatorColor: Color(0xFFFF8A00),
-                          tabs: [
-                            Tab(text: 'Activos'),
-                            Tab(text: 'Historial'),
-                          ],
-                        ),
-                        Expanded(
-                          child: TabBarView(
-                            children: [
-                              _buildRequestList(activeRequests, myQuotes, _currentUserId),
-                              _buildRequestList(historyRequests, myQuotes, _currentUserId),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                  );
-                },
-              );
-            },
-          ),
-    );
-  }
-
   Widget _buildRequestList(List<ServiceRequest> requests, List<Quote> myQuotes, String currentUserId) {
     if (requests.isEmpty) {
       return const Center(child: Text('No hay elementos en esta lista.', style: TextStyle(color: Colors.grey)));
     }
-    return ListView.separated(
+    return ListView.builder(
       physics: const AlwaysScrollableScrollPhysics(),
       padding: const EdgeInsets.symmetric(vertical: 8),
       itemCount: requests.length,
-      separatorBuilder: (context, index) => const Divider(height: 1),
       itemBuilder: (context, index) {
         final req = requests[index];
         final myQuote = myQuotes.firstWhere((q) => q.requestId == req.id, orElse: () => Quote(id: '', requestId: '', clientId: '', technicianId: '', technicianName: '', technicianRating: 5, minPrice: 0, maxPrice: 0, message: '', createdAt: DateTime.now()));
@@ -536,13 +500,5 @@ class _TechnicianClientsScreenState extends State<TechnicianClientsScreen> {
         style: TextStyle(color: badgeColor, fontSize: 10, fontWeight: FontWeight.bold),
       ),
     );
-  }
-
-  String _formatTime(DateTime date) {
-    final now = DateTime.now();
-    if (date.day == now.day && date.month == now.month && date.year == now.year) {
-      return DateFormat('HH:mm').format(date);
-    }
-    return DateFormat('dd/MM').format(date);
   }
 }
