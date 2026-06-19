@@ -1,7 +1,7 @@
 // Migrated: Firestore replaced by MongoDB+Socket.io via FirestoreService facade
 import 'package:flutter/material.dart';
-import '../../core/services/auth_service.dart';
 import 'package:intl/intl.dart';
+import '../../core/services/auth_service.dart';
 import '../../core/models/service_request.dart';
 import '../../core/models/quote_model.dart';
 import '../../core/services/firestore_service.dart';
@@ -80,13 +80,16 @@ class _TechnicianClientsScreenState extends State<TechnicianClientsScreen> {
 
                   final allMatchingRequests = snapshot.data ?? [];
                   
+                  // Filter requests based on my status
                   final activeRequests = allMatchingRequests.where((req) {
+                    // 1. Jobs assigned to me
                     if (req.technicianId == _currentUserId && 
                        (req.status == ServiceRequestStatus.assigned || 
                         req.status == ServiceRequestStatus.inProgress || 
                         req.status == ServiceRequestStatus.finishedByTechnician)) {
                       return true;
                     }
+                    // 2. Jobs where I have a pending quote
                     final myQuote = myQuotes.firstWhere((q) => q.requestId == req.id, orElse: () => Quote(id: '', requestId: '', clientId: '', technicianId: '', technicianName: '', technicianRating: 5, minPrice: 0, maxPrice: 0, message: '', createdAt: DateTime.now()));
                     if (req.status == ServiceRequestStatus.open && myQuote.status == QuoteStatus.pending) {
                       return true;
