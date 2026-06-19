@@ -802,7 +802,23 @@ class FirestoreService {
       }
     }
 
+    void onUpdate(_) => fetch();
+
     fetch();
+    _socket.on('request:status', onUpdate);
+    _socket.on('request:assigned', onUpdate);
+    _socket.on('request:created', onUpdate);
+    _socket.on('quote:accepted', onUpdate);
+    _socket.on('quote:status', onUpdate);
+
+    controller.onCancel = () {
+      _socket.off('request:status', onUpdate);
+      _socket.off('request:assigned', onUpdate);
+      _socket.off('request:created', onUpdate);
+      _socket.off('quote:accepted', onUpdate);
+      _socket.off('quote:status', onUpdate);
+      if (!controller.isClosed) controller.close();
+    };
 
     return controller.stream;
   }
