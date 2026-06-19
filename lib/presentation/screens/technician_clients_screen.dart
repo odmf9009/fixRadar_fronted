@@ -99,16 +99,13 @@ class _TechnicianClientsScreenState extends State<TechnicianClientsScreen> {
                     return const Center(child: CircularProgressIndicator(color: Color(0xFFFF8A00)));
                   }
 
-                  final allMatchingRequests = snapshot.data ?? [];
+                  final allRequests = snapshot.data ?? [];
                   
-                  // Filter requests based on status and involvement
                   final activeRequests = <ServiceRequest>[];
                   final historyRequests = <ServiceRequest>[];
 
-                  for (final req in allMatchingRequests) {
+                  for (final req in allRequests) {
                     final String reqId = req.id.toString();
-                    
-                    // Robust quote finding
                     final myQuote = myQuotes.firstWhere(
                       (q) => q.requestId.toString() == reqId, 
                       orElse: () => Quote(id: '', requestId: reqId, clientId: '', technicianId: '', technicianName: '', technicianRating: 5, minPrice: 0, maxPrice: 0, message: '', createdAt: DateTime.now())
@@ -116,28 +113,32 @@ class _TechnicianClientsScreenState extends State<TechnicianClientsScreen> {
                     
                     bool isActive = false;
                     
-                    // 1. Explicitly assigned to me (Active states)
-                    if (req.technicianId?.toString() == _currentUserId && 
-                       (req.status == ServiceRequestStatus.assigned || 
-                        req.status == ServiceRequestStatus.inProgress)) {
-                      isActive = true;
+                    // Priority 1: Technician is assigned in the request object
+                    if (req.technicianId?.toString() == _currentUserId) {
+                       if (req.status == ServiceRequestStatus.assigned || 
+                           req.status == ServiceRequestStatus.inProgress ||
+                           req.status == ServiceRequestStatus.finishedByTechnician) {
+                         isActive = true;
+                       }
                     }
                     
-                    // 2. Quote accepted by client
-                    else if (myQuote.status == QuoteStatus.accepted && 
-                        req.status != ServiceRequestStatus.completed && 
-                        req.status != ServiceRequestStatus.cancelled) {
-                      isActive = true;
+                    // Priority 2: My quote is accepted
+                    if (!isActive && myQuote.status == QuoteStatus.accepted) {
+                      if (req.status != ServiceRequestStatus.completed && 
+                          req.status != ServiceRequestStatus.cancelled) {
+                        isActive = true;
+                      }
                     }
 
-                    // 3. Pending quote on an open request
-                    else if (req.status == ServiceRequestStatus.open && myQuote.status == QuoteStatus.pending) {
+                    // Priority 3: I sent a quote and request is still open (Interested state)
+                    if (!isActive && req.status == ServiceRequestStatus.open && myQuote.status == QuoteStatus.pending) {
                       isActive = true;
                     }
 
                     if (isActive) {
                       activeRequests.add(req);
                     } else {
+                      // Only add to history if it was relevant to me
                       historyRequests.add(req);
                     }
                   }
