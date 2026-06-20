@@ -187,7 +187,8 @@ class _ActivityHistoryScreenState extends State<ActivityHistoryScreen> {
 
   Widget _buildMonthlySummary(UserModel? user) {
     final now = DateTime.now();
-    final monthName = DateFormat('MMMM', 'es').format(now);
+    final String currentLang = LanguageService().currentLanguage;
+    final monthName = DateFormat('MMMM', currentLang).format(now);
     
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 20),

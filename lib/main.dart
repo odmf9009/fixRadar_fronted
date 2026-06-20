@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:provider/provider.dart';
+import 'package:intl/date_symbol_data_local.dart';
 import 'core/config/routes.dart';
 import 'core/services/api_service.dart';
 import 'core/services/language_service.dart';
@@ -12,6 +13,12 @@ import 'firebase_options.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  
+  // Initialize date formatting for locales (specifically 'es' used in history)
+  await initializeDateFormatting('es', null);
+  await initializeDateFormatting('en', null);
+
+  await LanguageService().init();
   ApiService().init();
   await NotificationService().init();
   runApp(const FixRadarApp());

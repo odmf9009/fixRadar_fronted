@@ -91,20 +91,29 @@ class _AlertsScreenState extends State<AlertsScreen> {
         content: const Text('Se eliminarán permanentemente todas tus notificaciones guardadas.'),
         actions: [
           TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancelar')),
-          ElevatedButton(
-            onPressed: () async {
-              final uid = AuthService.currentUidSync;
-              if (uid.isNotEmpty) {
-                await FirestoreService().clearAllUserAlerts(uid);
-              }
-              if (mounted) {
-                Navigator.pop(context);
-                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Historial limpiado.')));
-              }
-            },
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-            child: const Text('Eliminar Todo', style: TextStyle(color: Colors.white)),
-          ),
+              ElevatedButton(
+                onPressed: () async {
+                  final uid = AuthService.currentUidSync;
+                  if (uid.isNotEmpty) {
+                    try {
+                      await FirestoreService().clearAllUserAlerts(uid);
+                      if (mounted) {
+                        Navigator.pop(context);
+                        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Historial limpiado.')));
+                        // Force a refresh of the active stream if needed
+                      }
+                    } catch (e) {
+                      if (mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text('Error al limpiar: $e'), backgroundColor: Colors.red),
+                        );
+                      }
+                    }
+                  }
+                },
+                style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+                child: const Text('Eliminar Todo', style: TextStyle(color: Colors.white)),
+              ),
         ],
       ),
     );
@@ -123,11 +132,15 @@ class _RadarTabState extends State<_RadarTab> with AutomaticKeepAliveClientMixin
   bool get wantKeepAlive => true;
   final FirestoreService _fs = FirestoreService();
   UserModel? _currentUser;
+  Stream<List<AlertModel>>? _alertsStream;
+  Stream<List<ServiceRequest>>? _nearbyStream;
 
   @override
   void initState() {
     super.initState();
     _loadUser();
+    _alertsStream = _fs.getUserAlerts(widget.currentUserId);
+    _nearbyStream = _fs.getNearbyServiceRequests(userId: widget.currentUserId);
   }
 
   void _loadUser() async {
@@ -141,30 +154,37 @@ class _RadarTabState extends State<_RadarTab> with AutomaticKeepAliveClientMixin
     if (_currentUser == null) return const Center(child: CircularProgressIndicator());
 
     return StreamBuilder<List<ServiceRequest>>(
-      stream: _fs.getNearbyServiceRequests(userId: widget.currentUserId),
+      stream: _nearbyStream,
       builder: (context, requestsSnapshot) {
         if (requestsSnapshot.hasError) {
           return Center(child: Text('Error: ${requestsSnapshot.error}'));
         }
         
-        final activeRequestIds = (requestsSnapshot.data ?? []).map((o) => o.id).toSet();
-
         return StreamBuilder<List<AlertModel>>(
-          stream: _fs.getUserAlerts(widget.currentUserId),
+          stream: _alertsStream,
           builder: (context, alertsSnapshot) {
             if (alertsSnapshot.hasError) {
               return Center(child: Text('Error: ${alertsSnapshot.error}'));
             }
-            if (!alertsSnapshot.hasData) return const Center(child: CircularProgressIndicator());
-            final alerts = alertsSnapshot.data!;
+            if (!alertsSnapshot.hasData && alertsSnapshot.connectionState == ConnectionState.waiting) {
+              return const Center(child: CircularProgressIndicator());
+            }
+            final alerts = alertsSnapshot.data ?? [];
             
             if (alerts.isEmpty) return _buildEmpty(tr('no_hay_alertas'), Icons.radar, tr('no_hay_alertas_desc'));
 
-            return ListView.separated(
-              padding: const EdgeInsets.symmetric(vertical: 8),
-              itemCount: alerts.length,
-              separatorBuilder: (context, i) => const Divider(height: 1, indent: 76),
-              itemBuilder: (context, i) => _buildAlertItem(context, alerts[i]),
+            return RefreshIndicator(
+              onRefresh: () async {
+                setState(() {
+                  _alertsStream = _fs.getUserAlerts(widget.currentUserId);
+                });
+              },
+              child: ListView.separated(
+                padding: const EdgeInsets.symmetric(vertical: 8),
+                itemCount: alerts.length,
+                separatorBuilder: (context, i) => const Divider(height: 1, indent: 76),
+                itemBuilder: (context, i) => _buildAlertItem(context, alerts[i]),
+              ),
             );
           },
         );

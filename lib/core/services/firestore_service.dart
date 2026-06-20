@@ -948,9 +948,7 @@ class FirestoreService {
   }
 
   Future<void> clearAllUserAlerts(String userId) async {
-    try {
-      await _api.delete('/alerts/clear-all');
-    } catch (_) {}
+    await _api.delete('/alerts/clear-all');
   }
 
   // ─── MISC STUBS ───────────────────────────────────────────────────────────
