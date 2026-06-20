@@ -58,10 +58,18 @@ class ProximityService {
         _cleanupStaleNotifiedIDs(requests);
       });
 
-      // Foreground location stream keeps radar alive in background
-      _positionSubscription = _locationService.technicianLocationStream.listen((position) {
-        _checkProximity(position);
-      });
+      // Foreground location stream keeps radar alive in background.
+      // Check permissions before opening the stream to avoid a Samsung/Android
+      // race condition where the OS briefly reports "denied" on cold start even
+      // when the user already granted location access.
+      final hasPermission = await _locationService.checkAndRequestPermissions();
+      if (hasPermission) {
+        _positionSubscription = _locationService.technicianLocationStream.listen((position) {
+          _checkProximity(position);
+        });
+      } else {
+        print('[Proximity] Location permission not granted — skipping GPS stream');
+      }
     }
   }
 
