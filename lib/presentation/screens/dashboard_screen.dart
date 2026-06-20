@@ -25,7 +25,7 @@ class DashboardScreen extends StatefulWidget {
   State<DashboardScreen> createState() => _DashboardScreenState();
 }
 
-class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProviderStateMixin {
+class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProviderStateMixin, WidgetsBindingObserver {
   final FirestoreService _firestoreService = FirestoreService();
   final AuthService _authService = AuthService();
   final LocationService _locationService = LocationService();
@@ -68,8 +68,18 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
     _bellShakeAnimation = Tween<double>(begin: 0, end: 1).animate(
       CurvedAnimation(parent: _bellShakeController, curve: Curves.easeOut),
     );
+    WidgetsBinding.instance.addObserver(this);
     print('STABLE_DASHBOARD: Starting services...');
     _initWithUser();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed && _currentPosition != null) {
+      // App came back to foreground — re-fetch nearby data that may have changed
+      // while the socket was disconnected in background
+      _startNearbyListener(_currentPosition!);
+    }
   }
 
   Future<void> _initWithUser() async {
@@ -82,6 +92,7 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _bellShakeController.dispose();
     _userSub?.cancel();
     _nearbySub?.cancel();

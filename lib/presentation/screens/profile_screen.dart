@@ -148,6 +148,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ElevatedButton(
                 onPressed: () async {
                   await _firestoreService.updateUserRole(user.id, user.role, specialties: tempSpecialties);
+                  await _firestoreService.refreshUserStream(user.id);
                   if (context.mounted) Navigator.pop(context);
                 },
                 style: ElevatedButton.styleFrom(
@@ -391,12 +392,42 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                       ),
                                     ),
                                     const Divider(height: 1),
-                                    ListTile(
-                                      contentPadding: const EdgeInsets.symmetric(horizontal: 16),
-                                      title: const Text('Mis Especialidades', style: TextStyle(fontWeight: FontWeight.bold)),
-                                      subtitle: Text(user!.specialties.isEmpty ? 'Ninguna seleccionada' : user.specialties.join(', '), maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 12)),
-                                      trailing: const Icon(Icons.edit, size: 20),
-                                      onTap: () => _showSpecialtiesDialog(context, user),
+                                    InkWell(
+                                      onTap: () => _showSpecialtiesDialog(context, user!),
+                                      child: Padding(
+                                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                                        child: Row(
+                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          children: [
+                                            Expanded(
+                                              child: Column(
+                                                crossAxisAlignment: CrossAxisAlignment.start,
+                                                children: [
+                                                  const Text('Mis Especialidades', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                                                  const SizedBox(height: 6),
+                                                  user!.specialties.isEmpty
+                                                      ? const Text('Ninguna seleccionada', style: TextStyle(fontSize: 12, color: Colors.grey))
+                                                      : Wrap(
+                                                          spacing: 6,
+                                                          runSpacing: 6,
+                                                          children: user.specialties.map((s) => Container(
+                                                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                                            decoration: BoxDecoration(
+                                                              color: const Color(0xFFFF8A00).withValues(alpha: 0.12),
+                                                              borderRadius: BorderRadius.circular(20),
+                                                              border: Border.all(color: const Color(0xFFFF8A00).withValues(alpha: 0.4)),
+                                                            ),
+                                                            child: Text(s, style: const TextStyle(fontSize: 12, color: Color(0xFFCC6F00), fontWeight: FontWeight.w500)),
+                                                          )).toList(),
+                                                        ),
+                                                ],
+                                              ),
+                                            ),
+                                            const SizedBox(width: 8),
+                                            const Icon(Icons.edit, size: 20, color: Colors.grey),
+                                          ],
+                                        ),
+                                      ),
                                     ),
                                     const Divider(height: 1),
                                     ListTile(

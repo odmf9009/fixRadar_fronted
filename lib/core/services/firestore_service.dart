@@ -252,6 +252,17 @@ class FirestoreService {
     return controller.stream;
   }
 
+  Future<void> refreshUserStream(String uid) async {
+    final controller = _userStreamControllers[uid];
+    if (controller == null || controller.isClosed) return;
+    try {
+      final response = await _api.get('/users/$uid');
+      final user = UserModel.fromJson(response.data);
+      _cachedUserValues[uid] = user;
+      if (!controller.isClosed) controller.add(user);
+    } catch (_) {}
+  }
+
   void _pollUser(String uid, StreamController<UserModel?> controller) async {
     while (!controller.isClosed) {
       try {
