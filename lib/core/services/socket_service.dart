@@ -14,6 +14,11 @@ class SocketService {
   String? _connectedToken;
   bool get isConnected => _socket?.connected ?? false;
 
+  // Estado actual de la app (primer/segundo plano). Se reenvía al backend en
+  // cada (re)conexión para que un socket reconectado en background no quede
+  // marcado como foreground (lo que suprimiría el FCM por error).
+  bool _appForeground = true;
+
   // Registry so handlers survive socket reconnects
   final Map<String, List<SocketEventHandler>> _registry = {};
 
@@ -58,7 +63,11 @@ class SocketService {
       }
     });
 
-    _socket!.onConnect((_) => print('[Socket] Connected'));
+    _socket!.onConnect((_) {
+      print('[Socket] Connected');
+      // Reportar el estado actual de la app al backend al conectar/reconectar.
+      _socket?.emit('app:state', _appForeground ? 'foreground' : 'background');
+    });
     _socket!.onDisconnect((_) => print('[Socket] Disconnected'));
     _socket!.onConnectError((e) => print('[Socket] Error: $e'));
   }
@@ -101,8 +110,10 @@ class SocketService {
   /// Reporta al backend si la app está en primer plano. El servidor solo
   /// envía FCM cuando NO está en primer plano (evita push duplicados in-app
   /// pero garantiza el push en segundo plano).
-  void setAppState(bool foreground) =>
-      emit('app:state', foreground ? 'foreground' : 'background');
+  void setAppState(bool foreground) {
+    _appForeground = foreground;
+    emit('app:state', foreground ? 'foreground' : 'background');
+  }
 
   void joinRoom(String room) => emit('chat:join', room);
   void leaveRoom(String room) => emit('chat:leave', room);
