@@ -280,10 +280,11 @@ class _ClientRequestsScreenState extends State<ClientRequestsScreen> {
         border: Border.all(color: Colors.blue[100]!),
       ),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              const Icon(Icons.info_outline, color: Colors.blue, size: 20),
+              const Icon(Icons.check_circle_outline, color: Colors.blue, size: 20),
               const SizedBox(width: 8),
               const Expanded(
                 child: Text(
@@ -293,6 +294,22 @@ class _ClientRequestsScreenState extends State<ClientRequestsScreen> {
               ),
             ],
           ),
+          if (request.completionPhotoUrl != null) ...[
+            const SizedBox(height: 10),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(8),
+              child: Image.network(
+                request.completionPhotoUrl!,
+                height: 160,
+                width: double.infinity,
+                fit: BoxFit.cover,
+                loadingBuilder: (_, child, progress) => progress == null
+                    ? child
+                    : const SizedBox(height: 160, child: Center(child: CircularProgressIndicator())),
+                errorBuilder: (_, __, ___) => const SizedBox.shrink(),
+              ),
+            ),
+          ],
           const SizedBox(height: 12),
           Row(
             children: [
@@ -315,7 +332,7 @@ class _ClientRequestsScreenState extends State<ClientRequestsScreen> {
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                     elevation: 0,
                   ),
-                  child: const Text('Confirmar', style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold)),
+                  child: const Text('Confirmar finalización', style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold)),
                 ),
               ),
             ],
@@ -330,7 +347,37 @@ class _ClientRequestsScreenState extends State<ClientRequestsScreen> {
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('¿Confirmar finalización?'),
-        content: const Text('Al confirmar, el pedido se cerrará definitivamente y podrás calificar al técnico.'),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              if (request.completionPhotoUrl != null) ...[
+                const Text(
+                  'Foto del trabajo terminado:',
+                  style: TextStyle(fontSize: 12, color: Colors.grey),
+                ),
+                const SizedBox(height: 8),
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(10),
+                  child: Image.network(
+                    request.completionPhotoUrl!,
+                    fit: BoxFit.cover,
+                    loadingBuilder: (_, child, progress) => progress == null
+                        ? child
+                        : const SizedBox(
+                            height: 160,
+                            child: Center(child: CircularProgressIndicator()),
+                          ),
+                    errorBuilder: (_, __, ___) => const SizedBox.shrink(),
+                  ),
+                ),
+                const SizedBox(height: 12),
+              ],
+              const Text('Al confirmar, el pedido se cerrará definitivamente y podrás calificar al técnico.'),
+            ],
+          ),
+        ),
         actions: [
           TextButton(onPressed: () => Navigator.pop(context), child: const Text('Revisar más')),
           ElevatedButton(

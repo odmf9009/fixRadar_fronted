@@ -357,22 +357,37 @@ class FirestoreService {
     final controller = StreamController<List<ChatMessage>>.broadcast();
     final messages = <ChatMessage>[];
 
-    _api.get('/chat/$requestId/messages').then((response) {
-      messages.addAll((response.data as List).map((e) => ChatMessage.fromJson(e)));
-      if (!controller.isClosed) controller.add(List.from(messages));
-    });
-
-    _socket.joinRoom(requestId);
-    _socket.on('chat:message', (data) {
-      if (data['requestId'] == requestId) {
-        messages.add(ChatMessage.fromJson(data));
-        if (!controller.isClosed) controller.add(List.from(messages));
+    void onMessage(data) {
+      final msgRequestId = data['requestId']?.toString() ?? '';
+      if (msgRequestId == requestId) {
+        // Avoid duplicates: check by id if present
+        final incoming = ChatMessage.fromJson(data);
+        if (!messages.any((m) => m.id.isNotEmpty && m.id == incoming.id)) {
+          messages.add(incoming);
+          if (!controller.isClosed) controller.add(List.from(messages));
+        }
       }
-    });
+    }
+
+    controller.onListen = () {
+      _api.get('/chat/$requestId/messages').then((response) {
+        if (!controller.isClosed) {
+          messages.clear();
+          messages.addAll((response.data as List).map((e) => ChatMessage.fromJson(e)));
+          controller.add(List.from(messages));
+        }
+      }).catchError((_) {
+        if (!controller.isClosed) controller.add([]);
+      });
+
+      _socket.joinRoom(requestId);
+      _socket.on('chat:message', onMessage);
+    };
 
     controller.onCancel = () {
       _socket.leaveRoom(requestId);
-      _socket.off('chat:message');
+      _socket.off('chat:message', onMessage);
+      if (!controller.isClosed) controller.close();
     };
 
     return controller.stream;

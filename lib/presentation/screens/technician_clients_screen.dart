@@ -1,10 +1,13 @@
 // Migrated: Firestore replaced by MongoDB+Socket.io via FirestoreService facade
+import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 import '../../core/services/auth_service.dart';
 import '../../core/models/service_request.dart';
 import '../../core/models/quote_model.dart';
 import '../../core/services/firestore_service.dart';
+import '../../core/services/upload_service.dart';
 import '../../core/services/language_service.dart';
 import '../../core/config/routes.dart';
 import 'widgets/category_badge.dart';
@@ -498,15 +501,28 @@ class _TechnicianClientsScreenState extends State<TechnicianClientsScreen> {
             tooltip: 'Chat con cliente',
           ),
           const SizedBox(width: 4),
-          ElevatedButton(
-            onPressed: () => _confirmFinishWork(request),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.green,
-              foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(horizontal: 12),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+          Expanded(
+            child: ElevatedButton(
+              onPressed: () => _confirmFinishWork(request),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.green,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              ),
+              child: const Text('Finalizar trabajo', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
             ),
-            child: const Text('Finalizar trabajo', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+          ),
+        ] else if (isAssigned && request.status == ServiceRequestStatus.finishedByTechnician) ...[
+          const Expanded(
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                Icon(Icons.hourglass_top, size: 15, color: Colors.blue),
+                SizedBox(width: 4),
+                Text('Esperando confirmación del cliente', style: TextStyle(color: Colors.blue, fontSize: 11)),
+              ],
+            ),
           ),
         ] else if (request.status == ServiceRequestStatus.open) ...[
           TextButton.icon(
@@ -520,39 +536,114 @@ class _TechnicianClientsScreenState extends State<TechnicianClientsScreen> {
   }
 
   void _confirmFinishWork(ServiceRequest request) {
+    XFile? capturedPhoto;
+    bool isUploading = false;
+
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('¿Finalizar trabajo?'),
-        content: const Text('¿Confirmas que ya terminaste este trabajo? El cliente recibirá una notificación y el pedido pasará al historial.'),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Aún no')),
-          ElevatedButton(
-            onPressed: () async {
-              Navigator.pop(context);
-              try {
-                await _firestoreService.finishWorkByTechnician(request.id);
-                if (mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Trabajo completado con éxito. Pasando al historial.'))
-                  );
-                  // Refresh streams
-                  setState(() {
-                    _initStreams();
-                  });
-                }
-              } catch (e) {
-                if (mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red)
-                  );
-                }
-              }
-            },
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
-            child: const Text('Sí, finalizar', style: TextStyle(color: Colors.white)),
+      barrierDismissible: false,
+      builder: (dialogContext) => StatefulBuilder(
+        builder: (dialogContext, setDialogState) => AlertDialog(
+          title: const Text('Finalizar trabajo'),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Text(
+                  'Toma una foto del trabajo terminado. El cliente la verá y deberá confirmar la finalización.',
+                  style: TextStyle(fontSize: 13),
+                ),
+                const SizedBox(height: 16),
+                if (capturedPhoto != null) ...[
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(10),
+                    child: Image.file(
+                      File(capturedPhoto!.path),
+                      height: 180,
+                      fit: BoxFit.cover,
+                    ),
+                  ),
+                  TextButton.icon(
+                    icon: const Icon(Icons.camera_alt, size: 16),
+                    label: const Text('Cambiar foto'),
+                    onPressed: isUploading ? null : () async {
+                      final XFile? photo = await ImagePicker().pickImage(
+                        source: ImageSource.camera,
+                        imageQuality: 70,
+                      );
+                      if (photo != null) setDialogState(() => capturedPhoto = photo);
+                    },
+                  ),
+                ] else
+                  Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton.icon(
+                          icon: const Icon(Icons.camera_alt),
+                          label: const Text('Tomar foto del trabajo'),
+                          style: OutlinedButton.styleFrom(
+                            side: const BorderSide(color: Color(0xFFFF8A00)),
+                            foregroundColor: const Color(0xFFFF8A00),
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                          ),
+                          onPressed: () async {
+                            final XFile? photo = await ImagePicker().pickImage(
+                              source: ImageSource.camera,
+                              imageQuality: 70,
+                            );
+                            if (photo != null) setDialogState(() => capturedPhoto = photo);
+                          },
+                        ),
+                      ),
+                    ],
+                  ),
+              ],
+            ),
           ),
-        ],
+          actions: [
+            TextButton(
+              onPressed: isUploading ? null : () => Navigator.pop(dialogContext),
+              child: const Text('Cancelar'),
+            ),
+            ElevatedButton(
+              onPressed: isUploading ? null : () async {
+                setDialogState(() => isUploading = true);
+                try {
+                  String? photoUrl;
+                  if (capturedPhoto != null) {
+                    photoUrl = await UploadService().uploadObjectImage(File(capturedPhoto!.path));
+                  }
+                  Navigator.pop(dialogContext);
+                  await _firestoreService.finishWorkByTechnician(request.id, photoUrl);
+                  if (mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Notificación enviada al cliente. Esperando confirmación.'),
+                        backgroundColor: Colors.blue,
+                      ),
+                    );
+                    setState(() => _initStreams());
+                  }
+                } catch (e) {
+                  setDialogState(() => isUploading = false);
+                  if (mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
+                    );
+                  }
+                }
+              },
+              style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
+              child: isUploading
+                  ? const SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                    )
+                  : const Text('Finalizar', style: TextStyle(color: Colors.white)),
+            ),
+          ],
+        ),
       ),
     );
   }

@@ -20,6 +20,7 @@ class AlertsScreen extends StatefulWidget {
 
 class _AlertsScreenState extends State<AlertsScreen> {
   final LocationService _locationService = LocationService();
+  final _radarTabKey = GlobalKey<_RadarTabState>();
   Position? _currentPosition;
   String _currentCity = '...';
 
@@ -73,7 +74,7 @@ class _AlertsScreenState extends State<AlertsScreen> {
             ),
             body: TabBarView(
               children: [
-                _RadarTab(currentUserId: AuthService.currentUidSync),
+                _RadarTab(key: _radarTabKey, currentUserId: AuthService.currentUidSync),
                 _NovedadesTab(currentPosition: _currentPosition, city: _currentCity),
               ],
             ),
@@ -99,8 +100,8 @@ class _AlertsScreenState extends State<AlertsScreen> {
                       await FirestoreService().clearAllUserAlerts(uid);
                       if (mounted) {
                         Navigator.pop(context);
+                        _radarTabKey.currentState?.refresh();
                         ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Historial limpiado.')));
-                        // Force a refresh of the active stream if needed
                       }
                     } catch (e) {
                       if (mounted) {
@@ -122,7 +123,7 @@ class _AlertsScreenState extends State<AlertsScreen> {
 
 class _RadarTab extends StatefulWidget {
   final String currentUserId;
-  const _RadarTab({required this.currentUserId});
+  const _RadarTab({super.key, required this.currentUserId});
   @override
   State<_RadarTab> createState() => _RadarTabState();
 }
@@ -139,6 +140,14 @@ class _RadarTabState extends State<_RadarTab> with AutomaticKeepAliveClientMixin
     super.initState();
     _loadUser();
     _alertsStream = _fs.getUserAlerts(widget.currentUserId);
+  }
+
+  void refresh() {
+    if (mounted) {
+      setState(() {
+        _alertsStream = _fs.getUserAlerts(widget.currentUserId);
+      });
+    }
   }
 
   void _loadUser() async {
