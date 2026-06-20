@@ -107,37 +107,30 @@ class _TechnicianClientsScreenState extends State<TechnicianClientsScreen> {
                   for (final req in allRequests) {
                     final String reqId = req.id.toString();
                     final myQuote = myQuotes.firstWhere(
-                      (q) => q.requestId.toString() == reqId, 
+                      (q) => q.requestId.toString() == reqId,
                       orElse: () => Quote(id: '', requestId: reqId, clientId: '', technicianId: '', technicianName: '', technicianRating: 5, minPrice: 0, maxPrice: 0, message: '', createdAt: DateTime.now())
                     );
-                    
-                    bool isActive = false;
 
-                    // A request is active if it's NOT completed and NOT cancelled,
-                    // AND the technician is involved in it.
-                    if (req.status != ServiceRequestStatus.completed && 
-                        req.status != ServiceRequestStatus.cancelled) {
-                      
-                      // 1. Technician is assigned in the request object
-                      if (req.technicianId?.toString() == _currentUserId) {
-                        isActive = true;
-                      } 
-                      // 2. Technician's quote was accepted
-                      else if (myQuote.status == QuoteStatus.accepted) {
-                        isActive = true;
-                      }
-                      // 3. Technician sent a quote and request is still open
-                      else if (req.status == ServiceRequestStatus.open && 
-                               (myQuote.id.isNotEmpty || req.interestedTechnicians.contains(_currentUserId))) {
-                        isActive = true;
-                      }
-                    }
+                    final bool quoteAccepted = myQuote.status == QuoteStatus.accepted;
+                    final bool quoteRejected = myQuote.status == QuoteStatus.rejected ||
+                                               myQuote.status == QuoteStatus.final_rejected ||
+                                               myQuote.status == QuoteStatus.cancelled;
+                    final bool isAssignedToMe = req.technicianId?.toString() == _currentUserId;
+                    final bool isFinished = req.status == ServiceRequestStatus.completed ||
+                                           req.status == ServiceRequestStatus.cancelled;
 
-                    if (isActive) {
-                      activeRequests.add(req);
-                    } else {
+                    if (quoteAccepted || isAssignedToMe) {
+                      // My accepted/assigned job
+                      if (!isFinished) {
+                        activeRequests.add(req);
+                      } else {
+                        historyRequests.add(req);
+                      }
+                    } else if (quoteRejected || isFinished) {
+                      // Rejected proposal or finished job I was involved in
                       historyRequests.add(req);
                     }
+                    // Pending proposals (open + quote pending) are shown in Cotizaciones tab
                   }
 
                   // Sort active requests: assigned/inProgress first
@@ -169,7 +162,7 @@ class _TechnicianClientsScreenState extends State<TechnicianClientsScreen> {
                         Expanded(
                           child: TabBarView(
                             children: [
-                              _buildRequestList(activeRequests, myQuotes, _currentUserId),
+                              _buildRequestList(activeRequests, myQuotes, _currentUserId, isActiveTab: true),
                               _buildRequestList(historyRequests, myQuotes, _currentUserId),
                             ],
                           ),
@@ -224,9 +217,31 @@ class _TechnicianClientsScreenState extends State<TechnicianClientsScreen> {
     );
   }
 
-  Widget _buildRequestList(List<ServiceRequest> requests, List<Quote> myQuotes, String currentUserId) {
+  Widget _buildRequestList(List<ServiceRequest> requests, List<Quote> myQuotes, String currentUserId, {bool isActiveTab = false}) {
     if (requests.isEmpty) {
-      return const Center(child: Text('No hay elementos en esta lista.', style: TextStyle(color: Colors.grey)));
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(32),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                isActiveTab ? Icons.work_outline : Icons.history_outlined,
+                size: 56,
+                color: Colors.grey[300],
+              ),
+              const SizedBox(height: 16),
+              Text(
+                isActiveTab
+                    ? 'No tienes trabajos activos.\nCuando un cliente acepte tu cotización, aparecerá aquí con su nombre y el trabajo.'
+                    : 'No hay trabajos en el historial.',
+                textAlign: TextAlign.center,
+                style: const TextStyle(color: Colors.grey, fontSize: 14),
+              ),
+            ],
+          ),
+        ),
+      );
     }
     return ListView.builder(
       physics: const AlwaysScrollableScrollPhysics(),
@@ -283,18 +298,52 @@ class _TechnicianClientsScreenState extends State<TechnicianClientsScreen> {
     // Acceptance date
     final DateTime? dateToShow = request.assignedAt ?? myQuote.statusUpdatedAt ?? request.updatedAt;
 
+    final bool isAcceptedJob = myQuote.status == QuoteStatus.accepted ||
+        request.technicianId?.toString() == currentUserId;
+
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.grey[200]!),
+        border: Border.all(
+          color: isAcceptedJob ? Colors.green.withOpacity(0.4) : Colors.grey[200]!,
+          width: isAcceptedJob ? 1.5 : 1,
+        ),
         boxShadow: [
           BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 10, offset: const Offset(0, 4))
         ],
       ),
       child: Column(
         children: [
+          if (isAcceptedJob)
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+              decoration: BoxDecoration(
+                color: Colors.green[50],
+                borderRadius: const BorderRadius.only(
+                  topLeft: Radius.circular(16),
+                  topRight: Radius.circular(16),
+                ),
+              ),
+              child: Row(
+                children: [
+                  const Icon(Icons.check_circle, color: Colors.green, size: 14),
+                  const SizedBox(width: 6),
+                  Text(
+                    'Cotización aceptada • Trabajando con ${request.clientName}',
+                    style: const TextStyle(
+                      color: Colors.green,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 12,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+              ),
+            ),
           Padding(
             padding: const EdgeInsets.all(16),
             child: Row(
