@@ -133,14 +133,12 @@ class _RadarTabState extends State<_RadarTab> with AutomaticKeepAliveClientMixin
   final FirestoreService _fs = FirestoreService();
   UserModel? _currentUser;
   Stream<List<AlertModel>>? _alertsStream;
-  Stream<List<ServiceRequest>>? _nearbyStream;
 
   @override
   void initState() {
     super.initState();
     _loadUser();
     _alertsStream = _fs.getUserAlerts(widget.currentUserId);
-    _nearbyStream = _fs.getNearbyServiceRequests(userId: widget.currentUserId);
   }
 
   void _loadUser() async {
@@ -153,40 +151,37 @@ class _RadarTabState extends State<_RadarTab> with AutomaticKeepAliveClientMixin
     super.build(context);
     if (_currentUser == null) return const Center(child: CircularProgressIndicator());
 
-    return StreamBuilder<List<ServiceRequest>>(
-      stream: _nearbyStream,
-      builder: (context, requestsSnapshot) {
-        if (requestsSnapshot.hasError) {
-          return Center(child: Text('Error: ${requestsSnapshot.error}'));
+    return StreamBuilder<List<AlertModel>>(
+      stream: _alertsStream,
+      builder: (context, alertsSnapshot) {
+        if (alertsSnapshot.hasError) {
+          return Center(child: Text('Error: ${alertsSnapshot.error}'));
         }
         
-        return StreamBuilder<List<AlertModel>>(
-          stream: _alertsStream,
-          builder: (context, alertsSnapshot) {
-            if (alertsSnapshot.hasError) {
-              return Center(child: Text('Error: ${alertsSnapshot.error}'));
-            }
-            if (!alertsSnapshot.hasData && alertsSnapshot.connectionState == ConnectionState.waiting) {
-              return const Center(child: CircularProgressIndicator());
-            }
-            final alerts = alertsSnapshot.data ?? [];
-            
-            if (alerts.isEmpty) return _buildEmpty(tr('no_hay_alertas'), Icons.radar, tr('no_hay_alertas_desc'));
+        // If we have data, we show it. Even if it's empty.
+        // We only show loading if we have NO data AND we are actually waiting.
+        if (!alertsSnapshot.hasData) {
+          return const Center(child: CircularProgressIndicator());
+        }
+        
+        final alerts = alertsSnapshot.data!;
+        
+        if (alerts.isEmpty) {
+          return _buildEmpty(tr('no_hay_alertas'), Icons.radar, tr('no_hay_alertas_desc'));
+        }
 
-            return RefreshIndicator(
-              onRefresh: () async {
-                setState(() {
-                  _alertsStream = _fs.getUserAlerts(widget.currentUserId);
-                });
-              },
-              child: ListView.separated(
-                padding: const EdgeInsets.symmetric(vertical: 8),
-                itemCount: alerts.length,
-                separatorBuilder: (context, i) => const Divider(height: 1, indent: 76),
-                itemBuilder: (context, i) => _buildAlertItem(context, alerts[i]),
-              ),
-            );
+        return RefreshIndicator(
+          onRefresh: () async {
+            setState(() {
+              _alertsStream = _fs.getUserAlerts(widget.currentUserId);
+            });
           },
+          child: ListView.separated(
+            padding: const EdgeInsets.symmetric(vertical: 8),
+            itemCount: alerts.length,
+            separatorBuilder: (context, i) => const Divider(height: 1, indent: 76),
+            itemBuilder: (context, i) => _buildAlertItem(context, alerts[i]),
+          ),
         );
       },
     );

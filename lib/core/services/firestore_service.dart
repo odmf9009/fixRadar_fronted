@@ -407,12 +407,19 @@ class FirestoreService {
         alerts.clear();
         alerts.addAll(list);
         if (!controller.isClosed) controller.add(List.from(alerts));
-      } catch (_) {}
+      } catch (e) {
+        print('[Alerts] Fetch error: $e');
+        if (!controller.isClosed) controller.add([]);
+      }
     }
 
     void onNewAlert(data) {
-      alerts.insert(0, AlertModel.fromJson(data));
-      if (!controller.isClosed) controller.add(List.from(alerts));
+      try {
+        alerts.insert(0, AlertModel.fromJson(data));
+        if (!controller.isClosed) controller.add(List.from(alerts));
+      } catch (e) {
+        print('[Alerts] onNewAlert error: $e');
+      }
     }
 
     void onCleared(_) {
@@ -420,9 +427,11 @@ class FirestoreService {
       if (!controller.isClosed) controller.add(List.from(alerts));
     }
 
-    fetch();
-    _socket.on('alert:new', onNewAlert);
-    _socket.on('alerts:cleared', onCleared);
+    controller.onListen = () {
+      fetch();
+      _socket.on('alert:new', onNewAlert);
+      _socket.on('alerts:cleared', onCleared);
+    };
 
     controller.onCancel = () {
       _socket.off('alert:new', onNewAlert);
