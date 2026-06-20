@@ -27,10 +27,12 @@ class _ChatScreenState extends State<ChatScreen> {
   final String _currentUserId = AuthService.currentUidSync;
   String _currentUserName = 'Usuario';
   bool _isSending = false;
+  late final Stream<List<ChatMessage>> _chatStream;
 
   @override
   void initState() {
     super.initState();
+    _chatStream = _firestoreService.getChatMessages(widget.request.id);
     _loadUserName();
     _markAsRead();
   }
@@ -148,7 +150,7 @@ class _ChatScreenState extends State<ChatScreen> {
           _buildStatusBar(),
           Expanded(
             child: StreamBuilder<List<ChatMessage>>(
-              stream: _firestoreService.getChatMessages(widget.request.id),
+              stream: _chatStream,
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
                   return const Center(child: CircularProgressIndicator());

@@ -1,4 +1,3 @@
-import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import '../../core/services/auth_service.dart';
@@ -21,6 +20,7 @@ class AlertsScreen extends StatefulWidget {
 
 class _AlertsScreenState extends State<AlertsScreen> {
   final LocationService _locationService = LocationService();
+  final _radarTabKey = GlobalKey<_RadarTabState>();
   Position? _currentPosition;
   String _currentCity = '...';
 
@@ -74,7 +74,7 @@ class _AlertsScreenState extends State<AlertsScreen> {
             ),
             body: TabBarView(
               children: [
-                _RadarTab(currentUserId: AuthService.currentUidSync),
+                _RadarTab(key: _radarTabKey, currentUserId: AuthService.currentUidSync),
                 _NovedadesTab(currentPosition: _currentPosition, city: _currentCity),
               ],
             ),
@@ -92,20 +92,29 @@ class _AlertsScreenState extends State<AlertsScreen> {
         content: const Text('Se eliminarán permanentemente todas tus notificaciones guardadas.'),
         actions: [
           TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancelar')),
-          ElevatedButton(
-            onPressed: () async {
-              final uid = AuthService.currentUidSync;
-              if (uid.isNotEmpty) {
-                await FirestoreService().clearAllUserAlerts(uid);
-              }
-              if (mounted) {
-                Navigator.pop(context);
-                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Historial limpiado.')));
-              }
-            },
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-            child: const Text('Eliminar Todo', style: TextStyle(color: Colors.white)),
-          ),
+              ElevatedButton(
+                onPressed: () async {
+                  final uid = AuthService.currentUidSync;
+                  if (uid.isNotEmpty) {
+                    try {
+                      await FirestoreService().clearAllUserAlerts(uid);
+                      if (mounted) {
+                        Navigator.pop(context);
+                        _radarTabKey.currentState?.refresh();
+                        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Historial limpiado.')));
+                      }
+                    } catch (e) {
+                      if (mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text('Error al limpiar: $e'), backgroundColor: Colors.red),
+                        );
+                      }
+                    }
+                  }
+                },
+                style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+                child: const Text('Eliminar Todo', style: TextStyle(color: Colors.white)),
+              ),
         ],
       ),
     );
@@ -114,7 +123,7 @@ class _AlertsScreenState extends State<AlertsScreen> {
 
 class _RadarTab extends StatefulWidget {
   final String currentUserId;
-  const _RadarTab({required this.currentUserId});
+  const _RadarTab({super.key, required this.currentUserId});
   @override
   State<_RadarTab> createState() => _RadarTabState();
 }
@@ -123,35 +132,65 @@ class _RadarTabState extends State<_RadarTab> with AutomaticKeepAliveClientMixin
   @override
   bool get wantKeepAlive => true;
   final FirestoreService _fs = FirestoreService();
+  UserModel? _currentUser;
+  Stream<List<AlertModel>>? _alertsStream;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUser();
+    _alertsStream = _fs.getUserAlerts(widget.currentUserId);
+  }
+
+  void refresh() {
+    if (mounted) {
+      setState(() {
+        _alertsStream = _fs.getUserAlerts(widget.currentUserId);
+      });
+    }
+  }
+
+  void _loadUser() async {
+    final user = await _fs.getUser(widget.currentUserId);
+    if (mounted) setState(() => _currentUser = user);
+  }
 
   @override
   Widget build(BuildContext context) {
     super.build(context);
-    return StreamBuilder<List<ServiceRequest>>(
-      stream: _fs.getNearbyServiceRequests(userId: widget.currentUserId),
-      builder: (context, requestsSnapshot) {
-        if (requestsSnapshot.hasError) {
-          return Center(child: Text('Error: ${requestsSnapshot.error}'));
+    if (_currentUser == null) return const Center(child: CircularProgressIndicator());
+
+    return StreamBuilder<List<AlertModel>>(
+      stream: _alertsStream,
+      builder: (context, alertsSnapshot) {
+        if (alertsSnapshot.hasError) {
+          return Center(child: Text('Error: ${alertsSnapshot.error}'));
+        }
+        
+        // If we have data, we show it. Even if it's empty.
+        // We only show loading if we have NO data AND we are actually waiting.
+        if (!alertsSnapshot.hasData) {
+          return const Center(child: CircularProgressIndicator());
+        }
+        
+        final alerts = alertsSnapshot.data!;
+        
+        if (alerts.isEmpty) {
+          return _buildEmpty(tr('no_hay_alertas'), Icons.radar, tr('no_hay_alertas_desc'));
         }
 
-        return StreamBuilder<List<AlertModel>>(
-          stream: _fs.getUserAlerts(widget.currentUserId),
-          builder: (context, alertsSnapshot) {
-            if (alertsSnapshot.hasError) {
-              return Center(child: Text('Error: ${alertsSnapshot.error}'));
-            }
-            if (!alertsSnapshot.hasData) return const Center(child: CircularProgressIndicator());
-            final alerts = alertsSnapshot.data!;
-            
-            if (alerts.isEmpty) return _buildEmpty(tr('no_hay_alertas'), Icons.radar, tr('no_hay_alertas_desc'));
-
-            return ListView.separated(
-              padding: const EdgeInsets.symmetric(vertical: 8),
-              itemCount: alerts.length,
-              separatorBuilder: (context, i) => const Divider(height: 1, indent: 76),
-              itemBuilder: (context, i) => _buildAlertItem(context, alerts[i]),
-            );
+        return RefreshIndicator(
+          onRefresh: () async {
+            setState(() {
+              _alertsStream = _fs.getUserAlerts(widget.currentUserId);
+            });
           },
+          child: ListView.separated(
+            padding: const EdgeInsets.symmetric(vertical: 8),
+            itemCount: alerts.length,
+            separatorBuilder: (context, i) => const Divider(height: 1, indent: 76),
+            itemBuilder: (context, i) => _buildAlertItem(context, alerts[i]),
+          ),
         );
       },
     );
@@ -218,33 +257,28 @@ class _NovedadesTabState extends State<_NovedadesTab> with AutomaticKeepAliveCli
   bool get wantKeepAlive => true;
   final FirestoreService _fs = FirestoreService();
   UserModel? _currentUser;
-  StreamSubscription? _userSub;
 
   @override
   void initState() {
     super.initState();
-    final uid = AuthService.currentUidSync;
-    if (uid.isNotEmpty) {
-      _userSub = _fs.getUserStream(uid).listen((user) {
-        if (mounted) setState(() => _currentUser = user);
-      });
-    }
+    _loadUser();
   }
 
-  @override
-  void dispose() {
-    _userSub?.cancel();
-    super.dispose();
+  void _loadUser() async {
+    final String uid = AuthService.currentUidSync;
+    if (uid.isNotEmpty) {
+      final user = await _fs.getUser(uid);
+      if (mounted) setState(() => _currentUser = user);
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     super.build(context);
+    if (_currentUser == null) return const Center(child: CircularProgressIndicator());
+
     return StreamBuilder<List<ServiceRequest>>(
-      stream: _fs.getNearbyServiceRequests(
-        latitude: widget.currentPosition?.latitude,
-        longitude: widget.currentPosition?.longitude,
-      ),
+      stream: _fs.getNearbyServiceRequests(userId: AuthService.currentUidSync),
       builder: (context, snapshot) {
         if (snapshot.hasError) {
           return Center(child: Text('Error: ${snapshot.error}'));

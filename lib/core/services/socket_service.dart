@@ -54,15 +54,7 @@ class SocketService {
     _socket!.onConnectError((e) => print('[Socket] Error: $e'));
   }
 
-  // Temporary disconnect (radar off). Registry is preserved so handlers
-  // survive when connect() is called again.
   void disconnect() {
-    _socket?.disconnect();
-    _socket = null;
-  }
-
-  // Full reset on logout. Clears registry so stale handlers don't carry over.
-  void reset() {
     _registry.clear();
     _socket?.disconnect();
     _socket = null;
@@ -73,26 +65,13 @@ class SocketService {
     _socket?.on(event, handler);
   }
 
-  // Remove a specific handler for an event. When no handler is given,
-  // removes all handlers for that event (legacy behavior).
   void off(String event, [SocketEventHandler? handler]) {
-    if (handler == null) {
-      _registry.remove(event);
-      _socket?.off(event);
-      return;
-    }
-    final handlers = _registry[event];
-    if (handlers == null) return;
-    handlers.remove(handler);
-    if (handlers.isEmpty) {
-      _registry.remove(event);
-      _socket?.off(event);
+    if (handler != null) {
+      _registry[event]?.remove(handler);
+      _socket?.off(event, handler);
     } else {
-      // socket_io_client removes all handlers for event via off(); re-register remaining ones
+      _registry.remove(event);
       _socket?.off(event);
-      for (final h in handlers) {
-        _socket?.on(event, h);
-      }
     }
   }
 

@@ -18,9 +18,11 @@ class FirestoreService {
   final ApiService _api = ApiService();
   final SocketService _socket = SocketService();
 
-  // Singleton broadcast streams per uid — all subscribers share ONE polling loop
+  // Singleton broadcast streams to share data and minimize API requests
   static final Map<String, StreamController<UserModel?>> _userStreamControllers = {};
   static final Map<String, UserModel?> _cachedUserValues = {};
+  static final Map<String, StreamController<List<ServiceRequest>>> _requestStreamControllers = {};
+  static final Map<String, List<ServiceRequest>> _cachedRequestValues = {};
 
   // ─── SERVICE REQUESTS ─────────────────────────────────────────────────────
 
@@ -69,29 +71,82 @@ class FirestoreService {
             .map((e) => ServiceRequest.fromJson(e))
             .toList();
         if (!controller.isClosed) controller.add(list);
-      } catch (e) {
-        if (!controller.isClosed) controller.addError(e);
-      }
+      } catch (_) {}
     }
+
+    void onUpdate(_) => fetchAndEmit();
 
     fetchAndEmit();
 
-    // Store handler references so off() removes only THIS stream's handlers
-    final onCreated = (dynamic _) => fetchAndEmit();
-    final onStatus = (dynamic _) => fetchAndEmit();
-    final onDeleted = (dynamic _) => fetchAndEmit();
-
-    _socket.on('request:created', onCreated);
-    _socket.on('request:status', onStatus);
-    _socket.on('request:deleted', onDeleted);
+    // Listen for new requests via Socket.io
+    _socket.on('request:created', onUpdate);
+    _socket.on('request:status', onUpdate);
+    _socket.on('request:deleted', onUpdate);
 
     controller.onCancel = () {
-      _socket.off('request:created', onCreated);
-      _socket.off('request:status', onStatus);
-      _socket.off('request:deleted', onDeleted);
+      _socket.off('request:created', onUpdate);
+      _socket.off('request:status', onUpdate);
+      _socket.off('request:deleted', onUpdate);
+      if (!controller.isClosed) controller.close();
     };
 
     return controller.stream;
+  }
+
+  Stream<List<ServiceRequest>> getClientRequests(String clientId) {
+    // If the stream controller already exists and is open, trigger a refresh and return it.
+    if (_requestStreamControllers.containsKey(clientId)) {
+      final existing = _requestStreamControllers[clientId]!;
+      if (!existing.isClosed) {
+        // Trigger an asynchronous fetch to update the stream
+        _fetchClientRequests(clientId);
+        return existing.stream;
+      }
+    }
+
+    final controller = StreamController<List<ServiceRequest>>.broadcast();
+    _requestStreamControllers[clientId] = controller;
+
+    _fetchClientRequests(clientId);
+
+    // Named handlers to allow surgical removal
+    void onUpdate(_) => _fetchClientRequests(clientId);
+
+    _socket.on('request:status', onUpdate);
+    _socket.on('request:created', onUpdate);
+    _socket.on('request:cancelled', onUpdate);
+    _socket.on('request:deleted', onUpdate);
+
+    controller.onCancel = () {
+      _socket.off('request:status', onUpdate);
+      _socket.off('request:created', onUpdate);
+      _socket.off('request:cancelled', onUpdate);
+      _socket.off('request:deleted', onUpdate);
+      _requestStreamControllers.remove(clientId);
+      _cachedRequestValues.remove(clientId);
+      if (!controller.isClosed) controller.close();
+    };
+
+    return controller.stream;
+  }
+
+  Future<void> _fetchClientRequests(String clientId) async {
+    final controller = _requestStreamControllers[clientId];
+    if (controller == null || controller.isClosed) return;
+
+    try {
+      final response = await _api.get('/service-requests/my');
+      final list = (response.data as List)
+          .map((e) => ServiceRequest.fromJson(e))
+          .toList();
+      _cachedRequestValues[clientId] = list;
+      if (!controller.isClosed) controller.add(list);
+    } catch (_) {
+      // If we have cached values, we can at least show those
+      if (_cachedRequestValues.containsKey(clientId)) {
+        if (!controller.isClosed) controller.add(_cachedRequestValues[clientId]!);
+      }
+    }
   }
 
   Stream<ServiceRequest?> getServiceRequestStream(String id) {
@@ -108,16 +163,17 @@ class FirestoreService {
       }
     }
 
-    fetchAndEmit();
-    _socket.joinRequest(id);
-
-    final onStatus = (dynamic data) { if (data['requestId'] == id) fetchAndEmit(); };
-    final onAssigned = (dynamic data) {
+    void onStatus(data) {
+      if (data['requestId'] == id) fetchAndEmit();
+    }
+    void onAssigned(data) {
       if (data['_id'] == id || data['id'] == id) {
         if (!controller.isClosed) controller.add(ServiceRequest.fromJson(data));
       }
-    };
+    }
 
+    fetchAndEmit();
+    _socket.joinRequest(id);
     _socket.on('request:status', onStatus);
     _socket.on('request:assigned', onAssigned);
 
@@ -125,6 +181,7 @@ class FirestoreService {
       _socket.leaveRequest(id);
       _socket.off('request:status', onStatus);
       _socket.off('request:assigned', onAssigned);
+      if (!controller.isClosed) controller.close();
     };
 
     return controller.stream;
@@ -140,43 +197,6 @@ class FirestoreService {
   }
 
   Future<ServiceRequest?> getObjectById(String id) => getServiceRequestById(id);
-
-  Stream<List<ServiceRequest>> getClientRequests(String clientId) {
-    final controller = StreamController<List<ServiceRequest>>.broadcast();
-
-    Future<void> fetch() async {
-      try {
-        final response = await _api.get('/service-requests/my');
-        final list = (response.data as List)
-            .map((e) => ServiceRequest.fromJson(e))
-            .toList();
-        if (!controller.isClosed) controller.add(list);
-      } catch (e) {
-        if (!controller.isClosed) controller.addError(e);
-      }
-    }
-
-    fetch();
-
-    final onStatus = (dynamic _) => fetch();
-    final onCreated = (dynamic _) => fetch();
-    final onCancelled = (dynamic _) => fetch();
-    final onDeleted = (dynamic _) => fetch();
-
-    _socket.on('request:status', onStatus);
-    _socket.on('request:created', onCreated);
-    _socket.on('request:cancelled', onCancelled);
-    _socket.on('request:deleted', onDeleted);
-
-    controller.onCancel = () {
-      _socket.off('request:status', onStatus);
-      _socket.off('request:created', onCreated);
-      _socket.off('request:cancelled', onCancelled);
-      _socket.off('request:deleted', onDeleted);
-    };
-
-    return controller.stream;
-  }
 
   Future<void> updateRequestStatus(String requestId, ServiceRequestStatus status) async {
     await _api.put('/service-requests/$requestId/status', data: {'status': status.name});
@@ -246,7 +266,8 @@ class FirestoreService {
         // This prevents the UI from reverting to a loading/error state on blips
       }
       if (!controller.isClosed) {
-        await Future.delayed(const Duration(seconds: 30));
+        // Increased from 30s to 60s since sockets handle real-time updates
+        await Future.delayed(const Duration(seconds: 60));
       }
     }
   }
@@ -303,19 +324,16 @@ class FirestoreService {
     }
 
     fetch();
-
-    final onQuoteNew = (dynamic data) { if (data['quote']?['requestId'] == requestId) fetch(); };
-    final onAccepted = (dynamic _) => fetch();
-    final onRejected = (dynamic _) => fetch();
-
-    _socket.on('quote:new', onQuoteNew);
-    _socket.on('quote:accepted', onAccepted);
-    _socket.on('quote:rejected', onRejected);
+    _socket.on('quote:new', (data) {
+      if (data['quote']?['requestId'] == requestId) fetch();
+    });
+    _socket.on('quote:accepted', (_) => fetch());
+    _socket.on('quote:rejected', (_) => fetch());
 
     controller.onCancel = () {
-      _socket.off('quote:new', onQuoteNew);
-      _socket.off('quote:accepted', onAccepted);
-      _socket.off('quote:rejected', onRejected);
+      _socket.off('quote:new');
+      _socket.off('quote:accepted');
+      _socket.off('quote:rejected');
     };
 
     return controller.stream;
@@ -339,24 +357,37 @@ class FirestoreService {
     final controller = StreamController<List<ChatMessage>>.broadcast();
     final messages = <ChatMessage>[];
 
-    _api.get('/chat/$requestId/messages').then((response) {
-      messages.addAll((response.data as List).map((e) => ChatMessage.fromJson(e)));
-      if (!controller.isClosed) controller.add(List.from(messages));
-    });
-
-    _socket.joinRoom(requestId);
-
-    final onMessage = (dynamic data) {
-      if (data['requestId'] == requestId) {
-        messages.add(ChatMessage.fromJson(data));
-        if (!controller.isClosed) controller.add(List.from(messages));
+    void onMessage(data) {
+      final msgRequestId = data['requestId']?.toString() ?? '';
+      if (msgRequestId == requestId) {
+        // Avoid duplicates: check by id if present
+        final incoming = ChatMessage.fromJson(data);
+        if (!messages.any((m) => m.id.isNotEmpty && m.id == incoming.id)) {
+          messages.add(incoming);
+          if (!controller.isClosed) controller.add(List.from(messages));
+        }
       }
+    }
+
+    controller.onListen = () {
+      _api.get('/chat/$requestId/messages').then((response) {
+        if (!controller.isClosed) {
+          messages.clear();
+          messages.addAll((response.data as List).map((e) => ChatMessage.fromJson(e)));
+          controller.add(List.from(messages));
+        }
+      }).catchError((_) {
+        if (!controller.isClosed) controller.add([]);
+      });
+
+      _socket.joinRoom(requestId);
+      _socket.on('chat:message', onMessage);
     };
-    _socket.on('chat:message', onMessage);
 
     controller.onCancel = () {
       _socket.leaveRoom(requestId);
       _socket.off('chat:message', onMessage);
+      if (!controller.isClosed) controller.close();
     };
 
     return controller.stream;
@@ -384,28 +415,43 @@ class FirestoreService {
     final controller = StreamController<List<AlertModel>>.broadcast();
     final alerts = <AlertModel>[];
 
-    _api.get('/alerts').then((response) {
-      alerts.addAll((response.data as List).map((e) => AlertModel.fromJson(e)));
-      if (!controller.isClosed) controller.add(List.from(alerts));
-    }).catchError((_) {
-      if (!controller.isClosed) controller.add([]);
-    });
+    Future<void> fetch() async {
+      try {
+        final response = await _api.get('/alerts');
+        final list = (response.data as List).map((e) => AlertModel.fromJson(e)).toList();
+        alerts.clear();
+        alerts.addAll(list);
+        if (!controller.isClosed) controller.add(List.from(alerts));
+      } catch (e) {
+        print('[Alerts] Fetch error: $e');
+        if (!controller.isClosed) controller.add([]);
+      }
+    }
 
-    final onAlertNew = (dynamic data) {
-      alerts.insert(0, AlertModel.fromJson(data));
-      if (!controller.isClosed) controller.add(List.from(alerts));
-    };
-    final onAlertsCleared = (dynamic _) {
+    void onNewAlert(data) {
+      try {
+        alerts.insert(0, AlertModel.fromJson(data));
+        if (!controller.isClosed) controller.add(List.from(alerts));
+      } catch (e) {
+        print('[Alerts] onNewAlert error: $e');
+      }
+    }
+
+    void onCleared(_) {
       alerts.clear();
       if (!controller.isClosed) controller.add(List.from(alerts));
+    }
+
+    controller.onListen = () {
+      fetch();
+      _socket.on('alert:new', onNewAlert);
+      _socket.on('alerts:cleared', onCleared);
     };
 
-    _socket.on('alert:new', onAlertNew);
-    _socket.on('alerts:cleared', onAlertsCleared);
-
     controller.onCancel = () {
-      _socket.off('alert:new', onAlertNew);
-      _socket.off('alerts:cleared', onAlertsCleared);
+      _socket.off('alert:new', onNewAlert);
+      _socket.off('alerts:cleared', onCleared);
+      if (!controller.isClosed) controller.close();
     };
 
     return controller.stream;
@@ -663,25 +709,18 @@ class FirestoreService {
     }
 
     fetch();
-
-    final onQNew1 = (dynamic _) => fetch();
-    final onQAcc1 = (dynamic _) => fetch();
-    final onQRej1 = (dynamic _) => fetch();
-    final onQStat1 = (dynamic _) => fetch();
-    final onReqCan1 = (dynamic _) => fetch();
-
-    _socket.on('quote:new', onQNew1);
-    _socket.on('quote:accepted', onQAcc1);
-    _socket.on('quote:rejected', onQRej1);
-    _socket.on('quote:status', onQStat1);
-    _socket.on('request:cancelled', onReqCan1);
+    _socket.on('quote:new', (_) => fetch());
+    _socket.on('quote:accepted', (_) => fetch());
+    _socket.on('quote:rejected', (_) => fetch());
+    _socket.on('quote:status', (_) => fetch());
+    _socket.on('request:cancelled', (_) => fetch());
 
     controller.onCancel = () {
-      _socket.off('quote:new', onQNew1);
-      _socket.off('quote:accepted', onQAcc1);
-      _socket.off('quote:rejected', onQRej1);
-      _socket.off('quote:status', onQStat1);
-      _socket.off('request:cancelled', onReqCan1);
+      _socket.off('quote:new');
+      _socket.off('quote:accepted');
+      _socket.off('quote:rejected');
+      _socket.off('quote:status');
+      _socket.off('request:cancelled');
     };
 
     return controller.stream;
@@ -700,26 +739,22 @@ class FirestoreService {
       }
     }
 
+    void onQuoteEvent(_) => fetch();
+
     fetch();
-
-    final onQNew2 = (dynamic _) => fetch();
-    final onQAcc2 = (dynamic _) => fetch();
-    final onQRej2 = (dynamic _) => fetch();
-    final onQStat2 = (dynamic _) => fetch();
-    final onReqCan2 = (dynamic _) => fetch();
-
-    _socket.on('quote:new', onQNew2);
-    _socket.on('quote:accepted', onQAcc2);
-    _socket.on('quote:rejected', onQRej2);
-    _socket.on('quote:status', onQStat2);
-    _socket.on('request:cancelled', onReqCan2);
+    _socket.on('quote:new', onQuoteEvent);
+    _socket.on('quote:accepted', onQuoteEvent);
+    _socket.on('quote:rejected', onQuoteEvent);
+    _socket.on('quote:status', onQuoteEvent);
+    _socket.on('request:cancelled', onQuoteEvent);
 
     controller.onCancel = () {
-      _socket.off('quote:new', onQNew2);
-      _socket.off('quote:accepted', onQAcc2);
-      _socket.off('quote:rejected', onQRej2);
-      _socket.off('quote:status', onQStat2);
-      _socket.off('request:cancelled', onReqCan2);
+      _socket.off('quote:new', onQuoteEvent);
+      _socket.off('quote:accepted', onQuoteEvent);
+      _socket.off('quote:rejected', onQuoteEvent);
+      _socket.off('quote:status', onQuoteEvent);
+      _socket.off('request:cancelled', onQuoteEvent);
+      if (!controller.isClosed) controller.close();
     };
 
     return controller.stream;
@@ -769,19 +804,14 @@ class FirestoreService {
     }
 
     fetch();
-
-    final onCreatedDirect = (dynamic _) => fetch();
-    final onStatusDirect = (dynamic _) => fetch();
-    final onDeletedDirect = (dynamic _) => fetch();
-
-    _socket.on('request:created', onCreatedDirect);
-    _socket.on('request:status', onStatusDirect);
-    _socket.on('request:deleted', onDeletedDirect);
+    _socket.on('request:created', (_) => fetch());
+    _socket.on('request:status', (_) => fetch());
+    _socket.on('request:deleted', (_) => fetch());
 
     controller.onCancel = () {
-      _socket.off('request:created', onCreatedDirect);
-      _socket.off('request:status', onStatusDirect);
-      _socket.off('request:deleted', onDeletedDirect);
+      _socket.off('request:created');
+      _socket.off('request:status');
+      _socket.off('request:deleted');
     };
 
     return controller.stream;
@@ -802,7 +832,23 @@ class FirestoreService {
       }
     }
 
+    void onUpdate(_) => fetch();
+
     fetch();
+    _socket.on('request:status', onUpdate);
+    _socket.on('request:assigned', onUpdate);
+    _socket.on('request:created', onUpdate);
+    _socket.on('quote:accepted', onUpdate);
+    _socket.on('quote:status', onUpdate);
+
+    controller.onCancel = () {
+      _socket.off('request:status', onUpdate);
+      _socket.off('request:assigned', onUpdate);
+      _socket.off('request:created', onUpdate);
+      _socket.off('quote:accepted', onUpdate);
+      _socket.off('quote:status', onUpdate);
+      if (!controller.isClosed) controller.close();
+    };
 
     return controller.stream;
   }
@@ -814,15 +860,13 @@ class FirestoreService {
   }
 
   Future<void> cancelAssignment(String requestId) async {
-    try {
-      await _api.put('/service-requests/$requestId/cancel-assignment');
-    } catch (_) {}
+    await _api.put('/service-requests/$requestId/cancel-assignment');
   }
 
-  Future<void> finishWorkByTechnician(String requestId) async {
-    try {
-      await _api.put('/service-requests/$requestId/finish');
-    } catch (_) {}
+  Future<void> finishWorkByTechnician(String requestId, [String? completionPhotoUrl]) async {
+    await _api.put('/service-requests/$requestId/finish', data: {
+      if (completionPhotoUrl != null) 'completionPhotoUrl': completionPhotoUrl,
+    });
   }
 
   Future<void> completeService(String requestId, [String? photoUrl]) async {
@@ -928,9 +972,7 @@ class FirestoreService {
   }
 
   Future<void> clearAllUserAlerts(String userId) async {
-    try {
-      await _api.delete('/alerts/clear-all');
-    } catch (_) {}
+    await _api.delete('/alerts/clear-all');
   }
 
   // ─── MISC STUBS ───────────────────────────────────────────────────────────

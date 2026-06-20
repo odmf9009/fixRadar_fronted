@@ -34,49 +34,67 @@ class _ClientRequestsScreenState extends State<ClientRequestsScreen> {
         elevation: 0,
         centerTitle: true,
       ),
-      body: StreamBuilder<List<ServiceRequest>>(
-        stream: _requestsStream,
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator(color: Color(0xFFFF8A00)));
-          }
-
-          final allRequests = snapshot.data ?? [];
-          
-          // Filter out cancelled and completed from THIS specific view
-          final requests = allRequests.where((r) => 
-            r.status != ServiceRequestStatus.cancelled && 
-            r.status != ServiceRequestStatus.completed
-          ).toList();
-
-          if (requests.isEmpty) {
-            return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.assignment_outlined, size: 64, color: Colors.grey[300]),
-                  const SizedBox(height: 16),
-                  const Text('Aún no has publicado pedidos', style: TextStyle(color: Colors.grey, fontSize: 16)),
-                  const SizedBox(height: 24),
-                  ElevatedButton(
-                    onPressed: () => Navigator.pushNamed(context, AppRoutes.publish),
-                    style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFFF8A00)),
-                    child: const Text('Publicar primer pedido', style: TextStyle(color: Colors.white)),
-                  ),
-                ],
-              ),
-            );
-          }
-
-          return ListView.builder(
-            padding: const EdgeInsets.all(16),
-            itemCount: requests.length,
-            itemBuilder: (context, index) {
-              final request = requests[index];
-              return _buildRequestCard(request);
-            },
-          );
+      body: RefreshIndicator(
+        onRefresh: () async {
+          setState(() {
+            _requestsStream = _firestoreService.getClientRequests(_currentUserId);
+          });
         },
+        color: const Color(0xFFFF8A00),
+        child: StreamBuilder<List<ServiceRequest>>(
+          stream: _requestsStream,
+          builder: (context, snapshot) {
+            if (snapshot.hasError) {
+              return Center(child: Text('Error: ${snapshot.error}'));
+            }
+
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return const Center(child: CircularProgressIndicator(color: Color(0xFFFF8A00)));
+            }
+
+            final allRequests = snapshot.data ?? [];
+            
+            // Filter out cancelled and completed from THIS specific view
+            final requests = allRequests.where((r) => 
+              r.status != ServiceRequestStatus.cancelled && 
+              r.status != ServiceRequestStatus.completed
+            ).toList();
+
+            if (requests.isEmpty) {
+              return SingleChildScrollView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                child: Container(
+                  height: MediaQuery.of(context).size.height * 0.7,
+                  alignment: Alignment.center,
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.assignment_outlined, size: 64, color: Colors.grey[300]),
+                      const SizedBox(height: 16),
+                      const Text('Aún no has publicado pedidos', style: TextStyle(color: Colors.grey, fontSize: 16)),
+                      const SizedBox(height: 24),
+                      ElevatedButton(
+                        onPressed: () => Navigator.pushNamed(context, AppRoutes.publish),
+                        style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFFF8A00)),
+                        child: const Text('Publicar primer pedido', style: TextStyle(color: Colors.white)),
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            }
+
+            return ListView.builder(
+              physics: const AlwaysScrollableScrollPhysics(),
+              padding: const EdgeInsets.all(16),
+              itemCount: requests.length,
+              itemBuilder: (context, index) {
+                final request = requests[index];
+                return _buildRequestCard(request);
+              },
+            );
+          },
+        ),
       ),
     );
   }
@@ -182,11 +200,29 @@ class _ClientRequestsScreenState extends State<ClientRequestsScreen> {
                 Row(
                   children: [
                     if (request.technicianId != null) ...[
-                      const Icon(Icons.engineering_outlined, size: 16, color: Colors.green),
-                      const SizedBox(width: 4),
-                      const Text(
-                        'Técnico trabajando',
-                        style: TextStyle(color: Colors.green, fontWeight: FontWeight.bold, fontSize: 13),
+                      CircleAvatar(
+                        radius: 12,
+                        backgroundImage: request.technicianPhotoUrl != null ? NetworkImage(request.technicianPhotoUrl!) : null,
+                        child: request.technicianPhotoUrl == null ? const Icon(Icons.person, size: 12) : null,
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              request.technicianName ?? 'Técnico asignado',
+                              style: const TextStyle(color: Colors.green, fontWeight: FontWeight.bold, fontSize: 13),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            if (request.budget != null)
+                              Text(
+                                'Por \$${request.budget!.toInt()}',
+                                style: TextStyle(color: Colors.grey[600], fontSize: 11),
+                              ),
+                          ],
+                        ),
                       ),
                     ] else if (request.responsesCount > 0) ...[
                     const Icon(Icons.people_outline, size: 16, color: Color(0xFFFF8A00)),
@@ -203,18 +239,20 @@ class _ClientRequestsScreenState extends State<ClientRequestsScreen> {
                     const SizedBox(width: 4),
                     const Text('Buscando técnicos...', style: TextStyle(color: Colors.grey, fontSize: 13)),
                   ],
-                  const Spacer(),
-                  if (request.status == ServiceRequestStatus.assigned || request.status == ServiceRequestStatus.inProgress)
+                  if (request.status == ServiceRequestStatus.assigned || request.status == ServiceRequestStatus.inProgress) ...[
+                    const Spacer(),
                     Stack(
                       children: [
                         IconButton(
                           onPressed: () => Navigator.pushNamed(context, AppRoutes.chat, arguments: request),
                           icon: const Icon(Icons.chat_bubble_outline, color: Color(0xFFFF8A00)),
+                          constraints: const BoxConstraints(),
+                          padding: const EdgeInsets.all(8),
                         ),
                         if (hasUnread)
                           Positioned(
-                            right: 10,
-                            top: 10,
+                            right: 4,
+                            top: 4,
                             child: Container(
                               width: 10,
                               height: 10,
@@ -223,6 +261,7 @@ class _ClientRequestsScreenState extends State<ClientRequestsScreen> {
                           ),
                       ],
                     ),
+                  ],
                 ],
               ),
             ],
@@ -241,10 +280,11 @@ class _ClientRequestsScreenState extends State<ClientRequestsScreen> {
         border: Border.all(color: Colors.blue[100]!),
       ),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              const Icon(Icons.info_outline, color: Colors.blue, size: 20),
+              const Icon(Icons.check_circle_outline, color: Colors.blue, size: 20),
               const SizedBox(width: 8),
               const Expanded(
                 child: Text(
@@ -254,6 +294,22 @@ class _ClientRequestsScreenState extends State<ClientRequestsScreen> {
               ),
             ],
           ),
+          if (request.completionPhotoUrl != null) ...[
+            const SizedBox(height: 10),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(8),
+              child: Image.network(
+                request.completionPhotoUrl!,
+                height: 160,
+                width: double.infinity,
+                fit: BoxFit.cover,
+                loadingBuilder: (_, child, progress) => progress == null
+                    ? child
+                    : const SizedBox(height: 160, child: Center(child: CircularProgressIndicator())),
+                errorBuilder: (_, __, ___) => const SizedBox.shrink(),
+              ),
+            ),
+          ],
           const SizedBox(height: 12),
           Row(
             children: [
@@ -276,7 +332,7 @@ class _ClientRequestsScreenState extends State<ClientRequestsScreen> {
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                     elevation: 0,
                   ),
-                  child: const Text('Confirmar', style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold)),
+                  child: const Text('Confirmar finalización', style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold)),
                 ),
               ),
             ],
@@ -291,7 +347,37 @@ class _ClientRequestsScreenState extends State<ClientRequestsScreen> {
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('¿Confirmar finalización?'),
-        content: const Text('Al confirmar, el pedido se cerrará definitivamente y podrás calificar al técnico.'),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              if (request.completionPhotoUrl != null) ...[
+                const Text(
+                  'Foto del trabajo terminado:',
+                  style: TextStyle(fontSize: 12, color: Colors.grey),
+                ),
+                const SizedBox(height: 8),
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(10),
+                  child: Image.network(
+                    request.completionPhotoUrl!,
+                    fit: BoxFit.cover,
+                    loadingBuilder: (_, child, progress) => progress == null
+                        ? child
+                        : const SizedBox(
+                            height: 160,
+                            child: Center(child: CircularProgressIndicator()),
+                          ),
+                    errorBuilder: (_, __, ___) => const SizedBox.shrink(),
+                  ),
+                ),
+                const SizedBox(height: 12),
+              ],
+              const Text('Al confirmar, el pedido se cerrará definitivamente y podrás calificar al técnico.'),
+            ],
+          ),
+        ),
         actions: [
           TextButton(onPressed: () => Navigator.pop(context), child: const Text('Revisar más')),
           ElevatedButton(

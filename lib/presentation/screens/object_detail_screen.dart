@@ -118,8 +118,11 @@ class _RequestDetailScreenState extends State<RequestDetailScreen> {
                           const SizedBox(height: 24),
                           _buildDescription(request),
                           const SizedBox(height: 24),
-                          if (request.status == ServiceRequestStatus.assigned || request.status == ServiceRequestStatus.inProgress)
+                          if (request.status == ServiceRequestStatus.assigned || request.status == ServiceRequestStatus.inProgress || request.status == ServiceRequestStatus.finishedByTechnician) ...[
                             _buildAcceptedBudget(request),
+                            const SizedBox(height: 16),
+                            _buildAssignedTechnicianCard(request),
+                          ],
                           if (isClient && _selectedQuote != null && request.status == ServiceRequestStatus.open)
                             _buildSelectedQuoteBanner(request),
                           const SizedBox(height: 32),
@@ -505,6 +508,8 @@ class _RequestDetailScreenState extends State<RequestDetailScreen> {
     }
 
     if (isClient) {
+      final String techName = request.technicianName ?? 'Técnico';
+      
       return Column(
         children: [
           if (request.status == ServiceRequestStatus.finishedByTechnician) ...[
@@ -515,17 +520,21 @@ class _RequestDetailScreenState extends State<RequestDetailScreen> {
               style: ElevatedButton.styleFrom(backgroundColor: Colors.green, minimumSize: const Size(double.infinity, 56)),
             ),
             const SizedBox(height: 12),
+            _buildAssignedTechnicianCard(request),
+            const SizedBox(height: 12),
             OutlinedButton.icon(
               onPressed: () => Navigator.pushNamed(context, AppRoutes.chat, arguments: request),
               icon: const Icon(Icons.chat_bubble_outline),
-              label: const Text('Chat con el Técnico'),
+              label: Text('Chatear con $techName'),
               style: OutlinedButton.styleFrom(minimumSize: const Size(double.infinity, 56)),
             ),
           ] else if (request.status == ServiceRequestStatus.assigned || request.status == ServiceRequestStatus.inProgress) ...[
+            _buildAssignedTechnicianCard(request),
+            const SizedBox(height: 20),
             ElevatedButton.icon(
               onPressed: () => Navigator.pushNamed(context, AppRoutes.chat, arguments: request),
               icon: const Icon(Icons.chat_bubble_outline),
-              label: const Text('Chat con el Técnico'),
+              label: Text('Chatear con $techName'),
               style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF1976D2), minimumSize: const Size(double.infinity, 56)),
             ),
             if (request.status == ServiceRequestStatus.assigned) ...[
@@ -746,13 +755,21 @@ class _RequestDetailScreenState extends State<RequestDetailScreen> {
                         if (serverError.contains('already sent')) {
                           errorMsg = 'Ya has enviado una propuesta para este pedido.';
                           final quote = await _firestoreService.getQuoteByTechnician(request.id, _currentUserId);
-                          if (mounted) setState(() => _myQuote = quote);
+                          if (mounted) {
+                            setState(() => _myQuote = quote);
+                            Navigator.pop(context); // Also close if already exists
+                          }
                         } else {
                           errorMsg = serverData['error'].toString();
                         }
                       }
                     } else if (e.toString().contains('already sent')) {
                       errorMsg = 'Ya has enviado una propuesta para este pedido.';
+                      if (mounted) {
+                        final quote = await _firestoreService.getQuoteByTechnician(request.id, _currentUserId);
+                        setState(() => _myQuote = quote);
+                        Navigator.pop(context);
+                      }
                     }
                     
                     if (context.mounted) {
@@ -882,8 +899,22 @@ class _RequestDetailScreenState extends State<RequestDetailScreen> {
             onPressed: () async {
               Navigator.pop(context);
               setState(() => _isLoading = true);
-              await _firestoreService.cancelAssignment(request.id);
-              setState(() => _isLoading = false);
+              try {
+                await _firestoreService.cancelAssignment(request.id);
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Asignación cancelada. El pedido vuelve a estar abierto.'))
+                  );
+                }
+              } catch (e) {
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red)
+                  );
+                }
+              } finally {
+                if (mounted) setState(() => _isLoading = false);
+              }
             },
             style: ElevatedButton.styleFrom(backgroundColor: Colors.orange),
             child: const Text('Sí, cancelar'),
@@ -904,14 +935,35 @@ class _RequestDetailScreenState extends State<RequestDetailScreen> {
           ElevatedButton(
             onPressed: () async {
               Navigator.pop(context);
-              final XFile? pickedFile = await _picker.pickImage(source: ImageSource.camera, imageQuality: 50);
-              if (pickedFile != null) {
-                setState(() => _isLoading = true);
-                final url = await _uploadService.uploadObjectImage(File(pickedFile.path));
-                await _firestoreService.completeService(request.id, url);
-                setState(() => _isLoading = false);
+              
+              final XFile? pickedFile = await _picker.pickImage(
+                source: ImageSource.camera, 
+                imageQuality: 50
+              );
+
+              if (pickedFile == null) return;
+
+              setState(() => _isLoading = true);
+              try {
+                final String? photoUrl = await _uploadService.uploadObjectImage(File(pickedFile.path));
+                await _firestoreService.finishWorkByTechnician(request.id, photoUrl);
+                
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Trabajo marcado como finalizado con foto. Esperando confirmación del cliente.'))
+                  );
+                }
+              } catch (e) {
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Error al finalizar: $e'), backgroundColor: Colors.red)
+                  );
+                }
+              } finally {
+                if (mounted) setState(() => _isLoading = false);
               }
             },
+            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFFF8A00)),
             child: const Text('Tomar Foto y Finalizar'),
           ),
         ],
@@ -999,5 +1051,76 @@ class _RequestDetailScreenState extends State<RequestDetailScreen> {
     if (diff.inMinutes < 60) return '${diff.inMinutes} m';
     if (diff.inHours < 24) return '${diff.inHours} h';
     return '${diff.inDays} d';
+  }
+
+  Widget _buildAssignedTechnicianCard(ServiceRequest request) {
+    if (request.technicianId == null) return const SizedBox();
+
+    return FutureBuilder<UserModel?>(
+      future: _firestoreService.getUser(request.technicianId!),
+      builder: (context, snapshot) {
+        final tech = snapshot.data;
+        final String name = tech?.displayName ?? request.technicianName ?? 'Técnico';
+        final String? photo = tech?.profileImageUrl ?? request.technicianPhotoUrl;
+        final String specialty = tech?.specialties.isNotEmpty == true ? tech!.specialties.first : request.category;
+        final double rating = tech?.rating ?? 5.0;
+
+        return Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: Colors.grey[200]!),
+            boxShadow: [
+              BoxShadow(color: Colors.black.withValues(alpha: 0.03), blurRadius: 10, offset: const Offset(0, 4))
+            ],
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Row(
+                children: [
+                  Icon(Icons.engineering_outlined, size: 16, color: Color(0xFFFF8A00)),
+                  SizedBox(width: 8),
+                  Text('Técnico asignado', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Color(0xFFFF8A00))),
+                ],
+              ),
+              const SizedBox(height: 16),
+              Row(
+                children: [
+                  CircleAvatar(
+                    radius: 24,
+                    backgroundImage: photo != null && photo.isNotEmpty ? NetworkImage(photo) : null,
+                    backgroundColor: Colors.grey[200],
+                    child: photo == null || photo.isEmpty ? const Icon(Icons.person, color: Colors.grey) : null,
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(name, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                        Text(specialty, style: TextStyle(color: Colors.grey[600], fontSize: 13)),
+                      ],
+                    ),
+                  ),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(color: Colors.amber[50], borderRadius: BorderRadius.circular(8)),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.star, size: 14, color: Colors.amber),
+                        const SizedBox(width: 4),
+                        Text(rating.toStringAsFixed(1), style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: Colors.amber)),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        );
+      },
+    );
   }
 }

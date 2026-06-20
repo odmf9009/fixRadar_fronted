@@ -47,6 +47,13 @@ class ApiService {
           await prefs.remove('backend_jwt');
           FirebaseAuth.instance.signOut();
         }
+
+        if (error.response?.statusCode == 429) {
+          print('[API] Rate limit exceeded (429)');
+          // Silently skip if it's a polling background request to avoid annoying the user
+          // But we log it for debugging.
+        }
+
         handler.next(error);
       },
     ));
