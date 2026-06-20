@@ -43,9 +43,17 @@ class ApiService {
       },
       onError: (error, handler) async {
         if (error.response?.statusCode == 401) {
-          final prefs = await SharedPreferences.getInstance();
-          await prefs.remove('backend_jwt');
-          FirebaseAuth.instance.signOut();
+          // Only sign out if the request actually carried an auth token.
+          // Requests made before login (e.g. FCM token upload at app start)
+          // arrive without Authorization header and should not trigger sign-out.
+          final hadAuth = error.requestOptions.headers.containsKey('Authorization');
+          if (hadAuth) {
+            final prefs = await SharedPreferences.getInstance();
+            await prefs.remove('backend_jwt');
+            if (FirebaseAuth.instance.currentUser != null) {
+              await FirebaseAuth.instance.signOut();
+            }
+          }
         }
 
         if (error.response?.statusCode == 429) {

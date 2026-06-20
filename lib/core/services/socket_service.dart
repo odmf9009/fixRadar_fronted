@@ -11,14 +11,13 @@ class SocketService {
   SocketService._internal();
 
   io.Socket? _socket;
+  String? _connectedToken;
   bool get isConnected => _socket?.connected ?? false;
 
   // Registry so handlers survive socket reconnects
   final Map<String, List<SocketEventHandler>> _registry = {};
 
   Future<void> connect() async {
-    if (isConnected) return;
-
     String? token;
 
     final firebaseUser = FirebaseAuth.instance.currentUser;
@@ -31,6 +30,16 @@ class SocketService {
 
     if (token == null) return;
 
+    // Already connected with the same token — nothing to do.
+    if (isConnected && _connectedToken == token) return;
+
+    // Different token (e.g. re-login after session expiry) — reconnect.
+    if (_socket != null) {
+      _socket?.disconnect();
+      _socket = null;
+    }
+
+    _connectedToken = token;
     _socket = io.io(
       AppConfig.socketUrl,
       io.OptionBuilder()
@@ -57,12 +66,14 @@ class SocketService {
   // Temporary disconnect (radar off). Registry is preserved so handlers
   // survive when connect() is called again.
   void disconnect() {
+    _connectedToken = null;
     _socket?.disconnect();
     _socket = null;
   }
 
   // Full reset on logout. Clears registry so stale handlers don't carry over.
   void reset() {
+    _connectedToken = null;
     _registry.clear();
     _socket?.disconnect();
     _socket = null;
