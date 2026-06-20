@@ -340,11 +340,15 @@ class FirestoreService {
     });
     _socket.on('quote:accepted', (_) => fetch());
     _socket.on('quote:rejected', (_) => fetch());
+    _socket.on('quote:counter_offer', (_) => fetch());
+    _socket.on('quote:withdrawn', (_) => fetch());
 
     controller.onCancel = () {
       _socket.off('quote:new');
       _socket.off('quote:accepted');
       _socket.off('quote:rejected');
+      _socket.off('quote:counter_offer');
+      _socket.off('quote:withdrawn');
     };
 
     return controller.stream;
