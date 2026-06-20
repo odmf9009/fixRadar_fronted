@@ -111,38 +111,21 @@ class _TechnicianClientsScreenState extends State<TechnicianClientsScreen> {
                       orElse: () => Quote(id: '', requestId: reqId, clientId: '', technicianId: '', technicianName: '', technicianRating: 5, minPrice: 0, maxPrice: 0, message: '', createdAt: DateTime.now())
                     );
 
-                    final bool quoteAccepted = myQuote.status == QuoteStatus.accepted;
-                    final bool quoteRejected = myQuote.status == QuoteStatus.rejected ||
-                                               myQuote.status == QuoteStatus.final_rejected ||
-                                               myQuote.status == QuoteStatus.cancelled;
-                    
-                    // Fallback comparison: String or contains (for robustness)
-                    final bool isAssignedToMe = req.technicianId?.toString() == _currentUserId || 
-                                                (req.technicianName != null && req.technicianName!.contains('Koisam'));
-                                                
+                    // A request is active if it's NOT completed and NOT cancelled
                     final bool isFinished = req.status == ServiceRequestStatus.completed ||
                                            req.status == ServiceRequestStatus.cancelled;
 
-                    // If it is "In Progress" (En curso), it MUST be active if it's assigned to me
-                    if (req.status == ServiceRequestStatus.inProgress || req.status == ServiceRequestStatus.assigned || req.status == ServiceRequestStatus.finishedByTechnician) {
-                       if (isAssignedToMe || quoteAccepted) {
-                         activeRequests.add(req);
-                         continue;
-                       }
-                    }
+                    // technician is involved if assigned, interested, or quoted
+                    final bool isInvolved = req.technicianId == _currentUserId || 
+                                           req.interestedTechnicians.contains(_currentUserId) ||
+                                           myQuote.id.isNotEmpty ||
+                                           (req.technicianName != null && req.technicianName!.contains('Koisam'));
 
-                    if (quoteAccepted || isAssignedToMe) {
-                      // My accepted/assigned job
-                      if (!isFinished) {
-                        activeRequests.add(req);
-                      } else {
-                        historyRequests.add(req);
-                      }
-                    } else if (quoteRejected || isFinished) {
-                      // Rejected proposal or finished job I was involved in
+                    if (!isInvolved) continue;
+
+                    if (isFinished) {
                       historyRequests.add(req);
-                    } else if (req.status == ServiceRequestStatus.open) {
-                      // If I sent a quote and it's still open, show it in Active
+                    } else {
                       activeRequests.add(req);
                     }
                   }
@@ -401,7 +384,7 @@ class _TechnicianClientsScreenState extends State<TechnicianClientsScreen> {
                               style: TextStyle(
                                 fontWeight: hasUnread ? FontWeight.bold : FontWeight.w600,
                                 fontSize: 16,
-                                color: const Color(0xFFFF8A00),
+                                color: Colors.blueGrey[800],
                               ),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
@@ -475,15 +458,16 @@ class _TechnicianClientsScreenState extends State<TechnicianClientsScreen> {
   }
 
   Widget _buildActionRow(ServiceRequest request, Quote myQuote, String currentUserId) {
-    final bool isAssigned = request.technicianId?.toString() == currentUserId || myQuote.status == QuoteStatus.accepted;
+    final bool isAssigned = request.technicianId == currentUserId || myQuote.status == QuoteStatus.accepted;
     final bool isRejected = myQuote.status == QuoteStatus.rejected || myQuote.status == QuoteStatus.final_rejected;
 
     if (isRejected) {
       return Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          const SizedBox(width: 8),
-          const Text('❌ Propuesta Rechazada', style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold, fontSize: 12)),
-          const Spacer(),
+          const Expanded(
+            child: Text('❌ Propuesta Rechazada', style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold, fontSize: 12)),
+          ),
           TextButton.icon(
             onPressed: () => Navigator.pushNamed(context, AppRoutes.chat, arguments: request),
             icon: const Icon(Icons.history, size: 18),
@@ -495,29 +479,36 @@ class _TechnicianClientsScreenState extends State<TechnicianClientsScreen> {
     }
 
     return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        TextButton.icon(
-          onPressed: () => Navigator.pushNamed(context, AppRoutes.requestDetail, arguments: request),
-          icon: const Icon(Icons.visibility_outlined, size: 18),
-          label: const Text('Ver detalle'),
-        ),
-        const Spacer(),
-        if (isAssigned && (request.status == ServiceRequestStatus.assigned || request.status == ServiceRequestStatus.inProgress || myQuote.status == QuoteStatus.accepted)) ...[
-          IconButton(
-            onPressed: () => Navigator.pushNamed(context, AppRoutes.chat, arguments: request),
-            icon: const Icon(Icons.chat_bubble_outline, color: Color(0xFFFF8A00)),
-            tooltip: 'Chat con cliente',
+        Flexible(
+          child: TextButton.icon(
+            onPressed: () => Navigator.pushNamed(context, AppRoutes.requestDetail, arguments: request),
+            icon: const Icon(Icons.visibility_outlined, size: 18),
+            label: const Text('Ver detalle', overflow: TextOverflow.ellipsis),
           ),
-          const SizedBox(width: 4),
-          ElevatedButton(
-            onPressed: () => _confirmFinishWork(request),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.green,
-              foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(horizontal: 12),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-            ),
-            child: const Text('Finalizar trabajo', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+        ),
+        if (isAssigned && (request.status == ServiceRequestStatus.assigned || request.status == ServiceRequestStatus.inProgress || myQuote.status == QuoteStatus.accepted)) ...[
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              IconButton(
+                onPressed: () => Navigator.pushNamed(context, AppRoutes.chat, arguments: request),
+                icon: const Icon(Icons.chat_bubble_outline, color: Color(0xFFFF8A00)),
+                tooltip: 'Chat con cliente',
+              ),
+              const SizedBox(width: 4),
+              ElevatedButton(
+                onPressed: () => _confirmFinishWork(request),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.green,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                ),
+                child: const Text('Finalizar trabajo', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+              ),
+            ],
           ),
         ] else if (request.status == ServiceRequestStatus.open) ...[
           TextButton.icon(
