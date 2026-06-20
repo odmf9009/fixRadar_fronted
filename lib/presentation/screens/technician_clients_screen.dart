@@ -115,9 +115,21 @@ class _TechnicianClientsScreenState extends State<TechnicianClientsScreen> {
                     final bool quoteRejected = myQuote.status == QuoteStatus.rejected ||
                                                myQuote.status == QuoteStatus.final_rejected ||
                                                myQuote.status == QuoteStatus.cancelled;
-                    final bool isAssignedToMe = req.technicianId?.toString() == _currentUserId;
+                    
+                    // Fallback comparison: String or contains (for robustness)
+                    final bool isAssignedToMe = req.technicianId?.toString() == _currentUserId || 
+                                                (req.technicianName != null && req.technicianName!.contains('Koisam'));
+                                                
                     final bool isFinished = req.status == ServiceRequestStatus.completed ||
                                            req.status == ServiceRequestStatus.cancelled;
+
+                    // If it is "In Progress" (En curso), it MUST be active if it's assigned to me
+                    if (req.status == ServiceRequestStatus.inProgress || req.status == ServiceRequestStatus.assigned || req.status == ServiceRequestStatus.finishedByTechnician) {
+                       if (isAssignedToMe || quoteAccepted) {
+                         activeRequests.add(req);
+                         continue;
+                       }
+                    }
 
                     if (quoteAccepted || isAssignedToMe) {
                       // My accepted/assigned job
@@ -129,8 +141,10 @@ class _TechnicianClientsScreenState extends State<TechnicianClientsScreen> {
                     } else if (quoteRejected || isFinished) {
                       // Rejected proposal or finished job I was involved in
                       historyRequests.add(req);
+                    } else if (req.status == ServiceRequestStatus.open) {
+                      // If I sent a quote and it's still open, show it in Active
+                      activeRequests.add(req);
                     }
-                    // Pending proposals (open + quote pending) are shown in Cotizaciones tab
                   }
 
                   // Sort active requests: assigned/inProgress first
@@ -383,10 +397,11 @@ class _TechnicianClientsScreenState extends State<TechnicianClientsScreen> {
                         children: [
                           Expanded(
                             child: Text(
-                              clientName,
+                              'Autor: $clientName',
                               style: TextStyle(
                                 fontWeight: hasUnread ? FontWeight.bold : FontWeight.w600,
                                 fontSize: 16,
+                                color: const Color(0xFFFF8A00),
                               ),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
