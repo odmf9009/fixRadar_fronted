@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/user_model.dart';
@@ -73,6 +74,7 @@ class AuthService {
       });
       final user = UserModel.fromJson(response.data['user']);
       await _socket.connect();
+      await _uploadFcmToken();
       return user;
     } catch (e) {
       print('Error en _syncGoogleWithBackend: $e');
@@ -113,6 +115,7 @@ class AuthService {
       final user = UserModel.fromJson(response.data['user']);
       await _saveBackendUserId(user.id);
       await _socket.connect();
+      await _uploadFcmToken();
       return user;
     } catch (e) {
       print('Error en signUpWithEmailBackend: $e');
@@ -133,6 +136,7 @@ class AuthService {
       final user = UserModel.fromJson(response.data['user']);
       await _saveBackendUserId(user.id);
       await _socket.connect();
+      await _uploadFcmToken();
       return user;
     } catch (e) {
       print('Error en signInWithEmailBackend: $e');
@@ -143,7 +147,7 @@ class AuthService {
   // ─── Session management ──────────────────────────────────────────────────────
 
   Future<void> signOut() async {
-    _socket.disconnect();
+    _socket.reset();
     await _auth.signOut();
     await _googleSignIn.signOut();
     await _clearBackendToken();
@@ -168,6 +172,7 @@ class AuthService {
       final user = UserModel.fromJson(data['user'] ?? data);
       await _saveBackendUserId(user.id); // populate sync cache for build() methods
       await _socket.connect();
+      await _uploadFcmToken();
       return user;
     } catch (e) {
       await _clearBackendToken();
@@ -178,6 +183,15 @@ class AuthService {
   Future<String?> getBackendToken() async {
     final prefs = await SharedPreferences.getInstance();
     return prefs.getString(_kBackendTokenKey);
+  }
+
+  // Uploads the device's FCM token to the backend.
+  // Must be called AFTER authentication so the JWT is available.
+  Future<void> _uploadFcmToken() async {
+    try {
+      final token = await FirebaseMessaging.instance.getToken();
+      if (token != null) await updateFcmToken(token);
+    } catch (_) {}
   }
 
   Future<void> updateFcmToken(String token) async {

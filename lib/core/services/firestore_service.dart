@@ -76,15 +76,19 @@ class FirestoreService {
 
     fetchAndEmit();
 
-    // Listen for new requests via Socket.io
-    _socket.on('request:created', (_) => fetchAndEmit());
-    _socket.on('request:status', (_) => fetchAndEmit());
-    _socket.on('request:deleted', (_) => fetchAndEmit());
+    // Store handler references so off() removes only THIS stream's handlers
+    final onCreated = (dynamic _) => fetchAndEmit();
+    final onStatus = (dynamic _) => fetchAndEmit();
+    final onDeleted = (dynamic _) => fetchAndEmit();
+
+    _socket.on('request:created', onCreated);
+    _socket.on('request:status', onStatus);
+    _socket.on('request:deleted', onDeleted);
 
     controller.onCancel = () {
-      _socket.off('request:created');
-      _socket.off('request:status');
-      _socket.off('request:deleted');
+      _socket.off('request:created', onCreated);
+      _socket.off('request:status', onStatus);
+      _socket.off('request:deleted', onDeleted);
     };
 
     return controller.stream;
@@ -106,19 +110,21 @@ class FirestoreService {
 
     fetchAndEmit();
     _socket.joinRequest(id);
-    _socket.on('request:status', (data) {
-      if (data['requestId'] == id) fetchAndEmit();
-    });
-    _socket.on('request:assigned', (data) {
+
+    final onStatus = (dynamic data) { if (data['requestId'] == id) fetchAndEmit(); };
+    final onAssigned = (dynamic data) {
       if (data['_id'] == id || data['id'] == id) {
         if (!controller.isClosed) controller.add(ServiceRequest.fromJson(data));
       }
-    });
+    };
+
+    _socket.on('request:status', onStatus);
+    _socket.on('request:assigned', onAssigned);
 
     controller.onCancel = () {
       _socket.leaveRequest(id);
-      _socket.off('request:status');
-      _socket.off('request:assigned');
+      _socket.off('request:status', onStatus);
+      _socket.off('request:assigned', onAssigned);
     };
 
     return controller.stream;
@@ -151,16 +157,22 @@ class FirestoreService {
     }
 
     fetch();
-    _socket.on('request:status', (_) => fetch());
-    _socket.on('request:created', (_) => fetch());
-    _socket.on('request:cancelled', (_) => fetch());
-    _socket.on('request:deleted', (_) => fetch());
+
+    final onStatus = (dynamic _) => fetch();
+    final onCreated = (dynamic _) => fetch();
+    final onCancelled = (dynamic _) => fetch();
+    final onDeleted = (dynamic _) => fetch();
+
+    _socket.on('request:status', onStatus);
+    _socket.on('request:created', onCreated);
+    _socket.on('request:cancelled', onCancelled);
+    _socket.on('request:deleted', onDeleted);
 
     controller.onCancel = () {
-      _socket.off('request:status');
-      _socket.off('request:created');
-      _socket.off('request:cancelled');
-      _socket.off('request:deleted');
+      _socket.off('request:status', onStatus);
+      _socket.off('request:created', onCreated);
+      _socket.off('request:cancelled', onCancelled);
+      _socket.off('request:deleted', onDeleted);
     };
 
     return controller.stream;
@@ -291,16 +303,19 @@ class FirestoreService {
     }
 
     fetch();
-    _socket.on('quote:new', (data) {
-      if (data['quote']?['requestId'] == requestId) fetch();
-    });
-    _socket.on('quote:accepted', (_) => fetch());
-    _socket.on('quote:rejected', (_) => fetch());
+
+    final onQuoteNew = (dynamic data) { if (data['quote']?['requestId'] == requestId) fetch(); };
+    final onAccepted = (dynamic _) => fetch();
+    final onRejected = (dynamic _) => fetch();
+
+    _socket.on('quote:new', onQuoteNew);
+    _socket.on('quote:accepted', onAccepted);
+    _socket.on('quote:rejected', onRejected);
 
     controller.onCancel = () {
-      _socket.off('quote:new');
-      _socket.off('quote:accepted');
-      _socket.off('quote:rejected');
+      _socket.off('quote:new', onQuoteNew);
+      _socket.off('quote:accepted', onAccepted);
+      _socket.off('quote:rejected', onRejected);
     };
 
     return controller.stream;
@@ -330,16 +345,18 @@ class FirestoreService {
     });
 
     _socket.joinRoom(requestId);
-    _socket.on('chat:message', (data) {
+
+    final onMessage = (dynamic data) {
       if (data['requestId'] == requestId) {
         messages.add(ChatMessage.fromJson(data));
         if (!controller.isClosed) controller.add(List.from(messages));
       }
-    });
+    };
+    _socket.on('chat:message', onMessage);
 
     controller.onCancel = () {
       _socket.leaveRoom(requestId);
-      _socket.off('chat:message');
+      _socket.off('chat:message', onMessage);
     };
 
     return controller.stream;
@@ -370,21 +387,25 @@ class FirestoreService {
     _api.get('/alerts').then((response) {
       alerts.addAll((response.data as List).map((e) => AlertModel.fromJson(e)));
       if (!controller.isClosed) controller.add(List.from(alerts));
+    }).catchError((_) {
+      if (!controller.isClosed) controller.add([]);
     });
 
-    _socket.on('alert:new', (data) {
+    final onAlertNew = (dynamic data) {
       alerts.insert(0, AlertModel.fromJson(data));
       if (!controller.isClosed) controller.add(List.from(alerts));
-    });
-
-    _socket.on('alerts:cleared', (_) {
+    };
+    final onAlertsCleared = (dynamic _) {
       alerts.clear();
       if (!controller.isClosed) controller.add(List.from(alerts));
-    });
+    };
+
+    _socket.on('alert:new', onAlertNew);
+    _socket.on('alerts:cleared', onAlertsCleared);
 
     controller.onCancel = () {
-      _socket.off('alert:new');
-      _socket.off('alerts:cleared');
+      _socket.off('alert:new', onAlertNew);
+      _socket.off('alerts:cleared', onAlertsCleared);
     };
 
     return controller.stream;
@@ -642,18 +663,25 @@ class FirestoreService {
     }
 
     fetch();
-    _socket.on('quote:new', (_) => fetch());
-    _socket.on('quote:accepted', (_) => fetch());
-    _socket.on('quote:rejected', (_) => fetch());
-    _socket.on('quote:status', (_) => fetch());
-    _socket.on('request:cancelled', (_) => fetch());
+
+    final onQNew1 = (dynamic _) => fetch();
+    final onQAcc1 = (dynamic _) => fetch();
+    final onQRej1 = (dynamic _) => fetch();
+    final onQStat1 = (dynamic _) => fetch();
+    final onReqCan1 = (dynamic _) => fetch();
+
+    _socket.on('quote:new', onQNew1);
+    _socket.on('quote:accepted', onQAcc1);
+    _socket.on('quote:rejected', onQRej1);
+    _socket.on('quote:status', onQStat1);
+    _socket.on('request:cancelled', onReqCan1);
 
     controller.onCancel = () {
-      _socket.off('quote:new');
-      _socket.off('quote:accepted');
-      _socket.off('quote:rejected');
-      _socket.off('quote:status');
-      _socket.off('request:cancelled');
+      _socket.off('quote:new', onQNew1);
+      _socket.off('quote:accepted', onQAcc1);
+      _socket.off('quote:rejected', onQRej1);
+      _socket.off('quote:status', onQStat1);
+      _socket.off('request:cancelled', onReqCan1);
     };
 
     return controller.stream;
@@ -673,18 +701,25 @@ class FirestoreService {
     }
 
     fetch();
-    _socket.on('quote:new', (_) => fetch());
-    _socket.on('quote:accepted', (_) => fetch());
-    _socket.on('quote:rejected', (_) => fetch());
-    _socket.on('quote:status', (_) => fetch());
-    _socket.on('request:cancelled', (_) => fetch());
+
+    final onQNew2 = (dynamic _) => fetch();
+    final onQAcc2 = (dynamic _) => fetch();
+    final onQRej2 = (dynamic _) => fetch();
+    final onQStat2 = (dynamic _) => fetch();
+    final onReqCan2 = (dynamic _) => fetch();
+
+    _socket.on('quote:new', onQNew2);
+    _socket.on('quote:accepted', onQAcc2);
+    _socket.on('quote:rejected', onQRej2);
+    _socket.on('quote:status', onQStat2);
+    _socket.on('request:cancelled', onReqCan2);
 
     controller.onCancel = () {
-      _socket.off('quote:new');
-      _socket.off('quote:accepted');
-      _socket.off('quote:rejected');
-      _socket.off('quote:status');
-      _socket.off('request:cancelled');
+      _socket.off('quote:new', onQNew2);
+      _socket.off('quote:accepted', onQAcc2);
+      _socket.off('quote:rejected', onQRej2);
+      _socket.off('quote:status', onQStat2);
+      _socket.off('request:cancelled', onReqCan2);
     };
 
     return controller.stream;
@@ -734,14 +769,19 @@ class FirestoreService {
     }
 
     fetch();
-    _socket.on('request:created', (_) => fetch());
-    _socket.on('request:status', (_) => fetch());
-    _socket.on('request:deleted', (_) => fetch());
+
+    final onCreatedDirect = (dynamic _) => fetch();
+    final onStatusDirect = (dynamic _) => fetch();
+    final onDeletedDirect = (dynamic _) => fetch();
+
+    _socket.on('request:created', onCreatedDirect);
+    _socket.on('request:status', onStatusDirect);
+    _socket.on('request:deleted', onDeletedDirect);
 
     controller.onCancel = () {
-      _socket.off('request:created');
-      _socket.off('request:status');
-      _socket.off('request:deleted');
+      _socket.off('request:created', onCreatedDirect);
+      _socket.off('request:status', onStatusDirect);
+      _socket.off('request:deleted', onDeletedDirect);
     };
 
     return controller.stream;

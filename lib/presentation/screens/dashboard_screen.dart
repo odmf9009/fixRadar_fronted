@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import '../../core/services/auth_service.dart';
@@ -24,7 +25,7 @@ class DashboardScreen extends StatefulWidget {
   State<DashboardScreen> createState() => _DashboardScreenState();
 }
 
-class _DashboardScreenState extends State<DashboardScreen> {
+class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProviderStateMixin {
   final FirestoreService _firestoreService = FirestoreService();
   final AuthService _authService = AuthService();
   final LocationService _locationService = LocationService();
@@ -52,9 +53,21 @@ class _DashboardScreenState extends State<DashboardScreen> {
   // Cached Streams for StreamBuilders to avoid re-fetching on build
   Stream<List<AlertModel>>? _alertsStream;
 
+  // Bell shake animation
+  late final AnimationController _bellShakeController;
+  late final Animation<double> _bellShakeAnimation;
+  int _prevUnreadCount = 0;
+
   @override
   void initState() {
     super.initState();
+    _bellShakeController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 600),
+    );
+    _bellShakeAnimation = Tween<double>(begin: 0, end: 1).animate(
+      CurvedAnimation(parent: _bellShakeController, curve: Curves.easeOut),
+    );
     print('STABLE_DASHBOARD: Starting services...');
     _initWithUser();
   }
@@ -69,6 +82,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   @override
   void dispose() {
+    _bellShakeController.dispose();
     _userSub?.cancel();
     _nearbySub?.cancel();
     _techsSub?.cancel();
@@ -705,16 +719,37 @@ class _DashboardScreenState extends State<DashboardScreen> {
         final alerts = snapshot.data ?? [];
         final unreadCount = alerts.where((a) => !a.isRead).length;
 
+        // Trigger shake when new unread notifications arrive
+        if (unreadCount > _prevUnreadCount) {
+          _prevUnreadCount = unreadCount;
+          Future.microtask(() {
+            if (mounted) _bellShakeController.forward(from: 0);
+          });
+        } else if (unreadCount == 0) {
+          _prevUnreadCount = 0;
+        }
+
+        final bellIcon = IconButton(
+          icon: Icon(
+            unreadCount > 0 ? Icons.notifications_active : Icons.notifications_none,
+            size: 28,
+            color: unreadCount > 0 ? const Color(0xFFFF8A00) : Colors.black87,
+          ),
+          onPressed: () => Navigator.pushNamed(context, AppRoutes.alerts),
+        );
+
         return Stack(
           clipBehavior: Clip.none,
           children: [
-            IconButton(
-              icon: Icon(
-                unreadCount > 0 ? Icons.notifications_active : Icons.notifications_none, 
-                size: 28,
-                color: unreadCount > 0 ? const Color(0xFFFF8A00) : Colors.black87,
-              ),
-              onPressed: () => Navigator.pushNamed(context, AppRoutes.alerts),
+            AnimatedBuilder(
+              animation: _bellShakeAnimation,
+              builder: (context, child) {
+                final angle = math.sin(_bellShakeAnimation.value * math.pi * 6) *
+                    0.3 *
+                    (1 - _bellShakeAnimation.value);
+                return Transform.rotate(angle: angle, child: child);
+              },
+              child: bellIcon,
             ),
             if (unreadCount > 0)
               Positioned(
