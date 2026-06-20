@@ -839,8 +839,10 @@ class FirestoreService {
     await _api.put('/service-requests/$requestId/cancel-assignment');
   }
 
-  Future<void> finishWorkByTechnician(String requestId) async {
-    await _api.put('/service-requests/$requestId/finish');
+  Future<void> finishWorkByTechnician(String requestId, [String? completionPhotoUrl]) async {
+    await _api.put('/service-requests/$requestId/finish', data: {
+      if (completionPhotoUrl != null) 'completionPhotoUrl': completionPhotoUrl,
+    });
   }
 
   Future<void> completeService(String requestId, [String? photoUrl]) async {

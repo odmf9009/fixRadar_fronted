@@ -935,18 +935,28 @@ class _RequestDetailScreenState extends State<RequestDetailScreen> {
           ElevatedButton(
             onPressed: () async {
               Navigator.pop(context);
+              
+              final XFile? pickedFile = await _picker.pickImage(
+                source: ImageSource.camera, 
+                imageQuality: 50
+              );
+
+              if (pickedFile == null) return;
+
               setState(() => _isLoading = true);
               try {
-                await _firestoreService.finishWorkByTechnician(request.id);
+                final String? photoUrl = await _uploadService.uploadObjectImage(File(pickedFile.path));
+                await _firestoreService.finishWorkByTechnician(request.id, photoUrl);
+                
                 if (mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Trabajo marcado como finalizado. Esperando confirmación del cliente.'))
+                    const SnackBar(content: Text('Trabajo marcado como finalizado con foto. Esperando confirmación del cliente.'))
                   );
                 }
               } catch (e) {
                 if (mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red)
+                    SnackBar(content: Text('Error al finalizar: $e'), backgroundColor: Colors.red)
                   );
                 }
               } finally {
@@ -954,7 +964,7 @@ class _RequestDetailScreenState extends State<RequestDetailScreen> {
               }
             },
             style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFFF8A00)),
-            child: const Text('Confirmar Finalización'),
+            child: const Text('Tomar Foto y Finalizar'),
           ),
         ],
       ),
