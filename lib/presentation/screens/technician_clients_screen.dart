@@ -463,10 +463,13 @@ class _TechnicianClientsScreenState extends State<TechnicianClientsScreen> {
 
     if (isRejected) {
       return Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           const Expanded(
-            child: Text('❌ Propuesta Rechazada', style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold, fontSize: 12)),
+            child: Text(
+              '❌ Propuesta Rechazada', 
+              style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold, fontSize: 12),
+              overflow: TextOverflow.ellipsis,
+            ),
           ),
           TextButton.icon(
             onPressed: () => Navigator.pushNamed(context, AppRoutes.chat, arguments: request),
@@ -479,7 +482,6 @@ class _TechnicianClientsScreenState extends State<TechnicianClientsScreen> {
     }
 
     return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         Flexible(
           child: TextButton.icon(
@@ -488,27 +490,23 @@ class _TechnicianClientsScreenState extends State<TechnicianClientsScreen> {
             label: const Text('Ver detalle', overflow: TextOverflow.ellipsis),
           ),
         ),
+        const Spacer(),
         if (isAssigned && (request.status == ServiceRequestStatus.assigned || request.status == ServiceRequestStatus.inProgress || myQuote.status == QuoteStatus.accepted)) ...[
-          Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              IconButton(
-                onPressed: () => Navigator.pushNamed(context, AppRoutes.chat, arguments: request),
-                icon: const Icon(Icons.chat_bubble_outline, color: Color(0xFFFF8A00)),
-                tooltip: 'Chat con cliente',
-              ),
-              const SizedBox(width: 4),
-              ElevatedButton(
-                onPressed: () => _confirmFinishWork(request),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.green,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(horizontal: 12),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                ),
-                child: const Text('Finalizar trabajo', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
-              ),
-            ],
+          IconButton(
+            onPressed: () => Navigator.pushNamed(context, AppRoutes.chat, arguments: request),
+            icon: const Icon(Icons.chat_bubble_outline, color: Color(0xFFFF8A00)),
+            tooltip: 'Chat con cliente',
+          ),
+          const SizedBox(width: 4),
+          ElevatedButton(
+            onPressed: () => _confirmFinishWork(request),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.green,
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(horizontal: 12),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            ),
+            child: const Text('Finalizar trabajo', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
           ),
         ] else if (request.status == ServiceRequestStatus.open) ...[
           TextButton.icon(
