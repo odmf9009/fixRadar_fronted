@@ -39,7 +39,7 @@ class LocationService {
         accuracy: LocationAccuracy.high,
         distanceFilter: 10,
       ),
-    );
+    ).handleError((e) => print('[Location] Stream error: $e'));
   }
 
   /// Technician radar stream — shows a persistent notification while active.
@@ -53,7 +53,8 @@ class LocationService {
         enableWakeLock: true,
       ),
     );
-    return Geolocator.getPositionStream(locationSettings: locationSettings);
+    return Geolocator.getPositionStream(locationSettings: locationSettings)
+        .handleError((e) => print('[Location] Technician stream error: $e'));
   }
 
   /// Gets the current position once.
