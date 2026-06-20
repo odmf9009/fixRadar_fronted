@@ -54,7 +54,15 @@ class SocketService {
     _socket!.onConnectError((e) => print('[Socket] Error: $e'));
   }
 
+  // Temporary disconnect (radar off). Registry is preserved so handlers
+  // survive when connect() is called again.
   void disconnect() {
+    _socket?.disconnect();
+    _socket = null;
+  }
+
+  // Full reset on logout. Clears registry so stale handlers don't carry over.
+  void reset() {
     _registry.clear();
     _socket?.disconnect();
     _socket = null;

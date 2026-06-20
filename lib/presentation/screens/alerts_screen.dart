@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import '../../core/services/auth_service.dart';
@@ -257,28 +258,33 @@ class _NovedadesTabState extends State<_NovedadesTab> with AutomaticKeepAliveCli
   bool get wantKeepAlive => true;
   final FirestoreService _fs = FirestoreService();
   UserModel? _currentUser;
+  StreamSubscription? _userSub;
 
   @override
   void initState() {
     super.initState();
-    _loadUser();
+    final uid = AuthService.currentUidSync;
+    if (uid.isNotEmpty) {
+      _userSub = _fs.getUserStream(uid).listen((user) {
+        if (mounted) setState(() => _currentUser = user);
+      });
+    }
   }
 
-  void _loadUser() async {
-    final String uid = AuthService.currentUidSync;
-    if (uid.isNotEmpty) {
-      final user = await _fs.getUser(uid);
-      if (mounted) setState(() => _currentUser = user);
-    }
+  @override
+  void dispose() {
+    _userSub?.cancel();
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     super.build(context);
-    if (_currentUser == null) return const Center(child: CircularProgressIndicator());
-
     return StreamBuilder<List<ServiceRequest>>(
-      stream: _fs.getNearbyServiceRequests(userId: AuthService.currentUidSync),
+      stream: _fs.getNearbyServiceRequests(
+        latitude: widget.currentPosition?.latitude,
+        longitude: widget.currentPosition?.longitude,
+      ),
       builder: (context, snapshot) {
         if (snapshot.hasError) {
           return Center(child: Text('Error: ${snapshot.error}'));
