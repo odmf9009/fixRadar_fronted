@@ -197,7 +197,11 @@ class _ChatScreenState extends State<ChatScreen> {
                   padding: const EdgeInsets.all(16),
                   itemCount: messages.length,
                   itemBuilder: (context, index) {
-                    final msg = messages[index];
+                    // 'messages' está en orden cronológico (viejo -> nuevo).
+                    // Con reverse:true el índice 0 se dibuja abajo, por eso
+                    // mapeamos el más reciente (último) al índice 0 para que
+                    // quede pegado al input y el historial arriba.
+                    final msg = messages[messages.length - 1 - index];
                     final bool isMe = msg.senderId == _currentUserId;
                     return _buildMessageBubble(msg, isMe);
                   },

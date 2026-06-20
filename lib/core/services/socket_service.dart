@@ -98,6 +98,12 @@ class SocketService {
     _socket?.emit(event, data);
   }
 
+  /// Reporta al backend si la app está en primer plano. El servidor solo
+  /// envía FCM cuando NO está en primer plano (evita push duplicados in-app
+  /// pero garantiza el push en segundo plano).
+  void setAppState(bool foreground) =>
+      emit('app:state', foreground ? 'foreground' : 'background');
+
   void joinRoom(String room) => emit('chat:join', room);
   void leaveRoom(String room) => emit('chat:leave', room);
   void joinRequest(String requestId) => emit('request:join', requestId);

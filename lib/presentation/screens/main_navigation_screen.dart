@@ -91,8 +91,14 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> with Widget
     if (state == AppLifecycleState.resumed) {
       // Reconnect socket (iOS/Android kill TCP connections in background)
       SocketService().connect();
+      // Avisar al backend que la app vuelve a primer plano (suprime FCM)
+      SocketService().setAppState(true);
       // Refresh map data
       _mapScreenKey.currentState?.centerOnUser();
+    } else if (state == AppLifecycleState.paused ||
+        state == AppLifecycleState.detached) {
+      // App en segundo plano: el backend debe enviar FCM para chats/alertas.
+      SocketService().setAppState(false);
     }
   }
 
@@ -218,9 +224,48 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> with Widget
         return;
       }
 
+      // Chat message → abrir directamente el chat entre las dos partes.
+      if (type == 'chat_message') {
+        final quoteId = data['quoteId'] as String?;
+        if (quoteId != null && quoteId.isNotEmpty) {
+          // Chat asociado a una cotización/propuesta.
+          try {
+            final quote = await _firestoreService.getQuoteById(quoteId);
+            String title = 'Chat de Cotización';
+            String? otherName = quote?.technicianName;
+            if (quote != null) {
+              final req = await _firestoreService.getServiceRequestById(quote.requestId);
+              if (req != null) title = req.title;
+              // Si el usuario actual es el técnico, la otra parte es el cliente.
+              if (quote.technicianId == _currentUserId) {
+                otherName = req?.clientName;
+              }
+            }
+            if (mounted) {
+              Navigator.pushNamed(context, AppRoutes.chat, arguments: {
+                'quoteId': quoteId,
+                'title': title,
+                'technicianName': otherName,
+              });
+            }
+          } catch (_) {}
+          return;
+        }
+        // Chat normal asociado a una solicitud.
+        if (requestId != null && requestId.isNotEmpty) {
+          try {
+            final request = await _firestoreService.getServiceRequestById(requestId);
+            if (request != null && mounted) {
+              Navigator.pushNamed(context, AppRoutes.chat, arguments: request);
+            }
+          } catch (_) {}
+        }
+        return;
+      }
+
       if (requestId == null || requestId.isEmpty) return;
 
-      if (type == 'nearby_request' || type == 'chat_message') {
+      if (type == 'nearby_request') {
         try {
           final request = await _firestoreService.getServiceRequestById(requestId);
           if (request != null && mounted) {
