@@ -114,9 +114,14 @@ class _TechnicianClientsScreenState extends State<TechnicianClientsScreen> {
                       orElse: () => Quote(id: '', requestId: reqId, clientId: '', technicianId: '', technicianName: '', technicianRating: 5, minPrice: 0, maxPrice: 0, message: '', createdAt: DateTime.now())
                     );
 
-                    // A request is active if it's NOT completed and NOT cancelled
+                    // A request is active if it's NOT completed and NOT cancelled.
+                    // Si el técnico retiró su cotización (cancelled) o fue rechazada,
+                    // también pasa a Historial para este técnico.
                     final bool isFinished = req.status == ServiceRequestStatus.completed ||
-                                           req.status == ServiceRequestStatus.cancelled;
+                                           req.status == ServiceRequestStatus.cancelled ||
+                                           myQuote.status == QuoteStatus.cancelled ||
+                                           myQuote.status == QuoteStatus.rejected ||
+                                           myQuote.status == QuoteStatus.final_rejected;
 
                     // technician is involved if assigned, interested, or quoted
                     final bool isInvolved = req.technicianId == _currentUserId || 
@@ -526,7 +531,7 @@ class _TechnicianClientsScreenState extends State<TechnicianClientsScreen> {
           ),
         ] else if (request.status == ServiceRequestStatus.open) ...[
           TextButton.icon(
-            onPressed: () => _confirmWithdrawQuote(request, currentUserId),
+            onPressed: () => _confirmWithdrawQuote(request, myQuote, currentUserId),
             icon: const Icon(Icons.close, color: Colors.red, size: 18),
             label: const Text('Retirar', style: TextStyle(color: Colors.red)),
           ),
@@ -648,7 +653,7 @@ class _TechnicianClientsScreenState extends State<TechnicianClientsScreen> {
     );
   }
 
-  void _confirmWithdrawQuote(ServiceRequest request, String currentUserId) {
+  void _confirmWithdrawQuote(ServiceRequest request, Quote myQuote, String currentUserId) {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -659,8 +664,17 @@ class _TechnicianClientsScreenState extends State<TechnicianClientsScreen> {
           ElevatedButton(
             onPressed: () async {
               Navigator.pop(context);
+              if (myQuote.id.isEmpty) {
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('No se encontró tu cotización para retirar.'), backgroundColor: Colors.red),
+                  );
+                }
+                return;
+              }
               try {
-                await _firestoreService.withdrawQuote(request.id, currentUserId);
+                // El backend espera el id de la COTIZACIÓN, no el del request.
+                await _firestoreService.withdrawQuote(myQuote.id);
                 if (mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(content: Text('Propuesta retirada con éxito.'))

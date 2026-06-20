@@ -782,19 +782,32 @@ class FirestoreService {
       }
     }
 
+    // Refrescar ante cualquier evento que afecte el estado de un trabajo/cotización,
+    // para que "Mis Clientes" se actualice en tiempo real (finalizar, asignar, retirar, etc.).
+    const events = [
+      'quote:new',
+      'quote:accepted',
+      'quote:rejected',
+      'quote:status',
+      'quote:withdrawn',
+      'request:status',
+      'request:assigned',
+      'request:created',
+      'request:deleted',
+      'request:cancelled',
+    ];
+    void onEvent(_) => fetch();
+
     fetch();
-    _socket.on('quote:new', (_) => fetch());
-    _socket.on('quote:accepted', (_) => fetch());
-    _socket.on('quote:rejected', (_) => fetch());
-    _socket.on('quote:status', (_) => fetch());
-    _socket.on('request:cancelled', (_) => fetch());
+    for (final e in events) {
+      _socket.on(e, onEvent);
+    }
 
     controller.onCancel = () {
-      _socket.off('quote:new');
-      _socket.off('quote:accepted');
-      _socket.off('quote:rejected');
-      _socket.off('quote:status');
-      _socket.off('request:cancelled');
+      for (final e in events) {
+        _socket.off(e, onEvent);
+      }
+      if (!controller.isClosed) controller.close();
     };
 
     return controller.stream;
@@ -906,21 +919,29 @@ class FirestoreService {
       }
     }
 
+    const events = [
+      'request:status',
+      'request:assigned',
+      'request:created',
+      'request:deleted',
+      'request:cancelled',
+      'quote:new',
+      'quote:accepted',
+      'quote:rejected',
+      'quote:status',
+      'quote:withdrawn',
+    ];
     void onUpdate(_) => fetch();
 
     fetch();
-    _socket.on('request:status', onUpdate);
-    _socket.on('request:assigned', onUpdate);
-    _socket.on('request:created', onUpdate);
-    _socket.on('quote:accepted', onUpdate);
-    _socket.on('quote:status', onUpdate);
+    for (final e in events) {
+      _socket.on(e, onUpdate);
+    }
 
     controller.onCancel = () {
-      _socket.off('request:status', onUpdate);
-      _socket.off('request:assigned', onUpdate);
-      _socket.off('request:created', onUpdate);
-      _socket.off('quote:accepted', onUpdate);
-      _socket.off('quote:status', onUpdate);
+      for (final e in events) {
+        _socket.off(e, onUpdate);
+      }
       if (!controller.isClosed) controller.close();
     };
 
