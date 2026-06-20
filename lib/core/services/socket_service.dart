@@ -130,4 +130,27 @@ class SocketService {
   void markChatRead(String requestId) {
     emit('chat:read', {'requestId': requestId});
   }
+
+  void joinQuoteRoom(String quoteId) => emit('chat:join', 'quote:$quoteId');
+  void leaveQuoteRoom(String quoteId) => emit('chat:leave', 'quote:$quoteId');
+
+  void sendQuoteChatMessage({
+    required String quoteId,
+    required String text,
+    required String senderName,
+    String? imageUrl,
+    double? latitude,
+    double? longitude,
+    String type = 'text',
+  }) {
+    emit('chat:message', {
+      'quoteId': quoteId,
+      'text': text,
+      'senderName': senderName,
+      'imageUrl': imageUrl,
+      'latitude': latitude,
+      'longitude': longitude,
+      'type': type,
+    });
+  }
 }

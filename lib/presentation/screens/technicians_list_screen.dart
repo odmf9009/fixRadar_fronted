@@ -122,6 +122,29 @@ class _TechniciansListScreenState extends State<TechniciansListScreen> {
                 const SizedBox(height: 2),
                 const Text('Plomería • 6 años exp.', style: TextStyle(color: Colors.grey, fontSize: 13)),
                 const SizedBox(height: 12),
+                const SizedBox(height: 8),
+                SizedBox(
+                  width: double.infinity,
+                  height: 36,
+                  child: OutlinedButton.icon(
+                    onPressed: () => Navigator.pushNamed(
+                      context,
+                      AppRoutes.chat,
+                      arguments: {
+                        'quoteId': quote.id,
+                        'title': widget.request.title,
+                        'technicianName': quote.technicianName,
+                      },
+                    ),
+                    icon: const Icon(Icons.chat_bubble_outline, size: 16, color: Color(0xFFFF8A00)),
+                    label: const Text('Chatear sobre esta propuesta', style: TextStyle(color: Color(0xFFFF8A00), fontSize: 12)),
+                    style: OutlinedButton.styleFrom(
+                      side: const BorderSide(color: Color(0xFFFF8A00)),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 8),
                 Row(
                   children: [
                     Expanded(

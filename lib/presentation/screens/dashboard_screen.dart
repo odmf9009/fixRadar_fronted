@@ -58,6 +58,10 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
   late final Animation<double> _bellShakeAnimation;
   int _prevUnreadCount = 0;
 
+  // Socket for chat:incoming bell shake
+  final SocketService _socket = SocketService();
+  late final void Function(dynamic) _onChatIncoming;
+
   @override
   void initState() {
     super.initState();
@@ -69,6 +73,9 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
       CurvedAnimation(parent: _bellShakeController, curve: Curves.easeOut),
     );
     WidgetsBinding.instance.addObserver(this);
+    _onChatIncoming = (_) {
+      if (mounted) _bellShakeController.forward(from: 0);
+    };
     print('STABLE_DASHBOARD: Starting services...');
     _initWithUser();
   }
@@ -86,6 +93,7 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
     _currentUserId = await _authService.getCurrentUserId();
     if (!mounted) return;
     _alertsStream = _firestoreService.getUserAlerts(_currentUserId);
+    _socket.on('chat:incoming', _onChatIncoming);
     _startDataListeners();
     _initLocation();
   }
@@ -94,6 +102,7 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
     _bellShakeController.dispose();
+    _socket.off('chat:incoming', _onChatIncoming);
     _userSub?.cancel();
     _nearbySub?.cancel();
     _techsSub?.cancel();

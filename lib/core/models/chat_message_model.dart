@@ -3,6 +3,7 @@ enum MessageType { text, image, location }
 class ChatMessage {
   final String id;
   final String requestId;
+  final String? quoteId;
   final String senderId;
   final String senderName;
   final String text;
@@ -16,6 +17,7 @@ class ChatMessage {
   const ChatMessage({
     required this.id,
     required this.requestId,
+    this.quoteId,
     required this.senderId,
     required this.senderName,
     this.text = '',
@@ -31,6 +33,7 @@ class ChatMessage {
     return ChatMessage(
       id: json['_id'] ?? json['id'] ?? '',
       requestId: json['requestId'] ?? '',
+      quoteId: json['quoteId'],
       senderId: json['senderId'] ?? '',
       senderName: json['senderName'] ?? 'Usuario',
       text: json['text'] ?? '',

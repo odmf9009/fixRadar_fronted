@@ -137,8 +137,17 @@ class AppRoutes {
       );
     },
     chat: (context) {
-      final args = ModalRoute.of(context)!.settings.arguments as ServiceRequest;
-      return ChatScreen(request: args);
+      final args = ModalRoute.of(context)!.settings.arguments;
+      if (args is ServiceRequest) {
+        return ChatScreen(request: args);
+      } else if (args is Map<String, dynamic>) {
+        return ChatScreen(
+          quoteId: args['quoteId'] as String?,
+          quoteTitle: args['title'] as String?,
+          quoteTechnicianName: args['technicianName'] as String?,
+        );
+      }
+      return ChatScreen(request: args as ServiceRequest);
     },
     publicProfile: (context) {
       final userId = ModalRoute.of(context)!.settings.arguments as String;

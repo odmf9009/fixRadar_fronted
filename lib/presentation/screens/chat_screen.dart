@@ -10,8 +10,18 @@ import '../../core/services/location_service.dart';
 import '../../core/services/upload_service.dart';
 
 class ChatScreen extends StatefulWidget {
-  final ServiceRequest request;
-  const ChatScreen({super.key, required this.request});
+  final ServiceRequest? request;
+  final String? quoteId;
+  final String? quoteTitle;
+  final String? quoteTechnicianName;
+
+  const ChatScreen({
+    super.key,
+    this.request,
+    this.quoteId,
+    this.quoteTitle,
+    this.quoteTechnicianName,
+  }) : assert(request != null || quoteId != null, 'Either request or quoteId must be provided');
 
   @override
   State<ChatScreen> createState() => _ChatScreenState();
@@ -22,23 +32,31 @@ class _ChatScreenState extends State<ChatScreen> {
   final LocationService _locationService = LocationService();
   final UploadService _uploadService = UploadService();
   final ImagePicker _picker = ImagePicker();
-  
+
   final TextEditingController _messageController = TextEditingController();
   final String _currentUserId = AuthService.currentUidSync;
   String _currentUserName = 'Usuario';
   bool _isSending = false;
   late final Stream<List<ChatMessage>> _chatStream;
 
+  bool get _isQuoteChat => widget.quoteId != null;
+  String get _chatTitle => _isQuoteChat ? (widget.quoteTitle ?? 'Chat de Cotización') : widget.request!.title;
+  String get _chatSubtitle => _isQuoteChat
+      ? (widget.quoteTechnicianName != null ? 'Con ${widget.quoteTechnicianName}' : 'Chat privado')
+      : (widget.request!.technicianName != null ? 'Con ${widget.request!.technicianName}' : 'Chat de servicio');
+
   @override
   void initState() {
     super.initState();
-    _chatStream = _firestoreService.getChatMessages(widget.request.id);
+    _chatStream = _isQuoteChat
+        ? _firestoreService.getChatMessagesByQuote(widget.quoteId!)
+        : _firestoreService.getChatMessages(widget.request!.id);
     _loadUserName();
-    _markAsRead();
+    if (!_isQuoteChat) _markAsRead();
   }
 
   Future<void> _markAsRead() async {
-    await _firestoreService.updateChatLastRead(widget.request.id, _currentUserId);
+    await _firestoreService.updateChatLastRead(widget.request!.id, _currentUserId);
   }
 
   Future<void> _loadUserName() async {
@@ -55,7 +73,8 @@ class _ChatScreenState extends State<ChatScreen> {
 
     final message = ChatMessage(
       id: '',
-      requestId: widget.request.id,
+      requestId: widget.request?.id ?? '',
+      quoteId: widget.quoteId,
       senderId: _currentUserId,
       senderName: _currentUserName,
       text: _messageController.text.trim(),
@@ -64,7 +83,11 @@ class _ChatScreenState extends State<ChatScreen> {
     );
 
     _messageController.clear();
-    await _firestoreService.sendChatMessage(widget.request.id, message);
+    if (_isQuoteChat) {
+      await _firestoreService.sendQuoteChatMessage(widget.quoteId!, message);
+    } else {
+      await _firestoreService.sendChatMessage(widget.request!.id, message);
+    }
   }
 
   Future<void> _sendLocation() async {
@@ -74,7 +97,8 @@ class _ChatScreenState extends State<ChatScreen> {
       if (pos != null) {
         final message = ChatMessage(
           id: '',
-          requestId: widget.request.id,
+          requestId: widget.request?.id ?? '',
+          quoteId: widget.quoteId,
           senderId: _currentUserId,
           senderName: _currentUserName,
           text: '📍 Mi ubicación actual',
@@ -83,7 +107,11 @@ class _ChatScreenState extends State<ChatScreen> {
           type: MessageType.location,
           createdAt: DateTime.now(),
         );
-        await _firestoreService.sendChatMessage(widget.request.id, message);
+        if (_isQuoteChat) {
+          await _firestoreService.sendQuoteChatMessage(widget.quoteId!, message);
+        } else {
+          await _firestoreService.sendChatMessage(widget.request!.id, message);
+        }
       }
     } catch (e) {
       print('Error sending location: $e');
@@ -101,7 +129,8 @@ class _ChatScreenState extends State<ChatScreen> {
       final url = await _uploadService.uploadObjectImage(File(pickedFile.path));
       final message = ChatMessage(
         id: '',
-        requestId: widget.request.id,
+        requestId: widget.request?.id ?? '',
+        quoteId: widget.quoteId,
         senderId: _currentUserId,
         senderName: _currentUserName,
         text: '📷 Foto del trabajo',
@@ -109,7 +138,11 @@ class _ChatScreenState extends State<ChatScreen> {
         type: MessageType.image,
         createdAt: DateTime.now(),
       );
-      await _firestoreService.sendChatMessage(widget.request.id, message);
+      if (_isQuoteChat) {
+        await _firestoreService.sendQuoteChatMessage(widget.quoteId!, message);
+      } else {
+        await _firestoreService.sendChatMessage(widget.request!.id, message);
+      }
     } catch (e) {
       print('Error sending image: $e');
     } finally {
@@ -126,11 +159,11 @@ class _ChatScreenState extends State<ChatScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              widget.request.title,
+              _chatTitle,
               style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black),
             ),
             Text(
-              widget.request.technicianName != null ? 'Con ${widget.request.technicianName}' : 'Chat de servicio',
+              _chatSubtitle,
               style: const TextStyle(fontSize: 12, color: Colors.grey),
             ),
           ],
@@ -139,10 +172,11 @@ class _ChatScreenState extends State<ChatScreen> {
         elevation: 1,
         iconTheme: const IconThemeData(color: Colors.black),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.info_outline, color: Colors.grey),
-            onPressed: () => Navigator.pushNamed(context, '/object-detail', arguments: widget.request),
-          ),
+          if (!_isQuoteChat)
+            IconButton(
+              icon: const Icon(Icons.info_outline, color: Colors.grey),
+              onPressed: () => Navigator.pushNamed(context, '/object-detail', arguments: widget.request),
+            ),
         ],
       ),
       body: Column(
@@ -181,15 +215,24 @@ class _ChatScreenState extends State<ChatScreen> {
   Widget _buildStatusBar() {
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
-      color: Colors.blue[50],
+      color: _isQuoteChat ? Colors.orange.withOpacity(0.08) : Colors.blue[50],
       child: Row(
         children: [
-          const Icon(Icons.security, size: 14, color: Colors.blue),
+          Icon(
+            _isQuoteChat ? Icons.handshake_outlined : Icons.security,
+            size: 14,
+            color: _isQuoteChat ? const Color(0xFFFF8A00) : Colors.blue,
+          ),
           const SizedBox(width: 8),
-          const Expanded(
+          Expanded(
             child: Text(
-              'Por tu seguridad, no compartas datos bancarios fuera de la plataforma.',
-              style: TextStyle(fontSize: 11, color: Colors.blue),
+              _isQuoteChat
+                  ? 'Chat de negociación. Acuerda los detalles antes de aceptar la propuesta.'
+                  : 'Por tu seguridad, no compartas datos bancarios fuera de la plataforma.',
+              style: TextStyle(
+                fontSize: 11,
+                color: _isQuoteChat ? const Color(0xFFCC6F00) : Colors.blue,
+              ),
             ),
           ),
         ],
@@ -272,37 +315,32 @@ class _ChatScreenState extends State<ChatScreen> {
         border: Border(top: BorderSide(color: Colors.grey[200]!)),
       ),
       child: SafeArea(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
+        child: Row(
           children: [
-            Row(
-              children: [
-                IconButton(
-                  icon: const Icon(Icons.add_circle_outline, color: Color(0xFFFF8A00)),
-                  onPressed: () => _showQuickActions(),
+            IconButton(
+              icon: const Icon(Icons.add_circle_outline, color: Color(0xFFFF8A00)),
+              onPressed: () => _showQuickActions(),
+            ),
+            Expanded(
+              child: TextField(
+                controller: _messageController,
+                decoration: InputDecoration(
+                  hintText: 'Escribe un mensaje...',
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(24), borderSide: BorderSide.none),
+                  filled: true,
+                  fillColor: Colors.grey[100],
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                 ),
-                Expanded(
-                  child: TextField(
-                    controller: _messageController,
-                    decoration: InputDecoration(
-                      hintText: 'Escribe un mensaje...',
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(24), borderSide: BorderSide.none),
-                      filled: true,
-                      fillColor: Colors.grey[100],
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 4),
-                CircleAvatar(
-                  backgroundColor: const Color(0xFFFF8A00),
-                  radius: 20,
-                  child: IconButton(
-                    icon: const Icon(Icons.send, color: Colors.white, size: 18),
-                    onPressed: _sendMessage,
-                  ),
-                ),
-              ],
+              ),
+            ),
+            const SizedBox(width: 4),
+            CircleAvatar(
+              backgroundColor: const Color(0xFFFF8A00),
+              radius: 20,
+              child: IconButton(
+                icon: const Icon(Icons.send, color: Colors.white, size: 18),
+                onPressed: _sendMessage,
+              ),
             ),
           ],
         ),
@@ -325,30 +363,21 @@ class _ChatScreenState extends State<ChatScreen> {
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
                 _buildActionItem(
-                  Icons.location_on_outlined, 
-                  'Ubicación', 
-                  Colors.green, 
+                  Icons.location_on_outlined,
+                  'Ubicación',
+                  Colors.green,
                   () {
                     Navigator.pop(context);
                     _sendLocation();
                   }
                 ),
                 _buildActionItem(
-                  Icons.camera_alt_outlined, 
-                  'Cámara', 
-                  Colors.blue, 
+                  Icons.camera_alt_outlined,
+                  'Cámara',
+                  Colors.blue,
                   () {
                     Navigator.pop(context);
                     _sendImage();
-                  }
-                ),
-                _buildActionItem(
-                  Icons.receipt_long_outlined, 
-                  'Presupuesto', 
-                  Colors.orange, 
-                  () {
-                    Navigator.pop(context);
-                    // Podría abrir el diálogo de quote nuevamente si fuera necesario
                   }
                 ),
               ],

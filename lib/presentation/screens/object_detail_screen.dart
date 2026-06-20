@@ -606,6 +606,29 @@ class _RequestDetailScreenState extends State<RequestDetailScreen> {
                 textAlign: TextAlign.center,
                 style: const TextStyle(fontSize: 12, color: Colors.grey)
               ),
+              if (!isFirstRejected && !isFinalRejected) ...[
+                const SizedBox(height: 12),
+                SizedBox(
+                  width: double.infinity,
+                  child: OutlinedButton.icon(
+                    onPressed: () => Navigator.pushNamed(
+                      context,
+                      AppRoutes.chat,
+                      arguments: {
+                        'quoteId': _myQuote!.id,
+                        'title': request.title,
+                        'technicianName': 'Cliente',
+                      },
+                    ),
+                    icon: const Icon(Icons.chat_bubble_outline, size: 16, color: Color(0xFFFF8A00)),
+                    label: const Text('Chat de cotización', style: TextStyle(color: Color(0xFFFF8A00), fontSize: 13)),
+                    style: OutlinedButton.styleFrom(
+                      side: const BorderSide(color: Color(0xFFFF8A00)),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                    ),
+                  ),
+                ),
+              ],
               if (isFirstRejected) ...[
                 const SizedBox(height: 16),
                 ElevatedButton.icon(

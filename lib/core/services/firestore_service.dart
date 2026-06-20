@@ -416,6 +416,57 @@ class FirestoreService {
     );
   }
 
+  Stream<List<ChatMessage>> getChatMessagesByQuote(String quoteId) {
+    final controller = StreamController<List<ChatMessage>>.broadcast();
+    final messages = <ChatMessage>[];
+
+    void onMessage(data) {
+      final msgQuoteId = data['quoteId']?.toString() ?? '';
+      if (msgQuoteId == quoteId) {
+        final incoming = ChatMessage.fromJson(data);
+        if (!messages.any((m) => m.id.isNotEmpty && m.id == incoming.id)) {
+          messages.add(incoming);
+          if (!controller.isClosed) controller.add(List.from(messages));
+        }
+      }
+    }
+
+    controller.onListen = () {
+      _api.get('/chat/quote/$quoteId/messages').then((response) {
+        if (!controller.isClosed) {
+          messages.clear();
+          messages.addAll((response.data as List).map((e) => ChatMessage.fromJson(e)));
+          controller.add(List.from(messages));
+        }
+      }).catchError((_) {
+        if (!controller.isClosed) controller.add([]);
+      });
+
+      _socket.joinQuoteRoom(quoteId);
+      _socket.on('chat:message', onMessage);
+    };
+
+    controller.onCancel = () {
+      _socket.leaveQuoteRoom(quoteId);
+      _socket.off('chat:message', onMessage);
+      if (!controller.isClosed) controller.close();
+    };
+
+    return controller.stream;
+  }
+
+  Future<void> sendQuoteChatMessage(String quoteId, ChatMessage message) async {
+    _socket.sendQuoteChatMessage(
+      quoteId: quoteId,
+      text: message.text,
+      senderName: message.senderName,
+      imageUrl: message.imageUrl,
+      latitude: message.latitude,
+      longitude: message.longitude,
+      type: message.type.name,
+    );
+  }
+
   // ─── ALERTS ───────────────────────────────────────────────────────────────
 
   Future<void> saveUserAlert(String userId, AlertModel alert) async {
