@@ -112,36 +112,42 @@ class _TechnicianClientsScreenState extends State<TechnicianClientsScreen> {
                     );
                     
                     bool isActive = false;
-                    
-                    // Priority 1: Technician is assigned in the request object
-                    if (req.technicianId?.toString() == _currentUserId) {
-                       if (req.status == ServiceRequestStatus.assigned || 
-                           req.status == ServiceRequestStatus.inProgress ||
-                           req.status == ServiceRequestStatus.finishedByTechnician) {
-                         isActive = true;
-                       }
-                    }
-                    
-                    // Priority 2: My quote is accepted
-                    if (!isActive && myQuote.status == QuoteStatus.accepted) {
-                      if (req.status != ServiceRequestStatus.completed && 
-                          req.status != ServiceRequestStatus.cancelled) {
+
+                    // A request is active if it's NOT completed and NOT cancelled,
+                    // AND the technician is involved in it.
+                    if (req.status != ServiceRequestStatus.completed && 
+                        req.status != ServiceRequestStatus.cancelled) {
+                      
+                      // 1. Technician is assigned in the request object
+                      if (req.technicianId?.toString() == _currentUserId) {
+                        isActive = true;
+                      } 
+                      // 2. Technician's quote was accepted
+                      else if (myQuote.status == QuoteStatus.accepted) {
                         isActive = true;
                       }
-                    }
-
-                    // Priority 3: I sent a quote and request is still open (Interested state)
-                    if (!isActive && req.status == ServiceRequestStatus.open && myQuote.status == QuoteStatus.pending) {
-                      isActive = true;
+                      // 3. Technician sent a quote and request is still open
+                      else if (req.status == ServiceRequestStatus.open && 
+                               (myQuote.id.isNotEmpty || req.interestedTechnicians.contains(_currentUserId))) {
+                        isActive = true;
+                      }
                     }
 
                     if (isActive) {
                       activeRequests.add(req);
                     } else {
-                      // Only add to history if it was relevant to me
                       historyRequests.add(req);
                     }
                   }
+
+                  // Sort active requests: assigned/inProgress first
+                  activeRequests.sort((a, b) {
+                    if (a.status == ServiceRequestStatus.inProgress && b.status != ServiceRequestStatus.inProgress) return -1;
+                    if (a.status != ServiceRequestStatus.inProgress && b.status == ServiceRequestStatus.inProgress) return 1;
+                    if (a.status == ServiceRequestStatus.assigned && b.status != ServiceRequestStatus.assigned) return -1;
+                    if (a.status != ServiceRequestStatus.assigned && b.status == ServiceRequestStatus.assigned) return 1;
+                    return b.updatedAt.compareTo(a.updatedAt);
+                  });
 
                   if (activeRequests.isEmpty && historyRequests.isEmpty) {
                     return _buildEmptyState();
