@@ -496,7 +496,11 @@ class FirestoreService {
 
     void onNewAlert(data) {
       try {
-        alerts.insert(0, AlertModel.fromJson(data));
+        final incoming = AlertModel.fromJson(data);
+        // Dedupe: las alertas de mensaje se "upsertean" (1 por conversación),
+        // así que si ya existe el mismo id lo quitamos y lo reinsertamos arriba.
+        alerts.removeWhere((a) => a.id == incoming.id);
+        alerts.insert(0, incoming);
         if (!controller.isClosed) controller.add(List.from(alerts));
       } catch (e) {
         print('[Alerts] onNewAlert error: $e');
@@ -508,15 +512,19 @@ class FirestoreService {
       if (!controller.isClosed) controller.add(List.from(alerts));
     }
 
+    void onRefresh(_) => fetch();
+
     controller.onListen = () {
       fetch();
       _socket.on('alert:new', onNewAlert);
       _socket.on('alerts:cleared', onCleared);
+      _socket.on('alerts:refresh', onRefresh);
     };
 
     controller.onCancel = () {
       _socket.off('alert:new', onNewAlert);
       _socket.off('alerts:cleared', onCleared);
+      _socket.off('alerts:refresh', onRefresh);
       if (!controller.isClosed) controller.close();
     };
 
@@ -1034,6 +1042,16 @@ class FirestoreService {
   Future<void> markAlertAsRead(String userId, String alertId) async {
     try {
       await _api.put('/alerts/$alertId/read');
+    } catch (_) {}
+  }
+
+  // Marca como leída la alerta (campana) de una conversación de chat al abrirla.
+  Future<void> markConversationRead({String? requestId, String? quoteId}) async {
+    try {
+      await _api.put('/alerts/read-conversation', data: {
+        if (requestId != null) 'requestId': requestId,
+        if (quoteId != null) 'quoteId': quoteId,
+      });
     } catch (_) {}
   }
 

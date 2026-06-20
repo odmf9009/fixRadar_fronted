@@ -1,8 +1,9 @@
-enum AlertType { nearby, directQuote, quoteReceived, system }
+enum AlertType { nearby, directQuote, quoteReceived, message, system }
 
 class AlertModel {
   final String id;
   final String requestId;
+  final String? quoteId;
   final String requestTitle;
   final String requestImageUrl;
   final String address;
@@ -14,6 +15,7 @@ class AlertModel {
   AlertModel({
     required this.id,
     required this.requestId,
+    this.quoteId,
     required this.requestTitle,
     required this.requestImageUrl,
     required this.address,
@@ -24,9 +26,11 @@ class AlertModel {
   });
 
   factory AlertModel.fromJson(Map<String, dynamic> json) {
+    final rawQuoteId = json['quoteId'];
     return AlertModel(
       id: json['_id'] ?? json['id'] ?? '',
       requestId: json['requestId'] ?? '',
+      quoteId: (rawQuoteId == null || rawQuoteId == '') ? null : rawQuoteId.toString(),
       requestTitle: json['requestTitle'] ?? 'Servicio detectado',
       requestImageUrl: json['requestImageUrl'] ?? '',
       address: json['address'] ?? '',

@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:geolocator/geolocator.dart';
 import '../../core/services/auth_service.dart';
 import '../../core/services/firestore_service.dart';
@@ -73,9 +74,10 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
       CurvedAnimation(parent: _bellShakeController, curve: Curves.easeOut),
     );
     WidgetsBinding.instance.addObserver(this);
-    _onChatIncoming = (_) {
-      if (mounted) _bellShakeController.forward(from: 0);
-    };
+    // Los mensajes de chat ahora generan una alerta (alert:new) que mueve el
+    // badge y dispara la animación/vibración por la vía de unreadCount. Por eso
+    // este handler ya no agita la campana: evita una doble vibración/sacudida.
+    _onChatIncoming = (_) {};
     print('STABLE_DASHBOARD: Starting services...');
     _initWithUser();
   }
@@ -739,11 +741,14 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
         final alerts = snapshot.data ?? [];
         final unreadCount = alerts.where((a) => !a.isRead).length;
 
-        // Trigger shake when new unread notifications arrive
+        // Trigger shake + vibración when new unread notifications arrive
         if (unreadCount > _prevUnreadCount) {
           _prevUnreadCount = unreadCount;
           Future.microtask(() {
-            if (mounted) _bellShakeController.forward(from: 0);
+            if (mounted) {
+              _bellShakeController.forward(from: 0);
+              HapticFeedback.vibrate();
+            }
           });
         } else if (unreadCount == 0) {
           _prevUnreadCount = 0;

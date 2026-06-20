@@ -200,6 +200,40 @@ class _RadarTabState extends State<_RadarTab> with AutomaticKeepAliveClientMixin
   Widget _buildAlertItem(BuildContext context, AlertModel alert) {
     return InkWell(
       onTap: () async {
+        if (alert.type == AlertType.message) {
+          // Alerta de chat: marcar la conversación como leída y abrir el chat.
+          _fs.markConversationRead(
+            requestId: alert.quoteId == null ? alert.requestId : null,
+            quoteId: alert.quoteId,
+          );
+          if (alert.quoteId != null) {
+            try {
+              final quote = await _fs.getQuoteById(alert.quoteId!);
+              String title = 'Chat de Cotización';
+              String? otherName = quote?.technicianName;
+              if (quote != null) {
+                final req = await _fs.getServiceRequestById(quote.requestId);
+                if (req != null) title = req.title;
+                if (quote.technicianId == widget.currentUserId) {
+                  otherName = req?.clientName;
+                }
+              }
+              if (mounted) {
+                Navigator.pushNamed(context, AppRoutes.chat, arguments: {
+                  'quoteId': alert.quoteId,
+                  'title': title,
+                  'technicianName': otherName,
+                });
+              }
+            } catch (_) {}
+          } else {
+            final req = await _fs.getServiceRequestById(alert.requestId);
+            if (req != null && mounted) {
+              Navigator.pushNamed(context, AppRoutes.chat, arguments: req);
+            }
+          }
+          return;
+        }
         _fs.markAlertAsRead(widget.currentUserId, alert.id);
         final req = await _fs.getServiceRequestById(alert.requestId);
         if (req != null && mounted) Navigator.pushNamed(context, AppRoutes.requestDetail, arguments: req);
@@ -231,7 +265,8 @@ class _RadarTabState extends State<_RadarTab> with AutomaticKeepAliveClientMixin
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(alert.requestTitle, style: TextStyle(fontWeight: alert.isRead ? FontWeight.normal : FontWeight.bold, fontSize: 16)),
-                  Text(tr('a_millas').replaceFirst('{d}', (alert.distance / 1609.34).toStringAsFixed(2)), style: const TextStyle(color: Color(0xFFFF8A00), fontSize: 13, fontWeight: FontWeight.w500)),
+                  if (alert.distance > 0)
+                    Text(tr('a_millas').replaceFirst('{d}', (alert.distance / 1609.34).toStringAsFixed(2)), style: const TextStyle(color: Color(0xFFFF8A00), fontSize: 13, fontWeight: FontWeight.w500)),
                   Text(_getTimeAgo(alert.createdAt), style: const TextStyle(color: Colors.grey, fontSize: 12)),
                 ],
               ),

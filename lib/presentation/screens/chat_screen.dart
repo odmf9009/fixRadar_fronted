@@ -53,6 +53,11 @@ class _ChatScreenState extends State<ChatScreen> {
         : _firestoreService.getChatMessages(widget.request!.id);
     _loadUserName();
     if (!_isQuoteChat) _markAsRead();
+    // Limpiar la alerta de campana de esta conversación al abrir el chat.
+    _firestoreService.markConversationRead(
+      requestId: _isQuoteChat ? null : widget.request!.id,
+      quoteId: widget.quoteId,
+    );
   }
 
   Future<void> _markAsRead() async {
