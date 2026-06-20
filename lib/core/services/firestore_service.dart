@@ -840,9 +840,7 @@ class FirestoreService {
   }
 
   Future<void> finishWorkByTechnician(String requestId) async {
-    try {
-      await _api.put('/service-requests/$requestId/finish');
-    } catch (_) {}
+    await _api.put('/service-requests/$requestId/finish');
   }
 
   Future<void> completeService(String requestId, [String? photoUrl]) async {
