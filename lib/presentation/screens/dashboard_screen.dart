@@ -184,13 +184,27 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
   Future<void> _initLocation() async {
     try {
       final pos = await _locationService.getCurrentLocation();
-      if (mounted && pos != null) {
+      if (!mounted) return;
+      if (pos != null) {
         setState(() => _currentPosition = pos);
         _startNearbyListener(pos);
         _startNearbyTechnicianListener(pos);
+      } else {
+        // Sin ubicación (permiso denegado / GPS apagado / simulador sin ubicación):
+        // detener los spinners para no quedar cargando infinitamente.
+        setState(() {
+          _isLoadingTechs = false;
+          _isLoadingNearby = false;
+        });
       }
     } catch (e) {
       print('STABLE_DASHBOARD: Location error: $e');
+      if (mounted) {
+        setState(() {
+          _isLoadingTechs = false;
+          _isLoadingNearby = false;
+        });
+      }
     }
   }
 
