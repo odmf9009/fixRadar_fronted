@@ -850,7 +850,7 @@ class _RequestDetailScreenState extends State<RequestDetailScreen> {
   }
 
   void _showReviewDialog(ServiceRequest request) {
-    double tempRating = 5;
+    double tempRating = 0;
     final TextEditingController commentController = TextEditingController();
 
     showDialog(
@@ -892,15 +892,17 @@ class _RequestDetailScreenState extends State<RequestDetailScreen> {
             actions: [
               TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancelar')),
               ElevatedButton(
-                onPressed: () async {
-                  await _firestoreService.submitReview(
-                    request.id, 
-                    request.technicianId!, 
-                    tempRating, 
-                    commentController.text
-                  );
-                  if (context.mounted) Navigator.pop(context);
-                },
+                onPressed: tempRating == 0
+                    ? null
+                    : () async {
+                        await _firestoreService.submitReview(
+                          request.id,
+                          request.technicianId!,
+                          tempRating,
+                          commentController.text
+                        );
+                        if (context.mounted) Navigator.pop(context);
+                      },
                 child: const Text('Enviar'),
               ),
             ],

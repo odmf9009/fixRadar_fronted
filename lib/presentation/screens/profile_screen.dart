@@ -235,10 +235,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
             _checkUserAchievements(user);
           }
 
+          final bool isTechnician = user?.role == 'technician' || user?.userType == 'technician';
+
           return StreamBuilder<List<ServiceRequest>>(
-            stream: _firestoreService.getClientRequests(currentUserId),
+            stream: isTechnician
+                ? _firestoreService.getTechnicianHistory(currentUserId)
+                : _firestoreService.getClientRequests(currentUserId),
             builder: (context, snapshot) {
-              final requests = snapshot.data ?? [];
+              final allRequests = snapshot.data ?? [];
+              // For technicians, only count jobs actually assigned to them (won), not just quoted.
+              final requests = isTechnician
+                  ? allRequests.where((p) => p.technicianId == currentUserId).toList()
+                  : allRequests;
               final activeCount = requests.where((p) => p.status != ServiceRequestStatus.completed && p.status != ServiceRequestStatus.cancelled).length;
               final completedCount = requests.where((p) => p.status == ServiceRequestStatus.completed).length;
 
@@ -353,7 +361,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         children: [
                           _buildStatItem(requests.length.toString(), 'Pedidos'),
                           _buildStatItem(completedCount.toString(), 'Completados'),
-                          _buildStatItem('${user?.rating.toStringAsFixed(1)}', 'Calificación'),
+                          _buildStatItem('${(user?.rating ?? 0.0).toStringAsFixed(1)}', 'Calificación'),
                         ],
                       ),
                     ),

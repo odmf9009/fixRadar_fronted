@@ -100,11 +100,16 @@ class _ClientRequestsScreenState extends State<ClientRequestsScreen> {
   }
 
   Widget _buildRequestCard(ServiceRequest request) {
-    final bool hasUnread = request.lastMessageBy != null && 
+    final rawLastRead = request.chatLastReadBy[_currentUserId];
+    final DateTime? lastReadAt = rawLastRead is String
+        ? DateTime.tryParse(rawLastRead)
+        : (rawLastRead is DateTime ? rawLastRead : null);
+
+    final bool hasUnread = request.lastMessageBy != null &&
                           request.lastMessageBy != _currentUserId &&
-                          (request.chatLastReadBy[_currentUserId] == null ||
-                           (request.lastMessageAt != null && 
-                            (request.chatLastReadBy[_currentUserId] as dynamic).toDate().isBefore(request.lastMessageAt!)));
+                          (lastReadAt == null ||
+                           (request.lastMessageAt != null &&
+                            lastReadAt.isBefore(request.lastMessageAt!)));
 
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
