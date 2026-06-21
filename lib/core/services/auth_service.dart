@@ -23,7 +23,9 @@ class AuthService {
 
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final GoogleSignIn _googleSignIn = GoogleSignIn(
-    clientId: '528608210144-cajos5fejrd64hjfscv8kq6k9qmo2baa.apps.googleusercontent.com',
+    // serverClientId = Web OAuth client (type 3) del proyecto Firebase.
+    // En Android NO se usa clientId; se necesita serverClientId para obtener el idToken.
+    serverClientId: '528608210144-cajos5fejrd64hjfscv8kq6k9qmo2baa.apps.googleusercontent.com',
   );
   final ApiService _api = ApiService();
   final SocketService _socket = SocketService();

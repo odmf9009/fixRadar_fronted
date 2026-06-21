@@ -27,7 +27,9 @@ android {
     }
 
     defaultConfig {
-        applicationId = "com.venturesflstudio.fix_radar"
+        // applicationId = identidad pública en Google Play (permanente).
+        // namespace (arriba) se mantiene como fix_radar para no mover el código Kotlin/R.
+        applicationId = "com.venturesflstudio.fixradar"
         minSdk = flutter.minSdkVersion
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode

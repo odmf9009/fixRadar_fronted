@@ -22,11 +22,79 @@
           }
         },
         {
+          "client_id": "528608210144-b1ffhvqmlbl3ohfl3tcb13hkglrb52f9.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.venturesflstudio.fix_radar",
+            "certificate_hash": "db445d0d7d49db983420d7942620b6d678db3ded"
+          }
+        },
+        {
           "client_id": "528608210144-da51k5jg6oa6bofodijdghucoknuln6i.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {
             "package_name": "com.venturesflstudio.fix_radar",
             "certificate_hash": "5f8714fc2a93819f2f4cbff526bb496a4cb96b06"
+          }
+        },
+        {
+          "client_id": "528608210144-cajos5fejrd64hjfscv8kq6k9qmo2baa.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDWS9722OGGyNTtDVaL4LJSQsuvAXKxBPI"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "528608210144-cajos5fejrd64hjfscv8kq6k9qmo2baa.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "528608210144-4nnmq9kqont8b0bjs2s2v6r9fnhu54vp.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.venturesflstudio.fixRadar"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:528608210144:android:f3f25f0d11297454893485",
+        "android_client_info": {
+          "package_name": "com.venturesflstudio.fixradar"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "528608210144-gkua7mvglk8pujllqfi32qeg84a2abjc.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.venturesflstudio.fixradar",
+            "certificate_hash": "290b49dd9e2e713cc67e948d76aa4692122be958"
+          }
+        },
+        {
+          "client_id": "528608210144-hkdsiccgbo1ulnc8cmeait3p36sjjonj.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.venturesflstudio.fixradar",
+            "certificate_hash": "5f8714fc2a93819f2f4cbff526bb496a4cb96b06"
+          }
+        },
+        {
+          "client_id": "528608210144-jrqavavmn8fbir3ca99t36khia03ojpb.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.venturesflstudio.fixradar",
+            "certificate_hash": "db445d0d7d49db983420d7942620b6d678db3ded"
           }
         },
         {
