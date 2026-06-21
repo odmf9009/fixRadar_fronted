@@ -56,14 +56,8 @@ class NotificationService {
       await androidPlugin?.createNotificationChannel(_alertChannel);
     }
 
-    // Upload token to backend (simulators don't have APNS token, skip gracefully)
-    try {
-      final token = await _fcm.getToken();
-      if (token != null) {
-        await AuthService().updateFcmToken(token);
-      }
-    } catch (_) {}
-
+    // Registrar listeners PRIMERO para que siempre queden activos, aunque la
+    // obtención del token se demore o falle.
     _fcm.onTokenRefresh.listen((newToken) {
       AuthService().updateFcmToken(newToken);
     });
@@ -76,14 +70,37 @@ class NotificationService {
       if (message.data.isNotEmpty) onNotificationTap?.call(message.data);
     });
 
-    // App was terminated and user tapped notification to open it
-    final initial = await _fcm.getInitialMessage();
-    if (initial != null && initial.data.isNotEmpty) {
-      // Delay to let the widget tree build first
-      Future.delayed(const Duration(milliseconds: 800), () {
-        onNotificationTap?.call(initial.data);
-      });
-    }
+    // App was terminated and user tapped notification to open it.
+    // En simulador iOS sin APNs esto se cuelga: protegemos con timeout.
+    try {
+      final initial = await _fcm
+          .getInitialMessage()
+          .timeout(const Duration(seconds: 3), onTimeout: () => null);
+      if (initial != null && initial.data.isNotEmpty) {
+        // Delay to let the widget tree build first
+        Future.delayed(const Duration(milliseconds: 800), () {
+          onNotificationTap?.call(initial.data);
+        });
+      }
+    } catch (_) {}
+
+    // Subir token al backend. En iOS getToken() requiere un token APNs que NO
+    // existe en el simulador, y entonces la llamada NUNCA resuelve (no lanza,
+    // simplemente cuelga). Chequeamos APNs + timeout para no bloquear nunca.
+    try {
+      if (defaultTargetPlatform == TargetPlatform.iOS) {
+        final apns = await _fcm
+            .getAPNSToken()
+            .timeout(const Duration(seconds: 3), onTimeout: () => null);
+        if (apns == null) return; // simulador / sin APNs: omitir subida de token
+      }
+      final token = await _fcm
+          .getToken()
+          .timeout(const Duration(seconds: 5), onTimeout: () => null);
+      if (token != null) {
+        await AuthService().updateFcmToken(token);
+      }
+    } catch (_) {}
   }
 
   Future<void> _showLocalNotification(RemoteMessage message) async {

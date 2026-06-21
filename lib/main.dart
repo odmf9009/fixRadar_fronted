@@ -20,7 +20,10 @@ void main() async {
 
   await LanguageService().init();
   ApiService().init();
-  await NotificationService().init();
+  // No se hace await: la inicialización de notificaciones (token FCM/APNs) no debe
+  // bloquear el primer frame. En simulador iOS getToken/getInitialMessage pueden
+  // tardar; dejamos que corra en segundo plano para que la app arranque al instante.
+  NotificationService().init();
   runApp(const FixRadarApp());
 }
 
