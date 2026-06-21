@@ -200,14 +200,22 @@ class _ClientRespondersListScreenState extends State<ClientRespondersListScreen>
                         child: ElevatedButton(
                           onPressed: () async {
                             final request = await _firestoreService.getServiceRequestById(quote.requestId);
-                            if (request != null && mounted) {
+                            if (!mounted) return;
+                            if (request != null) {
                               Navigator.pushNamed(
-                                context, 
-                                AppRoutes.requestDetail, 
+                                context,
+                                AppRoutes.requestDetail,
                                 arguments: {
                                   'request': request,
                                   'selectedQuote': quote,
                                 }
+                              );
+                            } else {
+                              // El pedido ya no existe (fue eliminado): avisar en vez de no hacer nada.
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text('Este pedido ya no está disponible.'),
+                                ),
                               );
                             }
                           },
