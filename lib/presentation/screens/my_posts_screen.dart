@@ -2,7 +2,12 @@ import 'package:flutter/material.dart';
 import '../../core/services/auth_service.dart';
 import '../../core/models/service_request.dart';
 import '../../core/services/firestore_service.dart';
+import '../../core/services/language_service.dart';
+import '../../core/services/view_mode_service.dart';
 import '../../core/config/routes.dart';
+
+// Identificadores estables de las pestañas (independientes del idioma/lente).
+enum _PostFilter { active, middle, finished }
 
 class MyPostsScreen extends StatefulWidget {
   const MyPostsScreen({super.key});
@@ -13,93 +18,135 @@ class MyPostsScreen extends StatefulWidget {
 
 class _MyPostsScreenState extends State<MyPostsScreen> {
   final FirestoreService _firestoreService = FirestoreService();
-  String _activeFilter = 'Activas';
+  _PostFilter _activeFilter = _PostFilter.active;
   final String _currentUserId = AuthService.currentUidSync;
+
+  /// Vista profesional ("Trabajar") = "Mis trabajos". Si no, vista de cliente
+  /// ("Necesito ayuda" o cuenta cliente) = "Mis pedidos".
+  bool get _isProView => ViewModeService.instance.isProLens;
+
+  /// ¿El pedido cuenta como "activo" (asignado y en curso, no terminado)?
+  bool _isActive(ServiceRequest p) =>
+      p.status == ServiceRequestStatus.assigned ||
+      p.status == ServiceRequestStatus.inProgress ||
+      p.status == ServiceRequestStatus.finishedByTechnician;
+
+  List<ServiceRequest> _filter(List<ServiceRequest> all) {
+    if (_isProView) {
+      // Mis trabajos (técnico):
+      switch (_activeFilter) {
+        case _PostFilter.active:
+          // Gané la cotización (asignado a mí) y aún no está completado.
+          return all.where((p) => p.technicianId == _currentUserId && _isActive(p)).toList();
+        case _PostFilter.middle: // Historial
+          // Envié cotización pero el cliente no la aprobó (no la gané), sin completar.
+          return all.where((p) =>
+              p.technicianId != _currentUserId &&
+              p.status != ServiceRequestStatus.completed &&
+              p.status != ServiceRequestStatus.cancelled).toList();
+        case _PostFilter.finished:
+          return all.where((p) => p.status == ServiceRequestStatus.completed && p.technicianId == _currentUserId).toList();
+      }
+    } else {
+      // Mis pedidos (cliente):
+      switch (_activeFilter) {
+        case _PostFilter.active:
+          return all.where(_isActive).toList();
+        case _PostFilter.middle: // Pendientes
+          // Me enviaron cotización(es) y no he aprobado ninguna: sigue abierto.
+          return all.where((p) => p.status == ServiceRequestStatus.open).toList();
+        case _PostFilter.finished:
+          return all.where((p) => p.status == ServiceRequestStatus.completed).toList();
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.white,
-      appBar: AppBar(
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.white),
-          onPressed: () => Navigator.pop(context),
-        ),
-        title: const Text(
-          'Mis pedidos',
-          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-        ),
-        backgroundColor: const Color(0xFF121212),
-        elevation: 0,
-        centerTitle: true,
-      ),
-      body: Column(
-        children: [
-          // Filter Tabs
-          Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Row(
-              children: [
-                _buildFilterTab('Activas'),
-                const SizedBox(width: 10),
-                _buildFilterTab('Historial'),
-                const SizedBox(width: 10),
-                _buildFilterTab('Finalizadas'),
-              ],
+    return ListenableBuilder(
+      listenable: Listenable.merge([LanguageService(), ViewModeService.instance]),
+      builder: (context, _) {
+        final bool pro = _isProView;
+        return Scaffold(
+          backgroundColor: Colors.white,
+          appBar: AppBar(
+            leading: IconButton(
+              icon: const Icon(Icons.arrow_back, color: Colors.white),
+              onPressed: () => Navigator.pop(context),
             ),
+            title: Text(
+              pro ? tr('my_jobs') : tr('my_orders'),
+              style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+            ),
+            backgroundColor: const Color(0xFF121212),
+            elevation: 0,
+            centerTitle: true,
           ),
-          
-          // Posts List
-          Expanded(
-            child: StreamBuilder<List<ServiceRequest>>(
-              stream: _firestoreService.getClientRequests(_currentUserId),
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const Center(child: CircularProgressIndicator(color: Color(0xFFFF8A00)));
-                }
-                
-                if (snapshot.hasError) {
-                  return Center(child: Text('Error: ${snapshot.error}'));
-                }
+          body: Column(
+            children: [
+              // Filter Tabs
+              Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Row(
+                  children: [
+                    _buildFilterTab(_PostFilter.active, tr('tab_active')),
+                    const SizedBox(width: 10),
+                    // El tab central cambia según el lente: Historial (pro) / Pendientes (cliente).
+                    _buildFilterTab(_PostFilter.middle, pro ? tr('tab_history') : tr('tab_pending')),
+                    const SizedBox(width: 10),
+                    _buildFilterTab(_PostFilter.finished, tr('tab_finished')),
+                  ],
+                ),
+              ),
 
-                final allPosts = snapshot.data ?? [];
-                
-                // Filter logic
-                final filteredPosts = allPosts.where((post) {
-                  if (_activeFilter == 'Activas') return post.status != ServiceRequestStatus.completed && post.status != ServiceRequestStatus.cancelled;
-                  if (_activeFilter == 'Finalizadas') return post.status == ServiceRequestStatus.completed;
-                  return true; // Historial shows all
-                }).toList();
+              // Posts List
+              Expanded(
+                child: StreamBuilder<List<ServiceRequest>>(
+                  stream: pro
+                      ? _firestoreService.getTechnicianHistory(_currentUserId)
+                      : _firestoreService.getClientRequests(_currentUserId),
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      return const Center(child: CircularProgressIndicator(color: Color(0xFFFF8A00)));
+                    }
 
-                if (filteredPosts.isEmpty) {
-                  return const Center(
-                    child: Text(
-                      'No tienes pedidos en esta categoría',
-                      style: TextStyle(color: Colors.grey),
-                    ),
-                  );
-                }
+                    if (snapshot.hasError) {
+                      return Center(child: Text('Error: ${snapshot.error}'));
+                    }
 
-                return ListView.separated(
-                  itemCount: filteredPosts.length,
-                  separatorBuilder: (context, index) => const Divider(height: 1, indent: 16, endIndent: 16),
-                  itemBuilder: (context, index) {
-                    final post = filteredPosts[index];
-                    return _buildPostItem(post);
+                    final filteredPosts = _filter(snapshot.data ?? []);
+
+                    if (filteredPosts.isEmpty) {
+                      return Center(
+                        child: Text(
+                          tr('no_items_category'),
+                          style: const TextStyle(color: Colors.grey),
+                        ),
+                      );
+                    }
+
+                    return ListView.separated(
+                      itemCount: filteredPosts.length,
+                      separatorBuilder: (context, index) => const Divider(height: 1, indent: 16, endIndent: 16),
+                      itemBuilder: (context, index) {
+                        final post = filteredPosts[index];
+                        return _buildPostItem(post);
+                      },
+                    );
                   },
-                );
-              },
-            ),
+                ),
+              ),
+            ],
           ),
-        ],
-      ),
+        );
+      },
     );
   }
 
-  Widget _buildFilterTab(String label) {
-    final isSelected = _activeFilter == label;
+  Widget _buildFilterTab(_PostFilter filter, String label) {
+    final isSelected = _activeFilter == filter;
     return GestureDetector(
-      onTap: () => setState(() => _activeFilter = label),
+      onTap: () => setState(() => _activeFilter = filter),
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
         decoration: BoxDecoration(

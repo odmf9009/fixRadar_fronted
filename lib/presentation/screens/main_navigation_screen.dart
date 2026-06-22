@@ -181,6 +181,10 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> with Widget
           setState(() => _currentUser = user);
 
           if (wasNull && user != null) {
+            // Aplicar la preferencia de idioma guardada del usuario (default 'en').
+            if (LanguageService().currentLanguage != user.language) {
+              LanguageService().setLanguage(user.language);
+            }
             // Cargar el lente guardado (default = vista natural del rol) y
             // escuchar cambios para reconstruir tabs/pantallas al alternar.
             ViewModeService.instance.load(user.role).then((_) {

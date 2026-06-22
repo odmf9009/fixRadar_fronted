@@ -7,12 +7,14 @@ class LanguageService extends ChangeNotifier {
   factory LanguageService() => _instance;
   LanguageService._internal();
 
-  String _currentLanguage = 'es';
+  String _currentLanguage = 'en';
   String get currentLanguage => _currentLanguage;
 
   Future<void> init() async {
     final prefs = await SharedPreferences.getInstance();
-    _currentLanguage = prefs.getString('app_language') ?? 'es';
+    // Idioma por defecto: inglés. Se sobreescribe con la preferencia guardada
+    // del usuario (sincronizada desde su perfil en backend) al iniciar sesión.
+    _currentLanguage = prefs.getString('app_language') ?? 'en';
     notifyListeners();
   }
 

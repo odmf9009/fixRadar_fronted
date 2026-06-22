@@ -466,7 +466,7 @@ class _RequestDetailScreenState extends State<RequestDetailScreen> {
               ElevatedButton.icon(
                 onPressed: () => _firestoreService.updateRequestStatus(request.id, ServiceRequestStatus.inProgress),
                 icon: const Icon(Icons.location_on_outlined),
-                label: const Text('Ya estoy en el lugar'),
+                label: Text(tr('i_arrived')),
                 style: ElevatedButton.styleFrom(backgroundColor: Colors.green, minimumSize: const Size(double.infinity, 56)),
               ),
               const SizedBox(height: 12),

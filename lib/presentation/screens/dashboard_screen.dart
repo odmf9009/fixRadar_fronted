@@ -404,8 +404,11 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
                   _buildLensToggle(),
                 ],
                 const SizedBox(height: 24),
-                _buildPublishButton(),
-                const SizedBox(height: 32),
+                // "Publicar un problema" solo en la vista de cliente / "Necesito ayuda".
+                if (_isClientView) ...[
+                  _buildPublishButton(),
+                  const SizedBox(height: 32),
+                ],
                 _buildCategories(),
                 const SizedBox(height: 32),
 
@@ -519,13 +522,13 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
       child: Row(
         children: [
           _buildLensOption(
-            label: 'Trabajar',
+            label: tr('lens_work'),
             icon: Icons.engineering,
             selected: !isClient,
             onTap: () => ViewModeService.instance.setMode(AppViewMode.pro),
           ),
           _buildLensOption(
-            label: 'Necesito ayuda',
+            label: tr('lens_need_help'),
             icon: Icons.handyman_outlined,
             selected: isClient,
             onTap: () => ViewModeService.instance.setMode(AppViewMode.client),
@@ -575,7 +578,7 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
     return ElevatedButton.icon(
       onPressed: () => Navigator.pushNamed(context, AppRoutes.publish),
       icon: const Icon(Icons.add_circle_outline, color: Colors.white),
-      label: const Text('Publicar un problema'),
+      label: Text(tr('publish_problem')),
       style: ElevatedButton.styleFrom(
         backgroundColor: const Color(0xFFFF8A00),
         minimumSize: const Size(double.infinity, 56),

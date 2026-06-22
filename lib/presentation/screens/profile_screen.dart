@@ -7,6 +7,7 @@ import '../../core/services/auth_service.dart';
 import '../../core/services/firestore_service.dart';
 import '../../core/services/upload_service.dart';
 import '../../core/services/language_service.dart';
+import '../../core/services/view_mode_service.dart';
 import '../../core/services/achievement_service.dart';
 import '../../core/models/service_request.dart';
 import '../../core/models/user_model.dart';
@@ -238,16 +239,19 @@ class _ProfileScreenState extends State<ProfileScreen> {
             _checkUserAchievements(user);
           }
 
-          final bool isTechnician = user?.role == 'technician' || user?.userType == 'technician';
+          final bool accountIsTech = user?.role == 'technician' || user?.userType == 'technician';
+          // Vista profesional ("Trabajar") vs cliente ("Necesito ayuda"): el
+          // resumen sigue el lente, no solo el rol.
+          final bool proView = accountIsTech && ViewModeService.instance.isProLens;
 
           return StreamBuilder<List<ServiceRequest>>(
-            stream: isTechnician
+            stream: proView
                 ? _firestoreService.getTechnicianHistory(currentUserId)
                 : _firestoreService.getClientRequests(currentUserId),
             builder: (context, snapshot) {
               final allRequests = snapshot.data ?? [];
-              // For technicians, only count jobs actually assigned to them (won), not just quoted.
-              final requests = isTechnician
+              // En vista profesional solo contamos los trabajos ganados (asignados a mí).
+              final requests = proView
                   ? allRequests.where((p) => p.technicianId == currentUserId).toList()
                   : allRequests;
               final activeCount = requests.where((p) => p.status != ServiceRequestStatus.completed && p.status != ServiceRequestStatus.cancelled).length;
@@ -470,7 +474,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       _buildMenuItem(Icons.admin_panel_settings, 'Panel de Administrador', () {
                         Navigator.pushNamed(context, AppRoutes.adminPanel);
                       }),
-                    _buildMenuItem(Icons.edit_note_outlined, 'Mis pedidos', () {
+                    _buildMenuItem(Icons.edit_note_outlined, proView ? tr('my_jobs') : tr('my_orders'), () {
                       Navigator.pushNamed(context, AppRoutes.myPosts);
                     }, count: activeCount),
                     _buildMenuItem(Icons.history, 'Historial', () {

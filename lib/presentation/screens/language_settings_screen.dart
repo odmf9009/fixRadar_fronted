@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../core/services/language_service.dart';
+import '../../core/services/user_service.dart';
 
 class LanguageSettingsScreen extends StatefulWidget {
   const LanguageSettingsScreen({super.key});
@@ -10,6 +11,16 @@ class LanguageSettingsScreen extends StatefulWidget {
 
 class _LanguageSettingsScreenState extends State<LanguageSettingsScreen> {
   final LanguageService _languageService = LanguageService();
+  final UserService _userService = UserService();
+
+  Future<void> _selectLanguage(String code) async {
+    await _languageService.setLanguage(code);
+    // Persistir la preferencia en el perfil del usuario (backend) para que se
+    // mantenga entre dispositivos y el servidor envíe push en ese idioma.
+    try {
+      await _userService.updateMe({'language': code});
+    } catch (_) {}
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -79,7 +90,7 @@ class _LanguageSettingsScreenState extends State<LanguageSettingsScreen> {
       trailing: isSelected 
           ? const Icon(Icons.check_circle, color: Color(0xFFFF8A00))
           : null,
-      onTap: () => _languageService.setLanguage(code),
+      onTap: () => _selectLanguage(code),
     );
   }
 }

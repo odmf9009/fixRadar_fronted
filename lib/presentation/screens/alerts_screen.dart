@@ -9,6 +9,7 @@ import '../../core/models/user_model.dart';
 import '../../core/services/firestore_service.dart';
 import '../../core/services/location_service.dart';
 import '../../core/services/language_service.dart';
+import '../../core/services/view_mode_service.dart';
 import '../../core/config/routes.dart';
 import 'widgets/category_badge.dart';
 
@@ -45,8 +46,30 @@ class _AlertsScreenState extends State<AlertsScreen> {
   @override
   Widget build(BuildContext context) {
     return ListenableBuilder(
-      listenable: LanguageService(),
+      listenable: Listenable.merge([LanguageService(), ViewModeService.instance]),
       builder: (context, _) {
+        final clearAction = IconButton(
+          icon: const Icon(Icons.delete_sweep_outlined, color: Colors.red),
+          onPressed: () => _showClearAllConfirm(context),
+          tooltip: tr('clear_history'),
+        );
+
+        // Vista de cliente: solo el listado de notificaciones (sin radar ni
+        // novedades/nuevas averías, que son funciones de la vista de técnico).
+        if (ViewModeService.instance.isClientLens) {
+          return Scaffold(
+            backgroundColor: Colors.white,
+            appBar: AppBar(
+              title: Text(tr('notifications'), style: const TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
+              backgroundColor: Colors.white,
+              elevation: 0,
+              centerTitle: true,
+              actions: [clearAction],
+            ),
+            body: _RadarTab(key: _radarTabKey, currentUserId: AuthService.currentUidSync),
+          );
+        }
+
         return DefaultTabController(
           length: 2,
           child: Scaffold(
@@ -56,13 +79,7 @@ class _AlertsScreenState extends State<AlertsScreen> {
               backgroundColor: Colors.white,
               elevation: 0,
               centerTitle: true,
-              actions: [
-                IconButton(
-                  icon: const Icon(Icons.delete_sweep_outlined, color: Colors.red),
-                  onPressed: () => _showClearAllConfirm(context),
-                  tooltip: 'Limpiar todo el historial',
-                ),
-              ],
+              actions: [clearAction],
               bottom: TabBar(
                 labelColor: const Color(0xFFFF8A00),
                 unselectedLabelColor: Colors.grey,

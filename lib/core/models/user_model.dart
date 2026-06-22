@@ -17,6 +17,7 @@ class UserModel {
   final String? userType;
   final bool onboardingCompleted;
   final String role;
+  final String language;
   final List<String> specialties;
   final double rating;
   final int reviewsCount;
@@ -65,6 +66,7 @@ class UserModel {
     this.userType,
     this.onboardingCompleted = false,
     this.role = 'client',
+    this.language = 'en',
     this.specialties = const [],
     this.rating = 0.0,
     this.reviewsCount = 0,
@@ -126,6 +128,7 @@ class UserModel {
       userType: json['userType'],
       onboardingCompleted: json['onboardingCompleted'] ?? false,
       role: json['role'] ?? json['userType'] ?? 'client',
+      language: json['language'] ?? 'en',
       specialties: List<String>.from(json['specialties'] ?? []),
       rating: (json['rating'] as num?)?.toDouble() ?? 0.0,
       reviewsCount: json['reviewsCount'] ?? 0,
@@ -191,6 +194,7 @@ class UserModel {
     'userType': userType,
     'onboardingCompleted': onboardingCompleted,
     'role': role,
+    'language': language,
     'specialties': specialties,
     'rating': rating,
     'reviewsCount': reviewsCount,
