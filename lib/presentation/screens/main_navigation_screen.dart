@@ -18,6 +18,7 @@ import '../../core/services/sync_service.dart';
 import '../../core/services/language_service.dart';
 import '../../core/services/socket_service.dart';
 import '../../core/services/notification_service.dart';
+import '../../core/services/view_mode_service.dart';
 import '../../core/models/user_model.dart';
 import '../../core/models/service_request.dart';
 
@@ -59,12 +60,22 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> with Widget
     _initNotificationTapHandler();
   }
 
+  /// La cuenta es de técnico (rol real, no cambia nunca).
+  bool get _accountIsTechnician =>
+      _currentUser?.role == 'technician' || _currentUser?.userType == 'technician';
+
+  /// Mostrar la UI de técnico = cuenta técnico Y lente en modo `pro`.
+  /// Un técnico en lente `client` ve exactamente la experiencia de cliente,
+  /// pero sigue siendo técnico en backend (sigue recibiendo trabajos).
+  bool get _showTechnicianUI =>
+      _accountIsTechnician && ViewModeService.instance.mode == AppViewMode.pro;
+
   void _initScreens() {
     if (_currentUser == null) return;
-    
-    final bool isTechnician = _currentUser?.role == 'technician';
-    
-    _screens = isTechnician 
+
+    final bool isTechnician = _showTechnicianUI;
+
+    _screens = isTechnician
       ? [
           DashboardScreen(onViewMap: (req) => _onTabTapped(1, focusRequest: req)),
           HomeMapScreen(
@@ -146,11 +157,20 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> with Widget
     SocketService().off('quote:new');
     SocketService().off('quote:accepted');
     SocketService().off('alert:new');
+    ViewModeService.instance.removeListener(_onViewModeChanged);
     WidgetsBinding.instance.removeObserver(this);
     _locationSyncTimer?.cancel();
     _connectivitySubscription?.cancel();
     _userSubscription?.cancel();
     super.dispose();
+  }
+
+  void _onViewModeChanged() {
+    if (!mounted) return;
+    // El lente cambió: el significado de cada pestaña cambia, así que
+    // reconstruimos las pantallas y volvemos a Inicio.
+    _initScreens();
+    setState(() => _currentIndex = 0);
   }
 
   void _listenToUser() {
@@ -159,8 +179,14 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> with Widget
         if (mounted) {
           final bool wasNull = _currentUser == null;
           setState(() => _currentUser = user);
-          
+
           if (wasNull && user != null) {
+            // Cargar el lente guardado (default = vista natural del rol) y
+            // escuchar cambios para reconstruir tabs/pantallas al alternar.
+            ViewModeService.instance.load(user.role).then((_) {
+              if (mounted) _initScreens();
+            });
+            ViewModeService.instance.addListener(_onViewModeChanged);
             _initScreens();
           }
 
@@ -297,7 +323,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> with Widget
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 
-    final bool isTechnician = _currentUser?.role == 'technician';
+    final bool isTechnician = _showTechnicianUI;
 
     return Scaffold(
       body: IndexedStack(

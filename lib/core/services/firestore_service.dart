@@ -1096,8 +1096,51 @@ class FirestoreService {
 
   Stream<List<ActivityModel>> getUserActivities(String userId) {
     final controller = StreamController<List<ActivityModel>>.broadcast();
-    controller.add([]);
+
+    Future<void> fetch() async {
+      try {
+        final response = await _api.get('/users/me/activity');
+        final list = (response.data as List)
+            .map((e) => _activityFromBackend(Map<String, dynamic>.from(e)))
+            .toList();
+        if (!controller.isClosed) controller.add(list);
+      } catch (_) {
+        // Ante cualquier error emitimos lista vacía para no dejar el shimmer
+        // colgado para siempre (mostrará el estado "sin actividad").
+        if (!controller.isClosed) controller.add([]);
+      }
+    }
+
+    fetch();
     return controller.stream;
+  }
+
+  // Mapea el documento de Activity del backend (enum/campos propios) al
+  // ActivityModel del frontend. Tipos desconocidos caen a 'publish' para
+  // que ActivityType.byName nunca lance.
+  ActivityModel _activityFromBackend(Map<String, dynamic> json) {
+    const typeMap = {
+      'request_created': 'publish',
+      'quote_sent': 'confirm',
+      'quote_accepted': 'confirm',
+      'service_completed': 'serviceCompleted',
+      'review_given': 'communityAppreciation',
+      'achievement_unlocked': 'achievement',
+      'referral_success': 'communityAppreciation',
+    };
+    final mappedType = typeMap[json['type']?.toString()] ?? 'publish';
+    return ActivityModel.fromMap(
+      (json['_id'] ?? json['id'] ?? '').toString(),
+      {
+        'title': json['title'] ?? '',
+        'description': json['description'] ?? '',
+        'points': json['pointsEarned'] ?? json['points'] ?? 0,
+        'type': mappedType,
+        'createdAt': json['createdAt'] ?? '',
+        'requestId': json['relatedId'] ?? json['requestId'],
+        'metadata': json['metadata'] ?? {},
+      },
+    );
   }
 
   Stream<List<UserModel>> getAllUsers() {

@@ -108,10 +108,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     return GestureDetector(
                       onTap: () {
                         setDialogState(() {
+                          // Selección ÚNICA en la UI: solo una especialidad a la vez.
+                          // Se sigue guardando como List<String> para que la
+                          // estructura admita varias en el futuro sin cambios.
                           if (isSelected) {
-                            tempSpecialties.remove(cat);
+                            tempSpecialties = [];
                           } else {
-                            tempSpecialties.add(cat);
+                            tempSpecialties = [cat];
                           }
                         });
                       },

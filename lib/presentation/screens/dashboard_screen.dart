@@ -9,6 +9,7 @@ import '../../core/services/language_service.dart';
 import '../../core/services/location_service.dart';
 import '../../core/services/socket_service.dart';
 import '../../core/services/proximity_service.dart';
+import '../../core/services/view_mode_service.dart';
 import '../../core/config/routes.dart';
 import '../../core/models/service_request.dart';
 import '../../core/models/user_model.dart';
@@ -208,6 +209,17 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
     }
   }
 
+  /// La cuenta es de técnico (rol real).
+  bool get _accountIsTechnician =>
+      _user?.role == 'technician' || _user?.userType == 'technician';
+
+  /// ¿Mostrar la vista de cliente? Clientes puros siempre; técnicos solo cuando
+  /// el lente está en modo `client`. No cambia el rol en backend.
+  bool get _isClientView {
+    if (!_accountIsTechnician) return true;
+    return ViewModeService.instance.mode == AppViewMode.client;
+  }
+
   Widget _buildRadarIcon(bool isOnline) {
     if (isOnline) {
       return const Icon(Icons.radar, color: Color(0xFFFF8A00), size: 28);
@@ -387,14 +399,18 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 _buildHeader(user),
+                if (_accountIsTechnician) ...[
+                  const SizedBox(height: 16),
+                  _buildLensToggle(),
+                ],
                 const SizedBox(height: 24),
                 _buildPublishButton(),
                 const SizedBox(height: 32),
                 _buildCategories(),
                 const SizedBox(height: 32),
 
-                // Secciones dinámicas según rol
-                if (user.role == 'client') ...[
+                // Secciones dinámicas según el lente de vista (no el rol).
+                if (_isClientView) ...[
                   _buildMyRequestsSummary(),
                   const SizedBox(height: 32),
                   _buildTopTechniciansList(),
@@ -412,7 +428,8 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
   }
 
   Widget _buildHeader(UserModel user) {
-    final bool isTech = user.role == 'technician';
+    // El badge/iconos reflejan el LENTE actual, no el rol de la cuenta.
+    final bool isTech = !_isClientView;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -427,7 +444,8 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
             ),
             Row(
               children: [
-                if (user.role == 'technician')
+                // El radar (disponibilidad para trabajos) solo en vista de técnico.
+                if (!_isClientView && _accountIsTechnician)
                   _isUpdatingStatus
                     ? const SizedBox(
                         width: 24, height: 24,
@@ -484,6 +502,72 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
         ),
         const Text('¿En qué podemos ayudarte hoy?', style: TextStyle(color: Colors.grey, fontSize: 14)),
       ],
+    );
+  }
+
+  /// Toggle de lente (solo cuentas de técnico): alternar entre actuar como
+  /// profesional o como cliente. No cambia el rol → no se pierden trabajos.
+  Widget _buildLensToggle() {
+    final bool isClient = _isClientView;
+    return Container(
+      padding: const EdgeInsets.all(4),
+      decoration: BoxDecoration(
+        color: Colors.grey[100],
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: Colors.grey[200]!),
+      ),
+      child: Row(
+        children: [
+          _buildLensOption(
+            label: 'Trabajar',
+            icon: Icons.engineering,
+            selected: !isClient,
+            onTap: () => ViewModeService.instance.setMode(AppViewMode.pro),
+          ),
+          _buildLensOption(
+            label: 'Necesito ayuda',
+            icon: Icons.handyman_outlined,
+            selected: isClient,
+            onTap: () => ViewModeService.instance.setMode(AppViewMode.client),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildLensOption({
+    required String label,
+    required IconData icon,
+    required bool selected,
+    required VoidCallback onTap,
+  }) {
+    return Expanded(
+      child: GestureDetector(
+        onTap: selected ? null : onTap,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          padding: const EdgeInsets.symmetric(vertical: 10),
+          decoration: BoxDecoration(
+            color: selected ? const Color(0xFFFF8A00) : Colors.transparent,
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(icon, size: 16, color: selected ? Colors.white : Colors.grey[600]),
+              const SizedBox(width: 6),
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.bold,
+                  color: selected ? Colors.white : Colors.grey[600],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 
