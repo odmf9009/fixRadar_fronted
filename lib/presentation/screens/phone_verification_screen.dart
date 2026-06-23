@@ -3,6 +3,13 @@ import 'package:flutter/services.dart';
 import '../../core/services/firestore_service.dart';
 import '../../core/services/language_service.dart';
 
+/// Interruptor del flujo de verificación por SMS.
+///
+/// TEMPORAL: mientras no haya cuenta de Twilio configurada lo dejamos en `false`,
+/// de modo que el usuario solo edita el número (país + dígitos) y se guarda sin
+/// comprobación. Cambiar a `true` para reactivar el OTP por SMS.
+const bool kPhoneVerificationEnabled = false;
+
 /// Verificación del teléfono por **SMS (OTP vía Twilio)**.
 ///
 /// Objetivo: comprobar que el número que ingresa el profesional existe y que él
@@ -81,6 +88,12 @@ class _PhoneVerificationScreenState extends State<PhoneVerificationScreen> {
     }
     final phone = '${_country.dial}$local';
 
+    // Sin verificación: devolvemos el número para que el perfil lo guarde directo.
+    if (!kPhoneVerificationEnabled) {
+      Navigator.pop(context, phone);
+      return;
+    }
+
     setState(() => _isLoading = true);
     try {
       await _firestoreService.sendPhoneVerificationCode(phone);
@@ -127,7 +140,7 @@ class _PhoneVerificationScreenState extends State<PhoneVerificationScreen> {
         return Scaffold(
           backgroundColor: Colors.white,
           appBar: AppBar(
-            title: Text(tr('verify_phone'),
+            title: Text(kPhoneVerificationEnabled ? tr('verify_phone') : tr('edit_phone'),
                 style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
             backgroundColor: const Color(0xFF121212),
             centerTitle: true,
@@ -194,7 +207,8 @@ class _PhoneVerificationScreenState extends State<PhoneVerificationScreen> {
           ],
         ),
         const SizedBox(height: 28),
-        _primaryButton(tr('send_code'), _isLoading ? null : _sendCode),
+        _primaryButton(kPhoneVerificationEnabled ? tr('send_code') : tr('save'),
+            _isLoading ? null : _sendCode),
       ],
     );
   }

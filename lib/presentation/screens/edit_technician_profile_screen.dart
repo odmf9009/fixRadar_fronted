@@ -128,17 +128,18 @@ class _EditTechnicianProfileScreenState extends State<EditTechnicianProfileScree
   }
 
   Future<void> _openPhoneVerification() async {
-    final verified = await Navigator.push<String>(
+    final result = await Navigator.push<String>(
       context,
       MaterialPageRoute(
         builder: (_) => PhoneVerificationScreen(initialPhone: _phoneNumber.isEmpty ? null : _phoneNumber),
       ),
     );
-    // El backend ya persistió el número y phoneVerified=true; reflejamos en UI.
-    if (verified != null && verified.isNotEmpty && mounted) {
+    // Con verificación activa el backend ya persistió el número (verificado).
+    // Sin verificación solo editamos el número; se guarda con el resto del perfil.
+    if (result != null && result.isNotEmpty && mounted) {
       setState(() {
-        _phoneNumber = verified;
-        _phoneVerified = true;
+        _phoneNumber = result;
+        _phoneVerified = kPhoneVerificationEnabled;
       });
     }
   }
@@ -169,7 +170,7 @@ class _EditTechnicianProfileScreenState extends State<EditTechnicianProfileScree
                         hasPhone ? _phoneNumber : tr('phone_not_set'),
                         style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
                       ),
-                      if (hasPhone && _phoneVerified) ...[
+                      if (hasPhone && _phoneVerified && kPhoneVerificationEnabled) ...[
                         const SizedBox(width: 6),
                         const Icon(Icons.verified, color: Colors.green, size: 18),
                       ],
@@ -181,7 +182,9 @@ class _EditTechnicianProfileScreenState extends State<EditTechnicianProfileScree
             TextButton(
               onPressed: _openPhoneVerification,
               child: Text(
-                hasPhone ? tr('verify_change_phone') : tr('verify_phone'),
+                kPhoneVerificationEnabled
+                    ? (hasPhone ? tr('verify_change_phone') : tr('verify_phone'))
+                    : (hasPhone ? tr('change_phone') : tr('add_phone')),
                 style: const TextStyle(color: Color(0xFFFF8A00), fontWeight: FontWeight.bold),
                 textAlign: TextAlign.end,
               ),
@@ -224,6 +227,9 @@ class _EditTechnicianProfileScreenState extends State<EditTechnicianProfileScree
       'freeQuote': _freeQuote,
       'emergencyService': _emergency,
       'weekendAvailability': _weekend,
+      // Sin verificación SMS: el número se guarda junto al resto del perfil.
+      'phoneNumber': _phoneNumber.trim(),
+      'phoneVerified': _phoneVerified,
     };
 
     try {
