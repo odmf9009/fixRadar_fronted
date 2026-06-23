@@ -227,6 +227,13 @@ class FirestoreService {
 
   // ─── PHONE VERIFICATION (SMS OTP via Twilio) ──────────────────────────────
 
+  /// Guarda el teléfono SIN verificación SMS (mientras Twilio no esté activo).
+  /// Devuelve el usuario actualizado.
+  Future<UserModel> updatePhone(String phone) async {
+    final response = await _api.put('/users/me/phone', data: {'phone': phone});
+    return UserModel.fromJson(response.data);
+  }
+
   /// Envía un código SMS al [phone] nuevo que el usuario quiere verificar.
   Future<void> sendPhoneVerificationCode(String phone) async {
     await _api.post('/users/me/phone/send-code', data: {'phone': phone});

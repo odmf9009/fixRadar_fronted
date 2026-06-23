@@ -134,8 +134,8 @@ class _EditTechnicianProfileScreenState extends State<EditTechnicianProfileScree
         builder: (_) => PhoneVerificationScreen(initialPhone: _phoneNumber.isEmpty ? null : _phoneNumber),
       ),
     );
-    // Con verificación activa el backend ya persistió el número (verificado).
-    // Sin verificación solo editamos el número; se guarda con el resto del perfil.
+    // En ambos modos el backend ya persistió el número al volver de la pantalla
+    // (verificado con OTP, o directo por el endpoint dedicado). Reflejamos en UI.
     if (result != null && result.isNotEmpty && mounted) {
       setState(() {
         _phoneNumber = result;
@@ -227,9 +227,7 @@ class _EditTechnicianProfileScreenState extends State<EditTechnicianProfileScree
       'freeQuote': _freeQuote,
       'emergencyService': _emergency,
       'weekendAvailability': _weekend,
-      // Sin verificación SMS: el número se guarda junto al resto del perfil.
-      'phoneNumber': _phoneNumber.trim(),
-      'phoneVerified': _phoneVerified,
+      // El teléfono NO va aquí: se guarda al editarlo, vía su endpoint dedicado.
     };
 
     try {

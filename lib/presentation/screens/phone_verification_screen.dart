@@ -88,9 +88,19 @@ class _PhoneVerificationScreenState extends State<PhoneVerificationScreen> {
     }
     final phone = '${_country.dial}$local';
 
-    // Sin verificación: devolvemos el número para que el perfil lo guarde directo.
+    // Sin verificación: guardamos el número directo por su endpoint y volvemos.
     if (!kPhoneVerificationEnabled) {
-      Navigator.pop(context, phone);
+      setState(() => _isLoading = true);
+      try {
+        await _firestoreService.updatePhone(phone);
+        if (!mounted) return;
+        Navigator.pop(context, phone);
+      } catch (e) {
+        if (mounted) {
+          setState(() => _isLoading = false);
+          _showError(e.toString());
+        }
+      }
       return;
     }
 
