@@ -225,6 +225,23 @@ class FirestoreService {
     await _api.put('/users/me', data: user.toJson());
   }
 
+  // ─── PHONE VERIFICATION (SMS OTP via Twilio) ──────────────────────────────
+
+  /// Envía un código SMS al [phone] nuevo que el usuario quiere verificar.
+  Future<void> sendPhoneVerificationCode(String phone) async {
+    await _api.post('/users/me/phone/send-code', data: {'phone': phone});
+  }
+
+  /// Confirma el código; el backend guarda el número y lo marca verificado.
+  /// Devuelve el usuario actualizado.
+  Future<UserModel> verifyPhoneCode(String phone, String code) async {
+    final response = await _api.post('/users/me/phone/verify', data: {
+      'phone': phone,
+      'code': code,
+    });
+    return UserModel.fromJson(response.data);
+  }
+
   Stream<UserModel?> getUserStream(String uid) {
     // Reuse existing broadcast stream — all callers share ONE polling loop
     final existing = _userStreamControllers[uid];

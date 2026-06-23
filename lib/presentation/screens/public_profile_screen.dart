@@ -587,8 +587,11 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
       child: SafeArea(
         child: Row(
           children: [
-            _circleAction(Icons.phone, Colors.green, () => _launchURL('tel:${user.phoneNumber ?? ""}')),
-            const SizedBox(width: 12),
+            // Solo se ofrece llamar si el profesional configuró su teléfono.
+            if (user.phoneNumber != null && user.phoneNumber!.trim().isNotEmpty) ...[
+              _circleAction(Icons.phone, Colors.green, () => _launchURL('tel:${user.phoneNumber!.trim()}')),
+              const SizedBox(width: 12),
+            ],
             _circleAction(Icons.chat_bubble_outline, primaryColor, () {
               // Usually needs a request context, but we can open a generic chat or handle via route
               ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Iniciando chat directo...')));

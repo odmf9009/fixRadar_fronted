@@ -70,6 +70,55 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> with Widget
   bool get _showTechnicianUI =>
       _accountIsTechnician && ViewModeService.instance.mode == AppViewMode.pro;
 
+  /// El profesional aún no configuró su teléfono: sin él los clientes no pueden
+  /// llamarlo, así que mostramos un banner que lo invita a completarlo.
+  bool get _needsPhoneSetup =>
+      _accountIsTechnician &&
+      (_currentUser?.phoneNumber == null || _currentUser!.phoneNumber!.trim().isEmpty);
+
+  Widget _buildPhoneBanner() {
+    return Material(
+      color: const Color(0xFFFFF3E0),
+      child: SafeArea(
+        bottom: false,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(16, 10, 8, 10),
+          child: Row(
+            children: [
+              const Icon(Icons.warning_amber_rounded, color: Color(0xFFFF8A00)),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  tr('phone_missing_banner'),
+                  style: const TextStyle(
+                    fontSize: 13,
+                    color: Color(0xFF8A5A00),
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ),
+              TextButton(
+                onPressed: () {
+                  if (_currentUser != null) {
+                    Navigator.pushNamed(
+                      context,
+                      AppRoutes.editTechProfile,
+                      arguments: _currentUser,
+                    );
+                  }
+                },
+                child: Text(
+                  tr('go'),
+                  style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFFFF8A00)),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   void _initScreens() {
     if (_currentUser == null) return;
 
@@ -329,11 +378,31 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> with Widget
 
     final bool isTechnician = _showTechnicianUI;
 
+    final bool showBanner = _needsPhoneSetup;
+
     return Scaffold(
-      body: IndexedStack(
-        index: _currentIndex,
-        children: _screens!,
-      ),
+      body: showBanner
+          ? Column(
+              children: [
+                _buildPhoneBanner(),
+                Expanded(
+                  // El banner ya consumió el inset superior; evitamos que las
+                  // pantallas internas lo vuelvan a aplicar (doble espacio).
+                  child: MediaQuery.removePadding(
+                    context: context,
+                    removeTop: true,
+                    child: IndexedStack(
+                      index: _currentIndex,
+                      children: _screens!,
+                    ),
+                  ),
+                ),
+              ],
+            )
+          : IndexedStack(
+              index: _currentIndex,
+              children: _screens!,
+            ),
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
           boxShadow: [

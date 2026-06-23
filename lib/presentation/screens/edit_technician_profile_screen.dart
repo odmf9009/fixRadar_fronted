@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import '../../core/models/user_model.dart';
 import '../../core/services/firestore_service.dart';
+import '../../core/services/language_service.dart';
+import 'phone_verification_screen.dart';
 
 class EditTechnicianProfileScreen extends StatefulWidget {
   final UserModel user;
@@ -20,7 +22,10 @@ class _EditTechnicianProfileScreenState extends State<EditTechnicianProfileScree
   late TextEditingController _cityController;
   late TextEditingController _radiusController;
   late TextEditingController _hoursController;
-  late TextEditingController _phoneController;
+
+  // El teléfono no se edita como texto plano: cambiarlo exige verificación SMS.
+  String _phoneNumber = '';
+  bool _phoneVerified = false;
 
   bool _freeQuote = true;
   bool _emergency = false;
@@ -35,7 +40,8 @@ class _EditTechnicianProfileScreenState extends State<EditTechnicianProfileScree
     _cityController = TextEditingController(text: widget.user.city);
     _radiusController = TextEditingController(text: widget.user.serviceRadius.toString());
     _hoursController = TextEditingController(text: widget.user.workHours);
-    _phoneController = TextEditingController(text: widget.user.phoneNumber);
+    _phoneNumber = widget.user.phoneNumber ?? '';
+    _phoneVerified = widget.user.phoneVerified;
     _freeQuote = widget.user.freeQuote;
     _emergency = widget.user.emergencyService;
     _weekend = widget.user.weekendAvailability;
@@ -64,7 +70,7 @@ class _EditTechnicianProfileScreenState extends State<EditTechnicianProfileScree
               _buildField('Años de Experiencia', _experienceController, icon: Icons.history, keyboardType: TextInputType.number),
               _buildField('Ciudad / Área Principal', _cityController, icon: Icons.location_city),
               _buildField('Radio de Servicio (km)', _radiusController, icon: Icons.radar, keyboardType: TextInputType.number),
-              _buildField('Teléfono de Contacto', _phoneController, icon: Icons.phone, keyboardType: TextInputType.phone),
+              _buildPhoneTile(),
               const SizedBox(height: 24),
               const Text('Biografía Profesional', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
               const SizedBox(height: 12),
@@ -121,6 +127,71 @@ class _EditTechnicianProfileScreenState extends State<EditTechnicianProfileScree
     );
   }
 
+  Future<void> _openPhoneVerification() async {
+    final verified = await Navigator.push<String>(
+      context,
+      MaterialPageRoute(
+        builder: (_) => PhoneVerificationScreen(initialPhone: _phoneNumber.isEmpty ? null : _phoneNumber),
+      ),
+    );
+    // El backend ya persistió el número y phoneVerified=true; reflejamos en UI.
+    if (verified != null && verified.isNotEmpty && mounted) {
+      setState(() {
+        _phoneNumber = verified;
+        _phoneVerified = true;
+      });
+    }
+  }
+
+  Widget _buildPhoneTile() {
+    final bool hasPhone = _phoneNumber.trim().isNotEmpty;
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        decoration: BoxDecoration(
+          color: Colors.grey[100],
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Row(
+          children: [
+            const Icon(Icons.phone, color: Color(0xFFFF8A00)),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(tr('contact_phone'), style: const TextStyle(color: Colors.grey, fontSize: 12)),
+                  const SizedBox(height: 2),
+                  Row(
+                    children: [
+                      Text(
+                        hasPhone ? _phoneNumber : tr('phone_not_set'),
+                        style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+                      ),
+                      if (hasPhone && _phoneVerified) ...[
+                        const SizedBox(width: 6),
+                        const Icon(Icons.verified, color: Colors.green, size: 18),
+                      ],
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            TextButton(
+              onPressed: _openPhoneVerification,
+              child: Text(
+                hasPhone ? tr('verify_change_phone') : tr('verify_phone'),
+                style: const TextStyle(color: Color(0xFFFF8A00), fontWeight: FontWeight.bold),
+                textAlign: TextAlign.end,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _buildField(String label, TextEditingController controller, {IconData? icon, TextInputType? keyboardType, String? hint}) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 16),
@@ -149,7 +220,6 @@ class _EditTechnicianProfileScreenState extends State<EditTechnicianProfileScree
       'yearsOfExperience': int.tryParse(_experienceController.text) ?? 0,
       'city': _cityController.text.trim(),
       'serviceRadius': double.tryParse(_radiusController.text) ?? 20.0,
-      'phoneNumber': _phoneController.text.trim(),
       'workHours': _hoursController.text.trim(),
       'freeQuote': _freeQuote,
       'emergencyService': _emergency,
