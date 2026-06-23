@@ -231,7 +231,17 @@ class FirestoreService {
   /// Devuelve el usuario actualizado.
   Future<UserModel> updatePhone(String phone) async {
     final response = await _api.put('/users/me/phone', data: {'phone': phone});
-    return UserModel.fromJson(response.data);
+    final user = UserModel.fromJson(response.data);
+    _emitUser(user);
+    return user;
+  }
+
+  /// Propaga un usuario ya actualizado al stream para que la UI (p. ej. el banner
+  /// de "configura tu teléfono") se refresque al instante, sin esperar al polling.
+  void _emitUser(UserModel user) {
+    _cachedUserValues[user.id] = user;
+    final controller = _userStreamControllers[user.id];
+    if (controller != null && !controller.isClosed) controller.add(user);
   }
 
   /// Envía un código SMS al [phone] nuevo que el usuario quiere verificar.
@@ -246,7 +256,9 @@ class FirestoreService {
       'phone': phone,
       'code': code,
     });
-    return UserModel.fromJson(response.data);
+    final user = UserModel.fromJson(response.data);
+    _emitUser(user);
+    return user;
   }
 
   Stream<UserModel?> getUserStream(String uid) {
