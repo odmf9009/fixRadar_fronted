@@ -36,15 +36,15 @@ class _MyPostsScreenState extends State<MyPostsScreen> {
       // Mis trabajos (técnico):
       switch (_activeFilter) {
         case _PostFilter.active:
-          // Gané la cotización (asignado a mí) y aún no está completado.
+          // Activos: el cliente aprobó mi propuesta (asignado a mí) y aún no se ha terminado.
           return all.where((p) => p.technicianId == _currentUserId && _isActive(p)).toList();
-        case _PostFilter.middle: // Historial
-          // Envié cotización pero el cliente no la aprobó (no la gané), sin completar.
-          return all.where((p) =>
-              p.technicianId != _currentUserId &&
-              p.status != ServiceRequestStatus.completed &&
-              p.status != ServiceRequestStatus.cancelled).toList();
+        case _PostFilter.middle: // Pendientes
+          // Pendientes: envié propuesta pero el cliente aún no la ha aprobado (sigue abierto).
+          // El historial del técnico solo trae pedidos donde tengo cotización/interés,
+          // así que un pedido 'open' aquí = mi propuesta está pendiente de aprobación.
+          return all.where((p) => p.status == ServiceRequestStatus.open).toList();
         case _PostFilter.finished:
+          // Finalizadas: las que ya se completaron y fueron mías.
           return all.where((p) => p.status == ServiceRequestStatus.completed && p.technicianId == _currentUserId).toList();
       }
     } else {
@@ -91,8 +91,8 @@ class _MyPostsScreenState extends State<MyPostsScreen> {
                   children: [
                     _buildFilterTab(_PostFilter.active, tr('tab_active')),
                     const SizedBox(width: 10),
-                    // El tab central cambia según el lente: Historial (pro) / Pendientes (cliente).
-                    _buildFilterTab(_PostFilter.middle, pro ? tr('tab_history') : tr('tab_pending')),
+                    // Tab central: Pendientes (propuesta enviada sin aprobar) en ambos lentes.
+                    _buildFilterTab(_PostFilter.middle, tr('tab_pending')),
                     const SizedBox(width: 10),
                     _buildFilterTab(_PostFilter.finished, tr('tab_finished')),
                   ],

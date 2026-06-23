@@ -14,6 +14,7 @@ class AppTranslations {
       'tab_pending': 'Pendientes',
       'tab_history': 'Historial',
       'tab_finished': 'Finalizados',
+      'completion_photo': 'Foto del trabajo terminado',
       'no_items_category': 'No tienes nada en esta categoría',
       'radar_on': 'Radar Activo',
       'offline_mode': 'Modo Offline Limitado',
@@ -208,6 +209,7 @@ class AppTranslations {
       'tab_pending': 'Pending',
       'tab_history': 'History',
       'tab_finished': 'Finished',
+      'completion_photo': 'Photo of the finished work',
       'no_items_category': 'Nothing in this category',
       // --- RADAR / ONLINE STATUS (en) ---
       'radar_tooltip_on': 'Radar active — tap to deactivate',

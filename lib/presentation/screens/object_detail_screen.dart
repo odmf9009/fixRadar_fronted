@@ -118,6 +118,12 @@ class _RequestDetailScreenState extends State<RequestDetailScreen> {
                           const SizedBox(height: 24),
                           _buildDescription(request),
                           const SizedBox(height: 24),
+                          if (request.completionPhotoUrl != null &&
+                              (request.status == ServiceRequestStatus.finishedByTechnician ||
+                                  request.status == ServiceRequestStatus.completed)) ...[
+                            _buildCompletionPhoto(request),
+                            const SizedBox(height: 24),
+                          ],
                           if (request.status == ServiceRequestStatus.assigned || request.status == ServiceRequestStatus.inProgress || request.status == ServiceRequestStatus.finishedByTechnician) ...[
                             _buildAcceptedBudget(request),
                             const SizedBox(height: 16),
@@ -367,6 +373,39 @@ class _RequestDetailScreenState extends State<RequestDetailScreen> {
         const Text('Descripción', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
         const SizedBox(height: 12),
         Text(request.description, style: const TextStyle(fontSize: 16, height: 1.6, color: Colors.black87)),
+      ],
+    );
+  }
+
+  /// Muestra la foto que el técnico tomó al finalizar el trabajo.
+  Widget _buildCompletionPhoto(ServiceRequest request) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            const Icon(Icons.check_circle, color: Color(0xFFFF8A00), size: 20),
+            const SizedBox(width: 8),
+            Text(tr('completion_photo'),
+                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+          ],
+        ),
+        const SizedBox(height: 12),
+        ClipRRect(
+          borderRadius: BorderRadius.circular(16),
+          child: Image.network(
+            request.completionPhotoUrl!,
+            width: double.infinity,
+            height: 220,
+            fit: BoxFit.cover,
+            errorBuilder: (context, error, stackTrace) => Container(
+              width: double.infinity,
+              height: 220,
+              color: Colors.grey[200],
+              child: const Icon(Icons.broken_image, color: Colors.grey, size: 48),
+            ),
+          ),
+        ),
       ],
     );
   }
