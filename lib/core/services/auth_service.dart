@@ -55,9 +55,12 @@ class AuthService {
         profileImageUrl: userCred.user!.photoURL ?? '',
         referralCode: referralCode,
       );
+    } on DioException {
+      // Error del backend al sincronizar → propagar para que la UI muestre el mensaje.
+      rethrow;
     } catch (e) {
       print('Error en signInWithGoogle: $e');
-      return null;
+      rethrow;
     }
   }
 
@@ -83,7 +86,8 @@ class AuthService {
       if (e is DioException) {
         print('Dio error: ${e.type} | ${e.message} | ${e.response}');
       }
-      return null;
+      // Propagar para que la UI muestre siempre un mensaje al usuario.
+      rethrow;
     }
   }
 
@@ -157,13 +161,20 @@ class AuthService {
   }
 
   /// Called on splash for Google-auth users.
+  /// Sincronización silenciosa: no propaga errores (el splash no debe mostrar
+  /// snackbars ni romperse). El login interactivo sí los propaga.
   Future<UserModel?> syncCurrentUser() async {
     final firebaseUser = _auth.currentUser;
     if (firebaseUser == null) return null;
-    return _syncGoogleWithBackend(
-      name: firebaseUser.displayName,
-      profileImageUrl: firebaseUser.photoURL,
-    );
+    try {
+      return await _syncGoogleWithBackend(
+        name: firebaseUser.displayName,
+        profileImageUrl: firebaseUser.photoURL,
+      );
+    } catch (e) {
+      print('Error en syncCurrentUser (splash): $e');
+      return null;
+    }
   }
 
   /// Called on splash for backend-email users.

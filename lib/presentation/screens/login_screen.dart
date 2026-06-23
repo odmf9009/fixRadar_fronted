@@ -1,9 +1,9 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:dio/dio.dart';
 import '../../core/config/routes.dart';
 import '../../core/services/auth_service.dart';
 import '../../core/models/user_model.dart';
+import '../../core/utils/auth_error_mapper.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -137,7 +137,7 @@ class _LoginScreenState extends State<LoginScreen> {
         _navigateAfterAuth(userModel);
       }
     } catch (e) {
-      if (mounted) _showError('Error con Google: ${_parseError(e)}');
+      if (mounted) _showError(_parseError(e));
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
@@ -161,16 +161,9 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
-  String _parseError(Object e) {
-    if (e is DioException) {
-      final data = e.response?.data;
-      if (data is Map) {
-        return data['message']?.toString() ?? data['error']?.toString() ?? 'Error del servidor';
-      }
-      return 'Error de conexión';
-    }
-    return e.toString();
-  }
+  // Delega en el nomenclador de errores localizado (es/en).
+  // Siempre devuelve un mensaje legible para el usuario.
+  String _parseError(Object e) => AuthErrorMapper.message(e);
 
   void _toggleMode() {
     setState(() {
