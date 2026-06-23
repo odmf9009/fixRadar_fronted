@@ -1,7 +1,6 @@
 import 'dart:io';
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:image_picker/image_picker.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:geocoding/geocoding.dart';
 import '../../core/services/auth_service.dart';
@@ -12,6 +11,8 @@ import '../../core/services/firestore_service.dart';
 import '../../core/services/location_service.dart';
 import '../../core/services/upload_service.dart';
 import '../../core/services/ai_service.dart';
+import '../../core/services/language_service.dart';
+import '../../core/widgets/photo_source_picker.dart';
 
 import '../../core/config/service_constants.dart';
 
@@ -27,7 +28,6 @@ class _PublishServiceRequestScreenState extends State<PublishServiceRequestScree
   final LocationService _locationService = LocationService();
   final UploadService _uploadService = UploadService();
   final AIService _aiService = AIService();
-  final ImagePicker _picker = ImagePicker();
 
   int _currentStep = 1;
   bool _isLoading = false;
@@ -104,12 +104,26 @@ class _PublishServiceRequestScreenState extends State<PublishServiceRequestScree
     }
   }
 
+  static const int _maxPhotos = 3;
+
   Future<void> _pickImage() async {
-    final XFile? pickedFile = await _picker.pickImage(source: ImageSource.camera, imageQuality: 70);
-    if (pickedFile != null) {
-      setState(() => _imageFiles.add(File(pickedFile.path)));
-      if (_imageFiles.length == 1) _analyzeImage(File(pickedFile.path));
+    if (_imageFiles.length >= _maxPhotos) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(tr('max_photos_reached'))),
+      );
+      return;
     }
+
+    final bool wasEmpty = _imageFiles.isEmpty;
+    final newFiles = await PhotoSourcePicker.pick(
+      context,
+      remaining: _maxPhotos - _imageFiles.length,
+    );
+    if (newFiles.isEmpty || !mounted) return;
+
+    setState(() => _imageFiles.addAll(newFiles));
+    // Analiza la primera foto con IA solo cuando antes no había ninguna.
+    if (wasEmpty) _analyzeImage(_imageFiles.first);
   }
 
   Future<void> _analyzeImage(File imageFile) async {
@@ -366,18 +380,17 @@ class _PublishServiceRequestScreenState extends State<PublishServiceRequestScree
         const Text('Cuéntanos más detalles', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
         const SizedBox(height: 24),
         
-        // Photo
-        const Text('1. Toma una foto del problema', style: TextStyle(fontWeight: FontWeight.bold)),
+        // Photos (hasta 3, cámara o galería)
+        const Text('1. Agrega fotos del problema (hasta 3)', style: TextStyle(fontWeight: FontWeight.bold)),
         const SizedBox(height: 12),
-        GestureDetector(
-          onTap: _pickImage,
-          child: Container(
-            height: 150,
-            width: double.infinity,
-            decoration: BoxDecoration(color: Colors.grey[100], borderRadius: BorderRadius.circular(12), border: Border.all(color: Colors.grey[300]!)),
-            child: _imageFiles.isEmpty 
-              ? const Column(mainAxisAlignment: MainAxisAlignment.center, children: [Icon(Icons.camera_alt_outlined, size: 40, color: Colors.grey), Text('Agregar foto', style: TextStyle(color: Colors.grey))])
-              : Image.file(_imageFiles[0], fit: BoxFit.cover),
+        SizedBox(
+          height: 110,
+          child: ListView(
+            scrollDirection: Axis.horizontal,
+            children: [
+              for (int i = 0; i < _imageFiles.length; i++) _buildPhotoThumb(i),
+              if (_imageFiles.length < _maxPhotos) _buildAddPhotoTile(),
+            ],
           ),
         ),
         const SizedBox(height: 24),
@@ -423,6 +436,57 @@ class _PublishServiceRequestScreenState extends State<PublishServiceRequestScree
           }).toList(),
         ),
       ],
+    );
+  }
+
+  Widget _buildPhotoThumb(int index) {
+    return Container(
+      width: 110,
+      height: 110,
+      margin: const EdgeInsets.only(right: 12),
+      child: Stack(
+        children: [
+          ClipRRect(
+            borderRadius: BorderRadius.circular(12),
+            child: Image.file(_imageFiles[index], width: 110, height: 110, fit: BoxFit.cover),
+          ),
+          Positioned(
+            top: 4,
+            right: 4,
+            child: GestureDetector(
+              onTap: () => setState(() => _imageFiles.removeAt(index)),
+              child: Container(
+                decoration: const BoxDecoration(color: Colors.black54, shape: BoxShape.circle),
+                padding: const EdgeInsets.all(4),
+                child: const Icon(Icons.close, size: 16, color: Colors.white),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAddPhotoTile() {
+    return GestureDetector(
+      onTap: _pickImage,
+      child: Container(
+        width: 110,
+        height: 110,
+        decoration: BoxDecoration(
+          color: Colors.grey[100],
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: Colors.grey[300]!),
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(Icons.add_a_photo_outlined, size: 36, color: Colors.grey),
+            const SizedBox(height: 4),
+            Text(tr('add_photo'), style: const TextStyle(color: Colors.grey, fontSize: 12)),
+          ],
+        ),
+      ),
     );
   }
 

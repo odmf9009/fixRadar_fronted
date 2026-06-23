@@ -958,9 +958,20 @@ class FirestoreService {
     await _api.put('/service-requests/$requestId/cancel-assignment');
   }
 
-  Future<void> finishWorkByTechnician(String requestId, [String? completionPhotoUrl]) async {
+  Future<void> finishWorkByTechnician(
+    String requestId, [
+    String? completionPhotoUrl,
+    List<String>? completionPhotoUrls,
+  ]) async {
+    // Normaliza a una lista (hasta 3) y mantiene la primera como portada.
+    final List<String> photos = [
+      if (completionPhotoUrls != null) ...completionPhotoUrls,
+      if (completionPhotoUrl != null) completionPhotoUrl,
+    ].where((u) => u.isNotEmpty).take(3).toList();
+
     await _api.put('/service-requests/$requestId/finish', data: {
-      if (completionPhotoUrl != null) 'completionPhotoUrl': completionPhotoUrl,
+      if (photos.isNotEmpty) 'completionPhotoUrls': photos,
+      if (photos.isNotEmpty) 'completionPhotoUrl': photos.first,
     });
   }
 

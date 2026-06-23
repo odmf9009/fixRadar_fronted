@@ -9,6 +9,7 @@ import '../../core/services/upload_service.dart';
 import '../../core/services/language_service.dart';
 import '../../core/services/view_mode_service.dart';
 import '../../core/services/achievement_service.dart';
+import '../../core/widgets/photo_source_picker.dart';
 import '../../core/models/service_request.dart';
 import '../../core/models/user_model.dart';
 import '../../core/config/service_constants.dart';
@@ -173,8 +174,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Future<void> _updateProfilePhoto(String userId) async {
+    // Permite elegir entre tomar la foto con la cámara o elegirla de la galería.
+    final source = await PhotoSourcePicker.chooseSource(context);
+    if (source == null) return;
+
     final XFile? pickedFile = await _picker.pickImage(
-      source: ImageSource.gallery,
+      source: source,
       imageQuality: 50,
     );
 

@@ -3,8 +3,8 @@ import 'dart:async';
 import '../../core/services/auth_service.dart';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
-import 'package:image_picker/image_picker.dart';
 import 'package:dio/dio.dart';
+import '../../core/widgets/photo_source_picker.dart';
 import '../../core/models/service_request.dart';
 import '../../core/models/user_model.dart';
 import '../../core/models/quote_model.dart';
@@ -25,7 +25,6 @@ class _RequestDetailScreenState extends State<RequestDetailScreen> {
   final _firestoreService = FirestoreService();
   final LocationService _locationService = LocationService();
   final UploadService _uploadService = UploadService();
-  final ImagePicker _picker = ImagePicker();
   final String _currentUserId = AuthService.currentUidSync;
   
   UserModel? _currentUser;
@@ -118,7 +117,7 @@ class _RequestDetailScreenState extends State<RequestDetailScreen> {
                           const SizedBox(height: 24),
                           _buildDescription(request),
                           const SizedBox(height: 24),
-                          if (request.completionPhotoUrl != null &&
+                          if (_completionPhotos(request).isNotEmpty &&
                               (request.status == ServiceRequestStatus.finishedByTechnician ||
                                   request.status == ServiceRequestStatus.completed)) ...[
                             _buildCompletionPhoto(request),
@@ -377,8 +376,16 @@ class _RequestDetailScreenState extends State<RequestDetailScreen> {
     );
   }
 
-  /// Muestra la foto que el técnico tomó al finalizar el trabajo.
+  /// Fotos que el técnico tomó al finalizar (lista nueva o foto única antigua).
+  List<String> _completionPhotos(ServiceRequest request) {
+    if (request.completionPhotoUrls.isNotEmpty) return request.completionPhotoUrls;
+    if (request.completionPhotoUrl != null) return [request.completionPhotoUrl!];
+    return [];
+  }
+
+  /// Muestra las fotos que el técnico tomó al finalizar el trabajo.
   Widget _buildCompletionPhoto(ServiceRequest request) {
+    final photos = _completionPhotos(request);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -386,27 +393,42 @@ class _RequestDetailScreenState extends State<RequestDetailScreen> {
           children: [
             const Icon(Icons.check_circle, color: Color(0xFFFF8A00), size: 20),
             const SizedBox(width: 8),
-            Text(tr('completion_photo'),
+            Text(photos.length > 1 ? tr('completion_photos') : tr('completion_photo'),
                 style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
           ],
         ),
         const SizedBox(height: 12),
-        ClipRRect(
-          borderRadius: BorderRadius.circular(16),
-          child: Image.network(
-            request.completionPhotoUrl!,
-            width: double.infinity,
-            height: 220,
-            fit: BoxFit.cover,
-            errorBuilder: (context, error, stackTrace) => Container(
-              width: double.infinity,
-              height: 220,
-              color: Colors.grey[200],
-              child: const Icon(Icons.broken_image, color: Colors.grey, size: 48),
+        if (photos.length == 1)
+          _completionPhotoImage(photos.first, double.infinity, 220)
+        else
+          SizedBox(
+            height: 160,
+            child: ListView.separated(
+              scrollDirection: Axis.horizontal,
+              itemCount: photos.length,
+              separatorBuilder: (_, __) => const SizedBox(width: 12),
+              itemBuilder: (context, i) => _completionPhotoImage(photos[i], 200, 160),
             ),
           ),
-        ),
       ],
+    );
+  }
+
+  Widget _completionPhotoImage(String url, double width, double height) {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(16),
+      child: Image.network(
+        url,
+        width: width,
+        height: height,
+        fit: BoxFit.cover,
+        errorBuilder: (context, error, stackTrace) => Container(
+          width: width == double.infinity ? null : width,
+          height: height,
+          color: Colors.grey[200],
+          child: const Icon(Icons.broken_image, color: Colors.grey, size: 48),
+        ),
+      ),
     );
   }
 
@@ -989,48 +1011,114 @@ class _RequestDetailScreenState extends State<RequestDetailScreen> {
   }
 
   void _showCompletionDialog(ServiceRequest request) {
+    final List<File> photos = [];
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Finalizar Trabajo'),
-        content: const Text('Para completar el servicio, debes tomar una foto del resultado final.'),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancelar')),
-          ElevatedButton(
-            onPressed: () async {
-              Navigator.pop(context);
-              
-              final XFile? pickedFile = await _picker.pickImage(
-                source: ImageSource.camera, 
-                imageQuality: 50
-              );
+      builder: (dialogContext) => StatefulBuilder(
+        builder: (dialogContext, setDialogState) {
+          Future<void> addPhotos() async {
+            final picked = await PhotoSourcePicker.pick(
+              dialogContext,
+              remaining: 3 - photos.length,
+            );
+            if (picked.isNotEmpty) setDialogState(() => photos.addAll(picked));
+          }
 
-              if (pickedFile == null) return;
+          return AlertDialog(
+            title: const Text('Finalizar Trabajo'),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(tr('finish_photos_hint')),
+                const SizedBox(height: 16),
+                SizedBox(
+                  height: 90,
+                  child: ListView(
+                    scrollDirection: Axis.horizontal,
+                    children: [
+                      for (int i = 0; i < photos.length; i++)
+                        Container(
+                          width: 90,
+                          height: 90,
+                          margin: const EdgeInsets.only(right: 8),
+                          child: Stack(
+                            children: [
+                              ClipRRect(
+                                borderRadius: BorderRadius.circular(10),
+                                child: Image.file(photos[i], width: 90, height: 90, fit: BoxFit.cover),
+                              ),
+                              Positioned(
+                                top: 2,
+                                right: 2,
+                                child: GestureDetector(
+                                  onTap: () => setDialogState(() => photos.removeAt(i)),
+                                  child: Container(
+                                    decoration: const BoxDecoration(color: Colors.black54, shape: BoxShape.circle),
+                                    padding: const EdgeInsets.all(3),
+                                    child: const Icon(Icons.close, size: 14, color: Colors.white),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      if (photos.length < 3)
+                        GestureDetector(
+                          onTap: addPhotos,
+                          child: Container(
+                            width: 90,
+                            height: 90,
+                            decoration: BoxDecoration(
+                              color: Colors.grey[100],
+                              borderRadius: BorderRadius.circular(10),
+                              border: Border.all(color: Colors.grey[300]!),
+                            ),
+                            child: const Icon(Icons.add_a_photo_outlined, color: Colors.grey),
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            actions: [
+              TextButton(onPressed: () => Navigator.pop(dialogContext), child: const Text('Cancelar')),
+              ElevatedButton(
+                onPressed: photos.isEmpty
+                    ? null
+                    : () async {
+                        Navigator.pop(dialogContext);
+                        setState(() => _isLoading = true);
+                        try {
+                          final List<String> urls = [];
+                          for (final f in photos) {
+                            final String? url = await _uploadService.uploadObjectImage(f);
+                            if (url != null) urls.add(url);
+                          }
+                          await _firestoreService.finishWorkByTechnician(request.id, null, urls);
 
-              setState(() => _isLoading = true);
-              try {
-                final String? photoUrl = await _uploadService.uploadObjectImage(File(pickedFile.path));
-                await _firestoreService.finishWorkByTechnician(request.id, photoUrl);
-                
-                if (mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Trabajo marcado como finalizado con foto. Esperando confirmación del cliente.'))
-                  );
-                }
-              } catch (e) {
-                if (mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('Error al finalizar: $e'), backgroundColor: Colors.red)
-                  );
-                }
-              } finally {
-                if (mounted) setState(() => _isLoading = false);
-              }
-            },
-            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFFF8A00)),
-            child: const Text('Tomar Foto y Finalizar'),
-          ),
-        ],
+                          if (mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('Trabajo marcado como finalizado con fotos. Esperando confirmación del cliente.')),
+                            );
+                          }
+                        } catch (e) {
+                          if (mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(content: Text('Error al finalizar: $e'), backgroundColor: Colors.red),
+                            );
+                          }
+                        } finally {
+                          if (mounted) setState(() => _isLoading = false);
+                        }
+                      },
+                style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFFF8A00)),
+                child: Text(tr('finish_and_send')),
+              ),
+            ],
+          );
+        },
       ),
     );
   }

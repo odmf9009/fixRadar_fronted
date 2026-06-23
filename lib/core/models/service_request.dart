@@ -37,6 +37,7 @@ class ServiceRequest {
   final double? minBudget;
   final double? maxBudget;
   final String? completionPhotoUrl;
+  final List<String> completionPhotoUrls;
   final DateTime? completedAt;
   final double? reviewRating;
   final String? reviewComment;
@@ -75,6 +76,7 @@ class ServiceRequest {
     this.minBudget,
     this.maxBudget,
     this.completionPhotoUrl,
+    this.completionPhotoUrls = const [],
     this.completedAt,
     this.reviewRating,
     this.reviewComment,
@@ -129,6 +131,7 @@ class ServiceRequest {
       minBudget: (json['minBudget'] as num?)?.toDouble(),
       maxBudget: (json['maxBudget'] as num?)?.toDouble(),
       completionPhotoUrl: json['completionPhotoUrl'],
+      completionPhotoUrls: List<String>.from(json['completionPhotoUrls'] ?? []),
       completedAt: json['completedAt'] != null ? DateTime.tryParse(json['completedAt']) : null,
       reviewRating: (json['reviewRating'] as num?)?.toDouble(),
       reviewComment: json['reviewComment'],
@@ -172,6 +175,7 @@ class ServiceRequest {
     String? acceptedQuoteId,
     DateTime? assignedAt,
     String? completionPhotoUrl,
+    List<String>? completionPhotoUrls,
     DateTime? completedAt,
     double? reviewRating,
     String? reviewComment,
@@ -207,6 +211,7 @@ class ServiceRequest {
       minBudget: minBudget,
       maxBudget: maxBudget,
       completionPhotoUrl: completionPhotoUrl ?? this.completionPhotoUrl,
+      completionPhotoUrls: completionPhotoUrls ?? this.completionPhotoUrls,
       completedAt: completedAt ?? this.completedAt,
       reviewRating: reviewRating ?? this.reviewRating,
       reviewComment: reviewComment ?? this.reviewComment,

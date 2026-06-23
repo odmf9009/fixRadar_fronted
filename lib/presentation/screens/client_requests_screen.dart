@@ -299,21 +299,44 @@ class _ClientRequestsScreenState extends State<ClientRequestsScreen> {
               ),
             ],
           ),
-          if (request.completionPhotoUrl != null) ...[
+          if (_completionPhotos(request).isNotEmpty) ...[
             const SizedBox(height: 10),
-            ClipRRect(
-              borderRadius: BorderRadius.circular(8),
-              child: Image.network(
-                request.completionPhotoUrl!,
-                height: 160,
-                width: double.infinity,
-                fit: BoxFit.cover,
-                loadingBuilder: (_, child, progress) => progress == null
-                    ? child
-                    : const SizedBox(height: 160, child: Center(child: CircularProgressIndicator())),
-                errorBuilder: (_, __, ___) => const SizedBox.shrink(),
-              ),
-            ),
+            Builder(builder: (_) {
+              final photos = _completionPhotos(request);
+              if (photos.length == 1) {
+                return ClipRRect(
+                  borderRadius: BorderRadius.circular(8),
+                  child: Image.network(
+                    photos.first,
+                    height: 160,
+                    width: double.infinity,
+                    fit: BoxFit.cover,
+                    loadingBuilder: (_, child, progress) => progress == null
+                        ? child
+                        : const SizedBox(height: 160, child: Center(child: CircularProgressIndicator())),
+                    errorBuilder: (_, __, ___) => const SizedBox.shrink(),
+                  ),
+                );
+              }
+              return SizedBox(
+                height: 120,
+                child: ListView.separated(
+                  scrollDirection: Axis.horizontal,
+                  itemCount: photos.length,
+                  separatorBuilder: (_, __) => const SizedBox(width: 8),
+                  itemBuilder: (_, i) => ClipRRect(
+                    borderRadius: BorderRadius.circular(8),
+                    child: Image.network(
+                      photos[i],
+                      height: 120,
+                      width: 150,
+                      fit: BoxFit.cover,
+                      errorBuilder: (_, __, ___) => const SizedBox.shrink(),
+                    ),
+                  ),
+                ),
+              );
+            }),
           ],
           const SizedBox(height: 12),
           Row(
@@ -345,6 +368,13 @@ class _ClientRequestsScreenState extends State<ClientRequestsScreen> {
         ],
       ),
     );
+  }
+
+  /// Fotos de finalización (lista nueva o, si no, la foto única antigua).
+  List<String> _completionPhotos(ServiceRequest request) {
+    if (request.completionPhotoUrls.isNotEmpty) return request.completionPhotoUrls;
+    if (request.completionPhotoUrl != null) return [request.completionPhotoUrl!];
+    return [];
   }
 
   void _confirmAcceptCompletion(ServiceRequest request) {
