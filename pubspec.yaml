@@ -2,7 +2,7 @@ name: fix_radar
 description: "FixRadar - Conecta clientes con técnicos locales en tiempo real."
 publish_to: 'none'
 
-version: 1.0.0+2
+version: 1.0.0+3
 
 environment:
   sdk: '>=3.4.4 <4.0.0'
