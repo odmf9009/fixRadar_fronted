@@ -68,9 +68,5 @@
 	</array>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>Necesitamos tu ubicación para mostrarte trabajos y técnicos cercanos a ti.</string>
-	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
-	<string>Necesitamos tu ubicación en segundo plano para el radar de trabajos cercanos.</string>
-	<key>NSLocationAlwaysUsageDescription</key>
-	<string>Necesitamos tu ubicación en segundo plano para el radar de trabajos cercanos.</string>
 </dict>
 </plist>
