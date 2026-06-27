@@ -58,13 +58,16 @@ class ProximityService {
         _cleanupStaleNotifiedIDs(requests);
       });
 
-      // Foreground location stream keeps radar alive in background.
+      // El radar solo corre mientras la app está ABIERTA (sin foreground service).
+      // Cuando la app pasa a segundo plano, el stream se detiene; los trabajos
+      // nuevos de su categoría y radio le llegan por notificación push (FCM)
+      // enviada desde el backend. Esto evita el permiso de foreground service.
       // Check permissions before opening the stream to avoid a Samsung/Android
       // race condition where the OS briefly reports "denied" on cold start even
       // when the user already granted location access.
       final hasPermission = await _locationService.checkAndRequestPermissions();
       if (hasPermission) {
-        _positionSubscription = _locationService.technicianLocationStream.listen((position) {
+        _positionSubscription = _locationService.locationStream.listen((position) {
           _checkProximity(position);
         });
       } else {

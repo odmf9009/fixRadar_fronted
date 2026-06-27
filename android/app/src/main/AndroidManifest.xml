@@ -10,8 +10,12 @@
          librería (p. ej. geolocator) lo reinyecte en el manifest final. -->
     <uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION" tools:node="remove" />
     <uses-permission android:name="android.permission.CAMERA" />
-    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
-    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_LOCATION" />
+    <!-- Sin foreground service: el radar solo corre con la app abierta y los
+         trabajos nuevos llegan por FCM. Removemos los permisos de foreground
+         service para evitar la declaración/video que exige Google Play.
+         tools:node="remove" evita que geolocator los reinyecte. -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" tools:node="remove" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_LOCATION" tools:node="remove" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
 
     <application
