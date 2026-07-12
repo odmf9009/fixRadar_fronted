@@ -85,8 +85,11 @@ class UploadService {
         minWidth: 1024,
         minHeight: 1024,
       );
+      if (fullCompressed == null) {
+        throw Exception('No se pudo procesar la imagen (compresión falló).');
+      }
       final fullRef = _storage.ref('$folder/$fileName.jpg');
-      await fullRef.putData(fullCompressed!);
+      await fullRef.putData(fullCompressed);
       final fullUrl = await fullRef.getDownloadURL();
 
       // Thumbnail
@@ -96,8 +99,11 @@ class UploadService {
         minWidth: 256,
         minHeight: 256,
       );
+      if (thumbCompressed == null) {
+        throw Exception('No se pudo procesar la miniatura (compresión falló).');
+      }
       final thumbRef = _storage.ref('$folder/${fileName}_thumb.jpg');
-      await thumbRef.putData(thumbCompressed!);
+      await thumbRef.putData(thumbCompressed);
       final thumbUrl = await thumbRef.getDownloadURL();
 
       return {'full': fullUrl, 'thumb': thumbUrl};

@@ -167,7 +167,7 @@ class _PublishServiceRequestScreenState extends State<PublishServiceRequestScree
           thumbnailUrls.add(result['thumb']!);
         } catch (e) {
           print('Error subiendo imagen: $e');
-          throw Exception('Error al subir la imagen. Verifica tu conexión y los permisos de Storage.');
+          throw Exception('Error al subir la imagen: $e');
         }
       }
 
