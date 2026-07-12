@@ -120,6 +120,7 @@ class AuthService {
       await _saveBackendToken(token);
       final user = UserModel.fromJson(response.data['user']);
       await _saveBackendUserId(user.id);
+      await _signInToFirebaseIfPossible(response.data['firebaseToken'] as String?);
       await _socket.connect();
       await _uploadFcmToken();
       return user;
@@ -141,12 +142,41 @@ class AuthService {
       await _saveBackendToken(token);
       final user = UserModel.fromJson(response.data['user']);
       await _saveBackendUserId(user.id);
+      await _signInToFirebaseIfPossible(response.data['firebaseToken'] as String?);
       await _socket.connect();
       await _uploadFcmToken();
       return user;
     } catch (e) {
       print('Error en signInWithEmailBackend: $e');
       rethrow;
+    }
+  }
+
+  // ─── Firebase session for email users ────────────────────────────────────────
+
+  /// Inicia sesión en Firebase Auth con un custom token para que los usuarios
+  /// de email/contraseña tengan `request.auth` válido en Storage/Firestore.
+  /// No es fatal: si falla, el usuario sigue autenticado vía JWT del backend.
+  Future<void> _signInToFirebaseIfPossible(String? customToken) async {
+    if (customToken == null || customToken.isEmpty) return;
+    if (_auth.currentUser != null) return;
+    try {
+      await _auth.signInWithCustomToken(customToken);
+    } catch (e) {
+      print('Error signInWithCustomToken: $e');
+    }
+  }
+
+  /// Garantiza que el usuario de email (con JWT del backend) también tenga
+  /// sesión de Firebase. Se llama en el arranque para migrar a quienes
+  /// iniciaron sesión con el build anterior, sin obligarles a re-login.
+  Future<void> ensureFirebaseSession() async {
+    if (_auth.currentUser != null) return;
+    try {
+      final response = await _api.get('/auth/firebase-token');
+      await _signInToFirebaseIfPossible(response.data['firebaseToken'] as String?);
+    } catch (e) {
+      print('Error ensureFirebaseSession: $e');
     }
   }
 
@@ -180,6 +210,8 @@ class AuthService {
   /// Called on splash for backend-email users.
   Future<UserModel?> syncCurrentUserFromBackend() async {
     try {
+      // Asegura sesión de Firebase (migra usuarios de email del build anterior).
+      await ensureFirebaseSession();
       final response = await _api.get('/users/me');
       final data = response.data;
       final user = UserModel.fromJson(data['user'] ?? data);
