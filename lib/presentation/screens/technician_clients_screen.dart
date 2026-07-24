@@ -68,7 +68,7 @@ class _TechnicianClientsScreenState extends State<TechnicianClientsScreen> {
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
-        title: const Text('Mis Clientes', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black)),
+        title: Text(tr('my_clients'), style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.black)),
         backgroundColor: Colors.white,
         elevation: 0,
         centerTitle: true,
@@ -191,11 +191,11 @@ class _TechnicianClientsScreenState extends State<TechnicianClientsScreen> {
           children: [
             const Icon(Icons.error_outline, color: Colors.red, size: 48),
             const SizedBox(height: 16),
-            const Text('Error al cargar clientes', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+            Text(tr('error_loading_clients'), style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
             const SizedBox(height: 8),
             Text(error, textAlign: TextAlign.center, style: const TextStyle(color: Colors.grey)),
             const SizedBox(height: 24),
-            ElevatedButton(onPressed: () => setState(() {}), child: const Text('Reintentar')),
+            ElevatedButton(onPressed: () => setState(() {}), child: Text(tr('retry'))),
           ],
         ),
       ),
@@ -238,7 +238,7 @@ class _TechnicianClientsScreenState extends State<TechnicianClientsScreen> {
               const SizedBox(height: 16),
               Text(
                 isActiveTab
-                    ? 'No tienes trabajos activos.\nCuando un cliente acepte tu cotización, aparecerá aquí con su nombre y el trabajo.'
+                    ? tr('no_active_jobs')
                     : 'No hay trabajos en el historial.',
                 textAlign: TextAlign.center,
                 style: const TextStyle(color: Colors.grey, fontSize: 14),
@@ -337,7 +337,7 @@ class _TechnicianClientsScreenState extends State<TechnicianClientsScreen> {
                   const Icon(Icons.check_circle, color: Colors.green, size: 14),
                   const SizedBox(width: 6),
                   Text(
-                    'Cotización aceptada • Trabajando con ${request.clientName}',
+                    tr('quote_accepted_working').replaceAll('{name}', request.clientName),
                     style: const TextStyle(
                       color: Colors.green,
                       fontWeight: FontWeight.bold,
@@ -482,7 +482,7 @@ class _TechnicianClientsScreenState extends State<TechnicianClientsScreen> {
           TextButton.icon(
             onPressed: () => Navigator.pushNamed(context, AppRoutes.chat, arguments: request),
             icon: const Icon(Icons.history, size: 18),
-            label: const Text('Ver Chat'),
+            label: Text(tr('view_chat')),
             style: TextButton.styleFrom(foregroundColor: Colors.grey),
           ),
         ],
@@ -495,7 +495,7 @@ class _TechnicianClientsScreenState extends State<TechnicianClientsScreen> {
           child: TextButton.icon(
             onPressed: () => Navigator.pushNamed(context, AppRoutes.requestDetail, arguments: request),
             icon: const Icon(Icons.visibility_outlined, size: 18),
-            label: const Text('Ver detalle', overflow: TextOverflow.ellipsis),
+            label: Text(tr('view_detail'), overflow: TextOverflow.ellipsis),
           ),
         ),
         const Spacer(),
@@ -515,17 +515,17 @@ class _TechnicianClientsScreenState extends State<TechnicianClientsScreen> {
                 padding: const EdgeInsets.symmetric(horizontal: 12),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
               ),
-              child: const Text('Finalizar trabajo', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+              child: Text(tr('finish_job'), style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
             ),
           ),
         ] else if (isAssigned && request.status == ServiceRequestStatus.finishedByTechnician) ...[
-          const Expanded(
+          Expanded(
             child: Row(
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
-                Icon(Icons.hourglass_top, size: 15, color: Colors.blue),
-                SizedBox(width: 4),
-                Text('Esperando confirmación del cliente', style: TextStyle(color: Colors.blue, fontSize: 11)),
+                const Icon(Icons.hourglass_top, size: 15, color: Colors.blue),
+                const SizedBox(width: 4),
+                Text(tr('awaiting_client_confirm'), style: const TextStyle(color: Colors.blue, fontSize: 11)),
               ],
             ),
           ),
@@ -533,7 +533,7 @@ class _TechnicianClientsScreenState extends State<TechnicianClientsScreen> {
           TextButton.icon(
             onPressed: () => _confirmWithdrawQuote(request, myQuote, currentUserId),
             icon: const Icon(Icons.close, color: Colors.red, size: 18),
-            label: const Text('Retirar', style: TextStyle(color: Colors.red)),
+            label: Text(tr('withdraw'), style: const TextStyle(color: Colors.red)),
           ),
         ],
       ],
@@ -549,14 +549,14 @@ class _TechnicianClientsScreenState extends State<TechnicianClientsScreen> {
       barrierDismissible: false,
       builder: (dialogContext) => StatefulBuilder(
         builder: (dialogContext, setDialogState) => AlertDialog(
-          title: const Text('Finalizar trabajo'),
+          title: Text(tr('finish_job')),
           content: SingleChildScrollView(
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Text(
-                  'Toma una foto del trabajo terminado. El cliente la verá y deberá confirmar la finalización.',
-                  style: TextStyle(fontSize: 13),
+                Text(
+                  tr('take_finished_photo_desc'),
+                  style: const TextStyle(fontSize: 13),
                 ),
                 const SizedBox(height: 16),
                 if (capturedPhoto != null) ...[
@@ -570,7 +570,7 @@ class _TechnicianClientsScreenState extends State<TechnicianClientsScreen> {
                   ),
                   TextButton.icon(
                     icon: const Icon(Icons.camera_alt, size: 16),
-                    label: const Text('Cambiar foto'),
+                    label: Text(tr('change_photo')),
                     onPressed: isUploading ? null : () async {
                       final XFile? photo = await ImagePicker().pickImage(
                         source: ImageSource.camera,
@@ -585,7 +585,7 @@ class _TechnicianClientsScreenState extends State<TechnicianClientsScreen> {
                       Expanded(
                         child: OutlinedButton.icon(
                           icon: const Icon(Icons.camera_alt),
-                          label: const Text('Tomar foto del trabajo'),
+                          label: Text(tr('take_work_photo')),
                           style: OutlinedButton.styleFrom(
                             side: const BorderSide(color: Color(0xFFFF8A00)),
                             foregroundColor: const Color(0xFFFF8A00),
@@ -608,7 +608,7 @@ class _TechnicianClientsScreenState extends State<TechnicianClientsScreen> {
           actions: [
             TextButton(
               onPressed: isUploading ? null : () => Navigator.pop(dialogContext),
-              child: const Text('Cancelar'),
+              child: Text(tr('cancel')),
             ),
             ElevatedButton(
               onPressed: isUploading ? null : () async {
@@ -622,8 +622,8 @@ class _TechnicianClientsScreenState extends State<TechnicianClientsScreen> {
                   await _firestoreService.finishWorkByTechnician(request.id, photoUrl);
                   if (mounted) {
                     ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Notificación enviada al cliente. Esperando confirmación.'),
+                      SnackBar(
+                        content: Text(tr('notif_sent_client')),
                         backgroundColor: Colors.blue,
                       ),
                     );
@@ -633,7 +633,7 @@ class _TechnicianClientsScreenState extends State<TechnicianClientsScreen> {
                   setDialogState(() => isUploading = false);
                   if (mounted) {
                     ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
+                      SnackBar(content: Text('${tr('error_label')}: $e'), backgroundColor: Colors.red),
                     );
                   }
                 }
@@ -645,7 +645,7 @@ class _TechnicianClientsScreenState extends State<TechnicianClientsScreen> {
                       height: 16,
                       child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
                     )
-                  : const Text('Finalizar', style: TextStyle(color: Colors.white)),
+                  : Text(tr('finish'), style: const TextStyle(color: Colors.white)),
             ),
           ],
         ),
@@ -657,17 +657,17 @@ class _TechnicianClientsScreenState extends State<TechnicianClientsScreen> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Retirar propuesta'),
-        content: const Text('¿Seguro que deseas retirar tu propuesta? No aparecerás más en la lista de interesados para este trabajo.'),
+        title: Text(tr('withdraw_proposal')),
+        content: Text(tr('withdraw_proposal_confirm')),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancelar')),
+          TextButton(onPressed: () => Navigator.pop(context), child: Text(tr('cancel'))),
           ElevatedButton(
             onPressed: () async {
               Navigator.pop(context);
               if (myQuote.id.isEmpty) {
                 if (mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('No se encontró tu cotización para retirar.'), backgroundColor: Colors.red),
+                    SnackBar(content: Text(tr('quote_not_found_withdraw')), backgroundColor: Colors.red),
                   );
                 }
                 return;
@@ -677,19 +677,19 @@ class _TechnicianClientsScreenState extends State<TechnicianClientsScreen> {
                 await _firestoreService.withdrawQuote(myQuote.id);
                 if (mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Propuesta retirada con éxito.'))
+                    SnackBar(content: Text(tr('proposal_withdrawn')))
                   );
                 }
               } catch (e) {
                 if (mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red)
+                    SnackBar(content: Text('${tr('error_label')}: $e'), backgroundColor: Colors.red)
                   );
                 }
               }
             },
             style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-            child: const Text('Retirar', style: TextStyle(color: Colors.white)),
+            child: Text(tr('withdraw'), style: const TextStyle(color: Colors.white)),
           ),
         ],
       ),

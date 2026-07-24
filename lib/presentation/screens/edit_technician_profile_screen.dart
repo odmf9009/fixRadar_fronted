@@ -52,7 +52,7 @@ class _EditTechnicianProfileScreenState extends State<EditTechnicianProfileScree
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
-        title: const Text('Perfil Profesional', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+        title: Text(tr('professional_profile_title'), style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
         backgroundColor: const Color(0xFF121212),
         elevation: 0,
         centerTitle: true,
@@ -64,44 +64,44 @@ class _EditTechnicianProfileScreenState extends State<EditTechnicianProfileScree
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text('Información Pública', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+              Text(tr('public_info'), style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
               const SizedBox(height: 16),
               _buildField('Empresa (Opcional)', _companyController, icon: Icons.business),
-              _buildField('Años de Experiencia', _experienceController, icon: Icons.history, keyboardType: TextInputType.number),
+              _buildField(tr('years_experience_label'), _experienceController, icon: Icons.history, keyboardType: TextInputType.number),
               _buildField('Ciudad / Área Principal', _cityController, icon: Icons.location_city),
               _buildField('Radio de Servicio (km)', _radiusController, icon: Icons.radar, keyboardType: TextInputType.number),
               _buildPhoneTile(),
               const SizedBox(height: 24),
-              const Text('Biografía Profesional', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+              Text(tr('professional_bio'), style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
               const SizedBox(height: 12),
               TextFormField(
                 controller: _bioController,
                 maxLines: 5,
                 decoration: InputDecoration(
-                  hintText: 'Cuéntale a tus clientes sobre tu experiencia y servicios...',
+                  hintText: tr('bio_hint'),
                   filled: true,
                   fillColor: Colors.grey[100],
                   border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
                 ),
               ),
               const SizedBox(height: 24),
-              const Text('Configuración Comercial', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+              Text(tr('business_settings'), style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
               const SizedBox(height: 8),
               _buildField('Horario de Trabajo', _hoursController, icon: Icons.schedule, hint: 'Ej: Lunes a Viernes 9am - 6pm'),
               SwitchListTile(
-                title: const Text('Ofrezco Presupuesto Gratis'),
+                title: Text(tr('free_quote_offer')),
                 value: _freeQuote,
                 activeColor: const Color(0xFFFF8A00),
                 onChanged: (val) => setState(() => _freeQuote = val),
               ),
               SwitchListTile(
-                title: const Text('Atención de Emergencias 24/7'),
+                title: Text(tr('emergency_service_247')),
                 value: _emergency,
                 activeColor: const Color(0xFFFF8A00),
                 onChanged: (val) => setState(() => _emergency = val),
               ),
               SwitchListTile(
-                title: const Text('Disponible Fines de Semana'),
+                title: Text(tr('weekend_available')),
                 value: _weekend,
                 activeColor: const Color(0xFFFF8A00),
                 onChanged: (val) => setState(() => _weekend = val),
@@ -116,7 +116,7 @@ class _EditTechnicianProfileScreenState extends State<EditTechnicianProfileScree
                     backgroundColor: const Color(0xFFFF8A00),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                   ),
-                  child: const Text('Guardar Cambios', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
+                  child: Text(tr('save_changes'), style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
                 ),
               ),
               const SizedBox(height: 20),
@@ -238,11 +238,11 @@ class _EditTechnicianProfileScreenState extends State<EditTechnicianProfileScree
       }));
       if (mounted) {
         Navigator.pop(context);
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Perfil profesional actualizado')));
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(tr('professional_profile_updated'))));
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red));
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('${tr('error_label')}: $e'), backgroundColor: Colors.red));
       }
     }
   }

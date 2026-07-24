@@ -46,9 +46,9 @@ class _FiltersScreenState extends State<FiltersScreen> {
           icon: const Icon(Icons.close, color: Colors.black),
           onPressed: () => Navigator.pop(context),
         ),
-        title: const Text(
-          'Filtros Avanzados',
-          style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
+        title: Text(
+          tr('advanced_filters'),
+          style: const TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
         ),
         centerTitle: true,
         actions: [
@@ -61,9 +61,9 @@ class _FiltersScreenState extends State<FiltersScreen> {
                 _searchController.clear();
               });
             },
-            child: const Text(
-              'Limpiar',
-              style: TextStyle(color: Color(0xFFFF8A00), fontWeight: FontWeight.bold),
+            child: Text(
+              tr('clear'),
+              style: const TextStyle(color: Color(0xFFFF8A00), fontWeight: FontWeight.bold),
             ),
           ),
         ],
@@ -74,12 +74,12 @@ class _FiltersScreenState extends State<FiltersScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Search keyword
-            const Text('Buscar por palabra clave', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+            Text(tr('search_by_keyword'), style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
             const SizedBox(height: 12),
             TextField(
               controller: _searchController,
               decoration: InputDecoration(
-                hintText: 'Ej: fuga, goteo, cortocircuito...',
+                hintText: tr('keyword_hint'),
                 prefixIcon: const Icon(Icons.search, color: Color(0xFFFF8A00)),
                 filled: true,
                 fillColor: Colors.grey[100],
@@ -90,14 +90,14 @@ class _FiltersScreenState extends State<FiltersScreen> {
 
             const SizedBox(height: 24),
 
-            const Text('📍 Distancia máxima de trabajo', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+            Text(tr('max_work_distance'), style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
             const SizedBox(height: 8),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Text('1 mi', style: TextStyle(color: Colors.grey)),
-                Text('${_distance.toInt()} millas', style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFFFF8A00))),
-                const Text('50 mi', style: TextStyle(color: Colors.grey)),
+                Text(tr('mi_1'), style: const TextStyle(color: Colors.grey)),
+                Text(tr('x_miles').replaceAll('{n}', '${_distance.toInt()}'), style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFFFF8A00))),
+                Text(tr('mi_50'), style: const TextStyle(color: Colors.grey)),
               ],
             ),
             Slider(
@@ -123,7 +123,7 @@ class _FiltersScreenState extends State<FiltersScreen> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      const Text('Trabajos encontrados:', style: TextStyle(color: Colors.grey, fontWeight: FontWeight.w500)),
+                      Text(tr('jobs_found'), style: const TextStyle(color: Colors.grey, fontWeight: FontWeight.w500)),
                       Text('${widget.resultsCount}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Color(0xFFFF8A00))),
                     ],
                   ),
@@ -132,11 +132,11 @@ class _FiltersScreenState extends State<FiltersScreen> {
                     Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text('Mis especialidades:', style: TextStyle(color: Colors.grey, fontWeight: FontWeight.w500)),
+                        Text(tr('my_specialties_label'), style: const TextStyle(color: Colors.grey, fontWeight: FontWeight.w500)),
                         const SizedBox(width: 8),
                         Expanded(
                           child: Text(
-                            widget.specialties.join(', '), 
+                            widget.specialties.map(ServiceConstants.getDisplayName).join(', '),
                             style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
                             textAlign: TextAlign.right,
                           ),
@@ -155,9 +155,9 @@ class _FiltersScreenState extends State<FiltersScreen> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Text('1 mi', style: TextStyle(color: Colors.grey)),
-                Text('${_alertDistance.toInt()} millas', style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF1976D2))),
-                const Text('50 mi', style: TextStyle(color: Colors.grey)),
+                Text(tr('mi_1'), style: const TextStyle(color: Colors.grey)),
+                Text(tr('x_miles').replaceAll('{n}', '${_alertDistance.toInt()}'), style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF1976D2))),
+                Text(tr('mi_50'), style: const TextStyle(color: Colors.grey)),
               ],
             ),
             Slider(
@@ -172,15 +172,15 @@ class _FiltersScreenState extends State<FiltersScreen> {
 
             const SizedBox(height: 24),
 
-            const Text('Fecha de publicación', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+            Text(tr('publish_date'), style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
             const SizedBox(height: 12),
             Row(
               children: [
-                _buildSelectableBadge('Últimas 24h', '24h', _selectedTime, (val) => setState(() => _selectedTime = val)),
+                _buildSelectableBadge(tr('last_24h'), '24h', _selectedTime, (val) => setState(() => _selectedTime = val)),
                 const SizedBox(width: 8),
-                _buildSelectableBadge('Últimos 3 días', '3d', _selectedTime, (val) => setState(() => _selectedTime = val)),
+                _buildSelectableBadge(tr('last_3_days'), '3d', _selectedTime, (val) => setState(() => _selectedTime = val)),
                 const SizedBox(width: 8),
-                _buildSelectableBadge('Siempre', 'all', _selectedTime, (val) => setState(() => _selectedTime = val)),
+                _buildSelectableBadge(tr('always'), 'all', _selectedTime, (val) => setState(() => _selectedTime = val)),
               ],
             ),
 
@@ -206,9 +206,9 @@ class _FiltersScreenState extends State<FiltersScreen> {
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                 elevation: 0,
               ),
-              child: const Text(
-                'Mostrar resultados',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white),
+              child: Text(
+                tr('show_results'),
+                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white),
               ),
             ),
             const SizedBox(height: 20),

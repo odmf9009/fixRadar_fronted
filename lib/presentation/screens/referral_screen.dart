@@ -20,14 +20,14 @@ class _ReferralScreenState extends State<ReferralScreen> {
   final String _currentUid = AuthService.currentUidSync;
 
   void _shareCode(String code) {
-    final message = '¡Únete a FixRadar y encuentra los mejores técnicos para tu hogar! Usa mi código de referido: $code\n\nDescarga la app aquí: https://fixradar.app';
+    final message = tr('referral_share_message').replaceAll('{code}', code);
     Share.share(message);
   }
 
   void _copyCode(String code) {
     Clipboard.setData(ClipboardData(text: code));
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('¡Código copiado al portapapeles!')),
+      SnackBar(content: Text(tr('code_copied'))),
     );
   }
 
@@ -102,10 +102,10 @@ class _ReferralScreenState extends State<ReferralScreen> {
             style: TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 8),
-          const Text(
-            'Comparte tu código y gana premios cuando tus amigos se unan a la cacería.',
+          Text(
+            tr('referral_subtitle'),
             textAlign: TextAlign.center,
-            style: TextStyle(color: Colors.grey, fontSize: 14),
+            style: const TextStyle(color: Colors.grey, fontSize: 14),
           ),
           const SizedBox(height: 32),
           Container(
@@ -117,7 +117,7 @@ class _ReferralScreenState extends State<ReferralScreen> {
             ),
             child: Column(
               children: [
-                const Text('TU CÓDIGO DE REFERIDO', style: TextStyle(color: Color(0xFFFF8A00), fontWeight: FontWeight.bold, fontSize: 12, letterSpacing: 1.2)),
+                Text(tr('your_referral_code'), style: const TextStyle(color: Color(0xFFFF8A00), fontWeight: FontWeight.bold, fontSize: 12, letterSpacing: 1.2)),
                 const SizedBox(height: 12),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
@@ -137,7 +137,7 @@ class _ReferralScreenState extends State<ReferralScreen> {
                 ElevatedButton.icon(
                   onPressed: () => _shareCode(user.referralCode),
                   icon: const Icon(Icons.share, size: 18),
-                  label: const Text('COMPARTIR CÓDIGO', style: TextStyle(fontWeight: FontWeight.bold)),
+                  label: Text(tr('compartir_codigo'), style: const TextStyle(fontWeight: FontWeight.bold)),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFFFF8A00),
                     foregroundColor: Colors.white,
@@ -158,17 +158,17 @@ class _ReferralScreenState extends State<ReferralScreen> {
       children: [
         Row(
           children: [
-            Expanded(child: _buildStatCard('Invitados', user.referralCount.toString(), Icons.people_outline, Colors.blue)),
+            Expanded(child: _buildStatCard(tr('invited'), user.referralCount.toString(), Icons.people_outline, Colors.blue)),
             const SizedBox(width: 16),
-            Expanded(child: _buildStatCard('Exitosos', user.successfulReferrals.toString(), Icons.verified_outlined, Colors.green)),
+            Expanded(child: _buildStatCard(tr('exitosos'), user.successfulReferrals.toString(), Icons.verified_outlined, Colors.green)),
           ],
         ),
         const SizedBox(height: 16),
         Row(
           children: [
-            Expanded(child: _buildStatCard('Pendientes', user.pendingReferrals.toString(), Icons.hourglass_empty, Colors.orange)),
+            Expanded(child: _buildStatCard(tr('pendientes'), user.pendingReferrals.toString(), Icons.hourglass_empty, Colors.orange)),
             const SizedBox(width: 16),
-            Expanded(child: _buildStatCard('XP Ganada', user.referralXpEarned.toString(), Icons.bolt, Colors.purple)),
+            Expanded(child: _buildStatCard(tr('xp_ganada'), user.referralXpEarned.toString(), Icons.bolt, Colors.purple)),
           ],
         ),
       ],
@@ -216,9 +216,9 @@ class _ReferralScreenState extends State<ReferralScreen> {
               children: [
                 Icon(Icons.group_outlined, size: 48, color: Colors.grey[300]),
                 const SizedBox(height: 16),
-                const Text('Aún no tienes referidos', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.grey)),
+                Text(tr('no_referrals'), style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.grey)),
                 const SizedBox(height: 8),
-                const Text('Invita a tus amigos para verlos aquí', style: TextStyle(fontSize: 12, color: Colors.grey)),
+                Text(tr('invite_friends_see'), style: const TextStyle(fontSize: 12, color: Colors.grey)),
               ],
             ),
           );
@@ -248,22 +248,22 @@ class _ReferralScreenState extends State<ReferralScreen> {
     switch (status) {
       case 'registered':
         statusColor = Colors.blue;
-        statusText = 'Registrado';
+        statusText = tr('registered_status');
         progress = 0.33;
         break;
       case 'first_post':
         statusColor = Colors.orange;
-        statusText = 'Primer Reporte';
+        statusText = tr('first_report_status');
         progress = 0.66;
         break;
       case 'completed':
         statusColor = Colors.green;
-        statusText = 'Completado';
+        statusText = tr('completed_status');
         progress = 1.0;
         break;
       default:
         statusColor = Colors.grey;
-        statusText = 'Pendiente';
+        statusText = tr('pending_status');
         progress = 0.0;
     }
 
@@ -298,7 +298,7 @@ class _ReferralScreenState extends State<ReferralScreen> {
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
                   Text('+$xp XP', style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.green)),
-                  const Text('Ganados', style: TextStyle(fontSize: 10, color: Colors.grey)),
+                  Text(tr('ganado'), style: const TextStyle(fontSize: 10, color: Colors.grey)),
                 ],
               ),
             ],

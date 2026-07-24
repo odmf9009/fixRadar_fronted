@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../core/config/routes.dart';
+import '../../core/services/language_service.dart';
 
 class OnboardingScreen extends StatefulWidget {
   const OnboardingScreen({super.key});
@@ -12,28 +13,28 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   final PageController _pageController = PageController();
   int _currentPage = 0;
 
-  final List<OnboardingData> _pages = [
+  late final List<OnboardingData> _pages = [
     OnboardingData(
-      title: '¡Bienvenido a FixRadar!',
-      description: 'Encuentra expertos para todas las reparaciones de tu hogar. Conectamos tus necesidades con soluciones profesionales cerca de ti.',
+      title: tr('onb_1_title'),
+      description: tr('onb_1_desc'),
       icon: Icons.handyman_rounded,
       color: const Color(0xFFFF8A00),
     ),
     OnboardingData(
-      title: 'Solicita Servicios',
-      description: 'Publica lo que necesitas, desde plomería hasta electricidad, y recibe cotizaciones instantáneas de técnicos calificados.',
+      title: tr('onb_2_title'),
+      description: tr('onb_2_desc'),
       icon: Icons.add_task_rounded,
       color: const Color(0xFF1976D2),
     ),
     OnboardingData(
-      title: 'Elige al Mejor',
-      description: 'Compara perfiles, revisa fotos de trabajos anteriores y lee las calificaciones para contratar con total confianza.',
+      title: tr('onb_3_title'),
+      description: tr('onb_3_desc'),
       icon: Icons.verified_user_rounded,
       color: const Color(0xFF4CAF50),
     ),
     OnboardingData(
-      title: 'Todo bajo Control',
-      description: 'Gestiona tus solicitudes, chatea con los técnicos y califica el servicio recibido para ayudar a la comunidad.',
+      title: tr('onb_4_title'),
+      description: tr('onb_4_desc'),
       icon: Icons.star_rounded,
       color: const Color(0xFFFFD700),
     ),
@@ -101,7 +102,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                     elevation: 0,
                   ),
                   child: Text(
-                    _currentPage == _pages.length - 1 ? '¡Empezar ahora!' : 'Siguiente',
+                    _currentPage == _pages.length - 1 ? tr('start_now') : tr('next'),
                     style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
                   ),
                 ),
@@ -109,7 +110,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 if (_currentPage < _pages.length - 1)
                   TextButton(
                     onPressed: () => Navigator.pushReplacementNamed(context, AppRoutes.login),
-                    child: const Text('Saltar tutorial', style: TextStyle(color: Colors.grey)),
+                    child: Text(tr('skip_tutorial'), style: const TextStyle(color: Colors.grey)),
                   ),
               ],
             ),

@@ -1,6 +1,35 @@
 import 'package:flutter/material.dart';
+import '../services/language_service.dart';
 
 class ServiceConstants {
+  static const Map<String, String> _categoryTrKeys = {
+    'Electricidad': 'cat_electricidad',
+    'Plomería': 'cat_plomeria',
+    'Aire Acond.': 'cat_aire_acond',
+    'Pintura': 'cat_pintura',
+    'Techos': 'cat_techos',
+    'Carpintería': 'cat_carpinteria',
+    'Drywall y Reparación de Paredes': 'cat_drywall',
+    'Jardinería': 'cat_jardineria',
+    'Limpieza': 'cat_limpieza',
+    'Electrodomésticos': 'cat_electrodomesticos',
+    'Cámaras y Seguridad': 'cat_camaras_seguridad',
+    'TV y Montaje': 'cat_tv_montaje',
+    'Puertas y Ventanas': 'cat_puertas_ventanas',
+    'Mudanzas': 'cat_mudanzas',
+    'Handyman': 'cat_handyman',
+    'Otros': 'cat_otros',
+    'Todos': 'cat_all',
+  };
+
+  /// Nombre traducido para mostrar en la UI. El valor de `category` (en
+  /// español) se conserva siempre como identificador canónico para
+  /// almacenamiento, filtros y coincidencia de especialidades.
+  static String getDisplayName(String category) {
+    final key = _categoryTrKeys[category];
+    return key != null ? tr(key) : category;
+  }
+
   static const List<Map<String, dynamic>> allCategories = [
     {'name': 'Electricidad', 'icon': Icons.bolt, 'color': Color(0xFFFBC02D)},
     {'name': 'Plomería', 'icon': Icons.water_drop, 'color': Color(0xFF1976D2)},

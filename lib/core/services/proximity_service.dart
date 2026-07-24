@@ -5,6 +5,7 @@ import 'auth_service.dart';
 import 'location_service.dart';
 import 'firestore_service.dart';
 import 'notification_service.dart';
+import 'language_service.dart';
 import '../models/service_request.dart';
 import '../models/user_model.dart';
 import '../models/alert_model.dart';
@@ -147,49 +148,49 @@ class ProximityService {
 
       if (alert.type == AlertType.quoteReceived) {
         _notificationService.showLocalAlert(
-          '💼 Nueva cotización recibida',
+          tr('notif_new_quote_recv'),
           alert.requestTitle,
           payload: alert.requestId,
         );
       } else if (alert.type == AlertType.directQuote) {
         _notificationService.showLocalAlert(
-          '📋 Solicitud directa',
-          'Un cliente quiere contratar tus servicios para: ${alert.requestTitle}',
+          tr('notif_direct_request'),
+          tr('notif_direct_request_body').replaceAll('{title}', alert.requestTitle),
           payload: alert.requestId,
         );
       } else if (alert.type == AlertType.system && alert.requestTitle == 'Nueva propuesta recibida') {
         _notificationService.showLocalAlert(
-          '🛠️ Propuesta de técnico',
-          alert.address, 
+          tr('notif_tech_proposal'),
+          alert.address,
           payload: alert.requestId,
         );
       } else if (alert.type == AlertType.system && alert.requestTitle == 'Propuesta rechazada') {
         _notificationService.showLocalAlert(
-          '❌ Propuesta Rechazada',
+          tr('notif_proposal_rejected'),
           alert.address,
           payload: alert.requestId,
         );
       } else if (alert.type == AlertType.system && alert.requestTitle == 'Rechazo definitivo') {
         _notificationService.showLocalAlert(
-          '🚫 Rechazo Definitivo',
+          tr('notif_final_rejection'),
           alert.address,
           payload: alert.requestId,
         );
       } else if (alert.type == AlertType.system && alert.requestTitle == 'Propuesta aceptada') {
         _notificationService.showLocalAlert(
-          '🎉 ¡Propuesta Aceptada!',
+          tr('notif_proposal_accepted'),
           alert.address,
           payload: alert.requestId,
         );
       } else if (alert.type == AlertType.system && alert.requestTitle == 'Asignación cancelada') {
         _notificationService.showLocalAlert(
-          '⚠️ Asignación Cancelada',
+          tr('notif_assignment_cancelled'),
           alert.address,
           payload: alert.requestId,
         );
       } else if (alert.type == AlertType.system && alert.requestTitle == 'Pedido cancelado por el cliente') {
         _notificationService.showLocalAlert(
-          '🚫 Pedido Cancelado',
+          tr('notif_order_cancelled'),
           alert.address,
           payload: alert.requestId,
         );
@@ -236,13 +237,13 @@ class ProximityService {
 
   void _sendAlert(ServiceRequest request, double distance) {
     double miles = distance / 1609.34;
-    String distText = miles < 0.1 
-        ? 'muy cerca de ti' 
-        : 'a solo ${miles.toStringAsFixed(2)} millas';
-        
+    String distText = miles < 0.1
+        ? tr('very_close_to_you')
+        : tr('only_x_miles').replaceAll('{mi}', miles.toStringAsFixed(2));
+
     _notificationService.showLocalAlert(
-      '🛠️ ¡Nueva avería detectada!',
-      'Alguien necesita ayuda con "${request.category}" $distText. ¡Acepta el trabajo ahora! 🏃‍♂️💨',
+      tr('notif_new_issue'),
+      tr('notif_new_issue_body').replaceAll('{category}', request.category).replaceAll('{dist}', distText),
       payload: request.id,
     );
 

@@ -3,6 +3,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../../core/services/auth_service.dart';
 import '../../core/services/firestore_service.dart';
+import '../../core/services/language_service.dart';
 
 class PrivacySettingsScreen extends StatefulWidget {
   const PrivacySettingsScreen({super.key});
@@ -45,9 +46,9 @@ class _PrivacySettingsScreenState extends State<PrivacySettingsScreen> {
           icon: const Icon(Icons.arrow_back, color: Colors.white),
           onPressed: () => Navigator.pop(context),
         ),
-        title: const Text(
-          'Privacidad',
-          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+        title: Text(
+          tr('privacidad_title'),
+          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
         ),
         backgroundColor: const Color(0xFF121212),
         elevation: 0,
@@ -58,10 +59,10 @@ class _PrivacySettingsScreenState extends State<PrivacySettingsScreen> {
           : ListView(
               padding: const EdgeInsets.symmetric(vertical: 12),
               children: [
-                _buildHeader('Identidad'),
+                _buildHeader(tr('identidad_header')),
                 _buildSwitchTile(
-                  'Mostrar nombre real',
-                  'Si está desactivado, otros usuarios solo verán tu @alias público.',
+                  tr('show_real_name'),
+                  tr('alias_only_desc'),
                   _showRealName,
                   (val) {
                     setState(() => _showRealName = val);
@@ -69,10 +70,10 @@ class _PrivacySettingsScreenState extends State<PrivacySettingsScreen> {
                   },
                 ),
                 const Divider(),
-                _buildHeader('Datos de Ubicación'),
+                _buildHeader(tr('location_data')),
                 _buildSwitchTile(
-                  'Radar inteligente',
-                  'Permite que la app procese tu ubicación en segundo plano para avisarte de tesoros cercanos.',
+                  tr('smart_radar'),
+                  tr('bg_location_desc'),
                   _shareLocationHistory,
                   (val) {
                     setState(() => _shareLocationHistory = val);
@@ -87,16 +88,16 @@ class _PrivacySettingsScreenState extends State<PrivacySettingsScreen> {
                       const Icon(Icons.verified_user_rounded, color: Colors.green, size: 40),
                       const SizedBox(height: 16),
                       Text(
-                        'En CurbRadar nos tomamos en serio tu seguridad. Nunca compartimos tu ubicación exacta exacta con otros usuarios, solo el área general del tesoro.',
+                        tr('privacy_serious_desc'),
                         style: TextStyle(color: Colors.grey[500], fontSize: 13),
                         textAlign: TextAlign.center,
                       ),
                       const SizedBox(height: 24),
                       TextButton(
                         onPressed: () => Navigator.pushNamed(context, '/privacy-policy'),
-                        child: const Text(
-                          'Leer Política de Privacidad completa',
-                          style: TextStyle(color: Color(0xFFFF8A00), fontWeight: FontWeight.bold),
+                        child: Text(
+                          tr('read_full_privacy'),
+                          style: const TextStyle(color: Color(0xFFFF8A00), fontWeight: FontWeight.bold),
                         ),
                       ),
                     ],
@@ -106,8 +107,8 @@ class _PrivacySettingsScreenState extends State<PrivacySettingsScreen> {
                 const Divider(),
                 ListTile(
                   leading: const Icon(Icons.delete_forever, color: Colors.red),
-                  title: const Text('Eliminar cuenta', style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold)),
-                  subtitle: const Text('Borra permanentemente tu perfil y todas tus solicitudes.'),
+                  title: Text(tr('delete_account'), style: const TextStyle(color: Colors.red, fontWeight: FontWeight.bold)),
+                  subtitle: Text(tr('delete_account_desc')),
                   onTap: () => _showDeleteAccountDialog(context),
                 ),
                 const SizedBox(height: 40),
@@ -123,14 +124,14 @@ class _PrivacySettingsScreenState extends State<PrivacySettingsScreen> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('¿Eliminar cuenta?'),
-        content: const Text(
-          'Esta acción es irreversible. Se eliminará tu perfil, tus solicitudes activas y tu historial. ¿Estás seguro?',
+        title: Text(tr('delete_account_q')),
+        content: Text(
+          tr('delete_account_confirm'),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Cancelar'),
+            child: Text(tr('cancel')),
           ),
           ElevatedButton(
             onPressed: () async {
@@ -146,13 +147,13 @@ class _PrivacySettingsScreenState extends State<PrivacySettingsScreen> {
                 if (mounted) {
                   Navigator.pop(context);
                   ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('Error al eliminar: $e. Re-inicia sesión e intenta de nuevo.')),
+                    SnackBar(content: Text(tr('delete_account_error').replaceAll('{e}', '$e'))),
                   );
                 }
               }
             },
             style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-            child: const Text('Eliminar Todo', style: TextStyle(color: Colors.white)),
+            child: Text(tr('delete_all'), style: const TextStyle(color: Colors.white)),
           ),
         ],
       ),

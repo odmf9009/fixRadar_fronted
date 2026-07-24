@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 import '../../core/models/service_request.dart';
 import '../../core/services/auth_service.dart';
 import '../../core/services/firestore_service.dart';
+import '../../core/services/language_service.dart';
 import '../../core/config/routes.dart';
 
 class ClientRequestsScreen extends StatefulWidget {
@@ -29,7 +30,7 @@ class _ClientRequestsScreenState extends State<ClientRequestsScreen> {
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
-        title: const Text('Mis Pedidos', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black)),
+        title: Text(tr('my_orders'), style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.black)),
         backgroundColor: Colors.white,
         elevation: 0,
         centerTitle: true,
@@ -45,7 +46,7 @@ class _ClientRequestsScreenState extends State<ClientRequestsScreen> {
           stream: _requestsStream,
           builder: (context, snapshot) {
             if (snapshot.hasError) {
-              return Center(child: Text('Error: ${snapshot.error}'));
+              return Center(child: Text('${tr('error_label')}: ${snapshot.error}'));
             }
 
             if (snapshot.connectionState == ConnectionState.waiting) {
@@ -71,12 +72,12 @@ class _ClientRequestsScreenState extends State<ClientRequestsScreen> {
                     children: [
                       Icon(Icons.assignment_outlined, size: 64, color: Colors.grey[300]),
                       const SizedBox(height: 16),
-                      const Text('Aún no has publicado pedidos', style: TextStyle(color: Colors.grey, fontSize: 16)),
+                      Text(tr('no_orders_yet'), style: const TextStyle(color: Colors.grey, fontSize: 16)),
                       const SizedBox(height: 24),
                       ElevatedButton(
                         onPressed: () => Navigator.pushNamed(context, AppRoutes.publish),
                         style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFFF8A00)),
-                        child: const Text('Publicar primer pedido', style: TextStyle(color: Colors.white)),
+                        child: Text(tr('post_first_order'), style: const TextStyle(color: Colors.white)),
                       ),
                     ],
                   ),
@@ -216,7 +217,7 @@ class _ClientRequestsScreenState extends State<ClientRequestsScreen> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              request.technicianName ?? 'Técnico asignado',
+                              request.technicianName ?? tr('tech_assigned_label'),
                               style: const TextStyle(color: Colors.green, fontWeight: FontWeight.bold, fontSize: 13),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
@@ -235,14 +236,14 @@ class _ClientRequestsScreenState extends State<ClientRequestsScreen> {
                     InkWell(
                       onTap: () => Navigator.pushNamed(context, AppRoutes.techniciansList, arguments: request),
                       child: Text(
-                        '${request.responsesCount} técnicos interesados',
+                        tr('techs_interested').replaceAll('{n}', '${request.responsesCount}'),
                         style: const TextStyle(color: Color(0xFFFF8A00), fontWeight: FontWeight.bold, fontSize: 13, decoration: TextDecoration.underline),
                       ),
                     ),
                   ] else ...[
                     const Icon(Icons.timer_outlined, size: 16, color: Colors.grey),
                     const SizedBox(width: 4),
-                    const Text('Buscando técnicos...', style: TextStyle(color: Colors.grey, fontSize: 13)),
+                    Text(tr('searching_techs'), style: const TextStyle(color: Colors.grey, fontSize: 13)),
                   ],
                   if (request.status == ServiceRequestStatus.assigned || request.status == ServiceRequestStatus.inProgress) ...[
                     const Spacer(),
@@ -291,10 +292,10 @@ class _ClientRequestsScreenState extends State<ClientRequestsScreen> {
             children: [
               const Icon(Icons.check_circle_outline, color: Colors.blue, size: 20),
               const SizedBox(width: 8),
-              const Expanded(
+              Expanded(
                 child: Text(
-                  'El técnico marcó el trabajo como finalizado.',
-                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.blue),
+                  tr('tech_marked_finished'),
+                  style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.blue),
                 ),
               ),
             ],
@@ -348,7 +349,7 @@ class _ClientRequestsScreenState extends State<ClientRequestsScreen> {
                     side: const BorderSide(color: Colors.blue),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                   ),
-                  child: const Text('Chat', style: TextStyle(color: Colors.blue, fontSize: 12)),
+                  child: Text(tr('job_chat'), style: const TextStyle(color: Colors.blue, fontSize: 12)),
                 ),
               ),
               const SizedBox(width: 8),
@@ -360,7 +361,7 @@ class _ClientRequestsScreenState extends State<ClientRequestsScreen> {
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                     elevation: 0,
                   ),
-                  child: const Text('Confirmar finalización', style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold)),
+                  child: Text(tr('confirm_completion'), style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold)),
                 ),
               ),
             ],
@@ -381,7 +382,7 @@ class _ClientRequestsScreenState extends State<ClientRequestsScreen> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('¿Confirmar finalización?'),
+        title: Text(tr('confirm_completion_q')),
         content: SingleChildScrollView(
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -409,12 +410,12 @@ class _ClientRequestsScreenState extends State<ClientRequestsScreen> {
                 ),
                 const SizedBox(height: 12),
               ],
-              const Text('Al confirmar, el pedido se cerrará definitivamente y podrás calificar al técnico.'),
+              Text(tr('confirm_completion_desc')),
             ],
           ),
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Revisar más')),
+          TextButton(onPressed: () => Navigator.pop(context), child: Text(tr('review_more'))),
           ElevatedButton(
             onPressed: () async {
               Navigator.pop(context);
@@ -422,7 +423,7 @@ class _ClientRequestsScreenState extends State<ClientRequestsScreen> {
                 await _firestoreService.updateRequestStatus(request.id, ServiceRequestStatus.completed);
                 if (mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('¡Trabajo completado con éxito! Por favor, califica al técnico.'))
+                    SnackBar(content: Text(tr('work_completed_rate')))
                   );
                   // Optionally navigate to details to trigger review dialog
                   Navigator.pushNamed(context, AppRoutes.requestDetail, arguments: request);
@@ -430,13 +431,13 @@ class _ClientRequestsScreenState extends State<ClientRequestsScreen> {
               } catch (e) {
                 if (mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red)
+                    SnackBar(content: Text('${tr('error_label')}: $e'), backgroundColor: Colors.red)
                   );
                 }
               }
             },
             style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
-            child: const Text('Sí, confirmar', style: TextStyle(color: Colors.white)),
+            child: Text(tr('yes_confirm'), style: const TextStyle(color: Colors.white)),
           ),
         ],
       ),
@@ -447,20 +448,20 @@ class _ClientRequestsScreenState extends State<ClientRequestsScreen> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Eliminar pedido', style: TextStyle(fontWeight: FontWeight.bold)),
-        content: Text('¿Estás seguro de que deseas eliminar "${request.title}"? Esta acción no se puede deshacer.'),
+        title: Text(tr('delete_order'), style: const TextStyle(fontWeight: FontWeight.bold)),
+        content: Text(tr('delete_order_confirm').replaceAll('{title}', request.title)),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancelar')),
+          TextButton(onPressed: () => Navigator.pop(context), child: Text(tr('cancel'))),
           ElevatedButton(
             onPressed: () async {
               Navigator.pop(context);
               await _firestoreService.deleteServiceRequest(request.id);
               if (mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Pedido eliminado correctamente')));
+                ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(tr('order_deleted'))));
               }
             },
             style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-            child: const Text('Eliminar', style: TextStyle(color: Colors.white)),
+            child: Text(tr('delete'), style: const TextStyle(color: Colors.white)),
           ),
         ],
       ),
@@ -473,27 +474,27 @@ class _ClientRequestsScreenState extends State<ClientRequestsScreen> {
     switch (status) {
       case ServiceRequestStatus.open:
         color = Colors.orange;
-        label = 'Abierto';
+        label = tr('status_open');
         break;
       case ServiceRequestStatus.assigned:
         color = Colors.blue;
-        label = 'Asignado';
+        label = tr('status_assigned');
         break;
       case ServiceRequestStatus.inProgress:
         color = Colors.indigo;
-        label = 'En curso';
+        label = tr('status_in_progress');
         break;
       case ServiceRequestStatus.finishedByTechnician:
         color = Colors.blue;
-        label = 'Por validar';
+        label = tr('status_pending_validation');
         break;
       case ServiceRequestStatus.completed:
         color = Colors.green;
-        label = 'Completado';
+        label = tr('status_completed');
         break;
       case ServiceRequestStatus.cancelled:
         color = Colors.red;
-        label = 'Cancelado';
+        label = tr('status_cancelled');
         break;
     }
 

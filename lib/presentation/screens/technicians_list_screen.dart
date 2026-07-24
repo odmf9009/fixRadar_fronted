@@ -31,12 +31,12 @@ class _TechniciansListScreenState extends State<TechniciansListScreen> {
       appBar: AppBar(
         title: Column(
           children: [
-            const Text('Técnicos que respondieron', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold, fontSize: 18)),
+            Text(tr('techs_responded'), style: const TextStyle(color: Colors.black, fontWeight: FontWeight.bold, fontSize: 18)),
             StreamBuilder<List<Quote>>(
               stream: _quotesStream,
               builder: (context, snapshot) {
                 final count = snapshot.data?.length ?? 0;
-                return Text('$count técnicos disponibles', style: const TextStyle(color: Colors.grey, fontSize: 13));
+                return Text(tr('techs_available').replaceAll('{count}', '$count'), style: const TextStyle(color: Colors.grey, fontSize: 13));
               },
             ),
           ],
@@ -51,7 +51,7 @@ class _TechniciansListScreenState extends State<TechniciansListScreen> {
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) return const Center(child: CircularProgressIndicator(color: Color(0xFFFF8A00)));
           final quotes = snapshot.data ?? [];
-          if (quotes.isEmpty) return const Center(child: Text('Aún no hay respuestas de técnicos.'));
+          if (quotes.isEmpty) return Center(child: Text(tr('no_tech_responses')));
 
           return ListView.builder(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -89,7 +89,7 @@ class _TechniciansListScreenState extends State<TechniciansListScreen> {
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                       decoration: BoxDecoration(color: Colors.blue[600], borderRadius: BorderRadius.circular(4)),
-                      child: const Text('PRO', style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold)),
+                      child: const Text('PRO', style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold)), // PRO no se traduce (marca)
                     ),
                     const Spacer(),
                     Text(
@@ -117,10 +117,10 @@ class _TechniciansListScreenState extends State<TechniciansListScreen> {
                     child: const Text('🔄 CONTRAOFERTA', style: TextStyle(color: Colors.orange, fontSize: 10, fontWeight: FontWeight.bold)),
                   ),
                 if (quote.estimatedTime != null && quote.estimatedTime!.isNotEmpty)
-                  Text('Tiempo: ${quote.estimatedTime}', style: const TextStyle(color: Colors.blue, fontSize: 13, fontWeight: FontWeight.w500)),
-                const Text('A 0.4 millas', style: TextStyle(color: Colors.grey, fontSize: 13)),
+                  Text(tr('time_label').replaceAll('{t}', quote.estimatedTime!), style: const TextStyle(color: Colors.blue, fontSize: 13, fontWeight: FontWeight.w500)),
+                Text(tr('at_distance_demo'), style: const TextStyle(color: Colors.grey, fontSize: 13)),
                 const SizedBox(height: 2),
-                const Text('Plomería • 6 años exp.', style: TextStyle(color: Colors.grey, fontSize: 13)),
+                Text(tr('plumbing_demo'), style: const TextStyle(color: Colors.grey, fontSize: 13)),
                 const SizedBox(height: 12),
                 const SizedBox(height: 8),
                 SizedBox(
@@ -137,7 +137,7 @@ class _TechniciansListScreenState extends State<TechniciansListScreen> {
                       },
                     ),
                     icon: const Icon(Icons.chat_bubble_outline, size: 16, color: Color(0xFFFF8A00)),
-                    label: const Text('Chatear sobre esta propuesta', style: TextStyle(color: Color(0xFFFF8A00), fontSize: 12)),
+                    label: Text(tr('chat_about_proposal'), style: const TextStyle(color: Color(0xFFFF8A00), fontSize: 12)),
                     style: OutlinedButton.styleFrom(
                       side: const BorderSide(color: Color(0xFFFF8A00)),
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
@@ -159,7 +159,7 @@ class _TechniciansListScreenState extends State<TechniciansListScreen> {
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                             padding: const EdgeInsets.symmetric(horizontal: 16),
                           ),
-                          child: const Text('Ver perfil', style: TextStyle(color: Color(0xFF4CAF50), fontWeight: FontWeight.bold, fontSize: 12)),
+                          child: Text(tr('view_profile'), style: const TextStyle(color: Color(0xFF4CAF50), fontWeight: FontWeight.bold, fontSize: 12)),
                         ),
                       ),
                     ),
@@ -174,7 +174,7 @@ class _TechniciansListScreenState extends State<TechniciansListScreen> {
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                             padding: const EdgeInsets.symmetric(horizontal: 16),
                           ),
-                          child: const Text('Rechazar', style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold, fontSize: 12)),
+                          child: Text(tr('reject'), style: const TextStyle(color: Colors.red, fontWeight: FontWeight.bold, fontSize: 12)),
                         ),
                       ),
                     ),
@@ -189,7 +189,7 @@ class _TechniciansListScreenState extends State<TechniciansListScreen> {
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                             elevation: 0,
                           ),
-                          child: const Text('Aceptar', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12)),
+                          child: Text(tr('accept'), style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12)),
                         ),
                       ),
                     ),
@@ -208,10 +208,10 @@ class _TechniciansListScreenState extends State<TechniciansListScreen> {
       context: context,
       builder: (context) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: const Text('Confirmar Asignación', style: TextStyle(fontWeight: FontWeight.bold)),
-        content: Text('¿Deseas contratar a ${quote.technicianName} para este trabajo? Se abrirá un chat privado para coordinar.'),
+        title: Text(tr('confirm_assignment'), style: const TextStyle(fontWeight: FontWeight.bold)),
+        content: Text(tr('hire_confirm_chat').replaceAll('{name}', quote.technicianName)),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancelar', style: TextStyle(color: Colors.grey))),
+          TextButton(onPressed: () => Navigator.pop(context), child: Text(tr('cancel'), style: const TextStyle(color: Colors.grey))),
           ElevatedButton(
             onPressed: () async {
               await firestoreService.acceptQuote(widget.request.id, quote);
@@ -222,7 +222,7 @@ class _TechniciansListScreenState extends State<TechniciansListScreen> {
               }
             },
             style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFFF8A00)),
-            child: const Text('Confirmar', style: TextStyle(color: Colors.white)),
+            child: Text(tr('confirm'), style: const TextStyle(color: Colors.white)),
           ),
         ],
       ),
@@ -234,10 +234,10 @@ class _TechniciansListScreenState extends State<TechniciansListScreen> {
       context: context,
       builder: (context) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: const Text('Rechazar Propuesta', style: TextStyle(fontWeight: FontWeight.bold)),
-        content: Text('¿Estás seguro de que deseas rechazar la propuesta de ${quote.technicianName}? Esta acción no se puede deshacer.'),
+        title: Text(tr('reject_proposal'), style: const TextStyle(fontWeight: FontWeight.bold)),
+        content: Text(tr('reject_proposal_confirm').replaceAll('{name}', quote.technicianName)),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancelar', style: TextStyle(color: Colors.grey))),
+          TextButton(onPressed: () => Navigator.pop(context), child: Text(tr('cancel'), style: const TextStyle(color: Colors.grey))),
           ElevatedButton(
             onPressed: () async {
               await firestoreService.rejectQuote(widget.request.id, quote.id);
@@ -246,7 +246,7 @@ class _TechniciansListScreenState extends State<TechniciansListScreen> {
               }
             },
             style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-            child: const Text('Rechazar', style: TextStyle(color: Colors.white)),
+            child: Text(tr('reject'), style: const TextStyle(color: Colors.white)),
           ),
         ],
       ),

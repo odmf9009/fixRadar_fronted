@@ -172,8 +172,8 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> with Widget
     SocketService().on('quote:new', (data) {
       if (mounted) {
         NotificationService().showLocalAlert(
-          '¡Nueva propuesta!',
-          'Un técnico ha enviado un presupuesto para tu pedido.',
+          tr('notif_new_quote_title'),
+          tr('notif_new_quote_body'),
         );
       }
     });
@@ -181,20 +181,20 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> with Widget
     SocketService().on('quote:accepted', (data) {
       if (mounted) {
         NotificationService().showLocalAlert(
-          '¡Propuesta aceptada!',
-          'Tu presupuesto ha sido aceptado por el cliente.',
+          tr('notif_quote_accepted_title'),
+          tr('notif_quote_accepted_body'),
         );
       }
     });
 
     SocketService().on('alert:new', (data) {
       if (mounted) {
-        final title = data['requestTitle'] ?? 'Nueva notificación';
+        final title = data['requestTitle'] ?? tr('notif_default_title');
         final type = data['type'] ?? 'system';
-        String body = 'Tienes una nueva alerta en el radar.';
-        
-        if (type == 'nearby') body = 'Hay un nuevo trabajo cerca de ti.';
-        if (type == 'directQuote') body = 'Un cliente te ha solicitado una cotización directa.';
+        String body = tr('notif_radar_alert');
+
+        if (type == 'nearby') body = tr('notif_new_job_nearby');
+        if (type == 'directQuote') body = tr('notif_direct_quote');
 
         NotificationService().showLocalAlert(title, body);
       }
@@ -310,7 +310,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> with Widget
           // Chat asociado a una cotización/propuesta.
           try {
             final quote = await _firestoreService.getQuoteById(quoteId);
-            String title = 'Chat de Cotización';
+            String title = tr('quote_chat_title');
             String? otherName = quote?.technicianName;
             if (quote != null) {
               final req = await _firestoreService.getServiceRequestById(quote.requestId);
@@ -419,19 +419,19 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> with Widget
           showSelectedLabels: true,
           showUnselectedLabels: true,
           items: isTechnician
-            ? const [
-                BottomNavigationBarItem(icon: Icon(Icons.home_outlined), activeIcon: Icon(Icons.home), label: 'Inicio'),
-                BottomNavigationBarItem(icon: Icon(Icons.work_outline), activeIcon: Icon(Icons.work), label: 'Mapa'),
-                BottomNavigationBarItem(icon: Icon(Icons.request_quote_outlined), activeIcon: Icon(Icons.request_quote), label: 'Cotizaciones'),
-                BottomNavigationBarItem(icon: Icon(Icons.people_outline), activeIcon: Icon(Icons.people), label: 'Clientes'),
-                BottomNavigationBarItem(icon: Icon(Icons.person_outline), activeIcon: Icon(Icons.person), label: 'Perfil'),
+            ? [
+                BottomNavigationBarItem(icon: const Icon(Icons.home_outlined), activeIcon: const Icon(Icons.home), label: tr('home')),
+                BottomNavigationBarItem(icon: const Icon(Icons.work_outline), activeIcon: const Icon(Icons.work), label: tr('mapa')),
+                BottomNavigationBarItem(icon: const Icon(Icons.request_quote_outlined), activeIcon: const Icon(Icons.request_quote), label: tr('quotes')),
+                BottomNavigationBarItem(icon: const Icon(Icons.people_outline), activeIcon: const Icon(Icons.people), label: tr('clients')),
+                BottomNavigationBarItem(icon: const Icon(Icons.person_outline), activeIcon: const Icon(Icons.person), label: tr('perfil')),
               ]
-            : const [
-                BottomNavigationBarItem(icon: Icon(Icons.home_outlined), activeIcon: Icon(Icons.home), label: 'Inicio'),
-                BottomNavigationBarItem(icon: Icon(Icons.engineering_outlined), activeIcon: Icon(Icons.engineering), label: 'Técnicos'),
-                BottomNavigationBarItem(icon: Icon(Icons.history_outlined), activeIcon: Icon(Icons.history), label: 'Mis Pedidos'),
-                BottomNavigationBarItem(icon: Icon(Icons.assignment_ind_outlined), activeIcon: Icon(Icons.assignment_ind), label: 'Propuestas'),
-                BottomNavigationBarItem(icon: Icon(Icons.person_outline), activeIcon: Icon(Icons.person), label: 'Perfil'),
+            : [
+                BottomNavigationBarItem(icon: const Icon(Icons.home_outlined), activeIcon: const Icon(Icons.home), label: tr('home')),
+                BottomNavigationBarItem(icon: const Icon(Icons.engineering_outlined), activeIcon: const Icon(Icons.engineering), label: tr('technicians')),
+                BottomNavigationBarItem(icon: const Icon(Icons.history_outlined), activeIcon: const Icon(Icons.history), label: tr('my_orders')),
+                BottomNavigationBarItem(icon: const Icon(Icons.assignment_ind_outlined), activeIcon: const Icon(Icons.assignment_ind), label: tr('proposals')),
+                BottomNavigationBarItem(icon: const Icon(Icons.person_outline), activeIcon: const Icon(Icons.person), label: tr('perfil')),
               ],
         ),
       ),

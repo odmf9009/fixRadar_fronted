@@ -380,7 +380,7 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
     }
 
     final user = _user;
-    if (user == null) return const Scaffold(body: Center(child: Text('Error al cargar perfil.')));
+    if (user == null) return Scaffold(body: Center(child: Text(tr('error_loading_profile'))));
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -470,7 +470,7 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
         Row(
           children: [
             Text(
-              'Hola, ${user.name.split(' ')[0]} 👋', 
+              tr('hello_name').replaceAll('{name}', user.name.split(' ')[0]),
               style: const TextStyle(color: Colors.black87, fontSize: 20, fontWeight: FontWeight.bold)
             ),
             const SizedBox(width: 12),
@@ -491,7 +491,7 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
                   ),
                   const SizedBox(width: 6),
                   Text(
-                    isTech ? 'Técnico' : 'Cliente',
+                    isTech ? tr('technician') : tr('client_role'),
                     style: TextStyle(
                       fontSize: 11, 
                       fontWeight: FontWeight.bold, 
@@ -503,7 +503,7 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
             ),
           ],
         ),
-        const Text('¿En qué podemos ayudarte hoy?', style: TextStyle(color: Colors.grey, fontSize: 14)),
+        Text(tr('how_can_we_help'), style: const TextStyle(color: Colors.grey, fontSize: 14)),
       ],
     );
   }
@@ -591,12 +591,12 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text('Categorías populares', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+        Text(tr('popular_categories'), style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
         const SizedBox(height: 16),
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: ServiceConstants.allCategories.take(4).map((cat) => 
-            CategoryItem(label: cat['name'] as String, icon: cat['icon'] as IconData, color: cat['color'] as Color)
+            CategoryItem(label: ServiceConstants.getDisplayName(cat['name'] as String), icon: cat['icon'] as IconData, color: cat['color'] as Color)
           ).toList(),
         ),
       ],
@@ -614,12 +614,12 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text('Mis solicitudes activas', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+        Text(tr('my_active_requests'), style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
         const SizedBox(height: 16),
         Row(
           children: [
-            if (waiting > 0) _statusBadge('Esperando cotizaciones ($waiting)', Colors.orange),
-            if (active > 0) ...[const SizedBox(width: 8), _statusBadge('Técnicos trabajando ($active)', Colors.blue)],
+            if (waiting > 0) _statusBadge(tr('waiting_quotes').replaceAll('{n}', '$waiting'), Colors.orange),
+            if (active > 0) ...[const SizedBox(width: 8), _statusBadge(tr('techs_working').replaceAll('{n}', '$active'), Colors.blue)],
           ],
         ),
       ],
@@ -631,12 +631,12 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text('Problemas recientes cerca de ti', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+        Text(tr('recent_problems_near'), style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
         const SizedBox(height: 16),
         if (_isLoadingNearby && _nearbyRequests.isEmpty)
           const Center(child: CircularProgressIndicator())
         else if (_nearbyRequests.isEmpty)
-          const Text('No hay problemas reportados cerca.', style: TextStyle(color: Colors.grey))
+          Text(tr('no_problems_near'), style: const TextStyle(color: Colors.grey))
         else
           ..._nearbyRequests.where((req) {
             // Only show open requests
@@ -690,7 +690,7 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
             Text(tr('technicians_nearby'), style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
             TextButton(
               onPressed: () => Navigator.pushNamed(context, AppRoutes.topTechnicians),
-              child: const Text('Ver todos', style: TextStyle(color: Color(0xFFFF8A00))),
+              child: Text(tr('see_all_btn'), style: const TextStyle(color: Color(0xFFFF8A00))),
             ),
           ],
         ),
@@ -698,7 +698,7 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
         if (_isLoadingTechs && _topTechnicians.isEmpty)
           const SizedBox(height: 100, child: Center(child: LinearProgressIndicator()))
         else if (_topTechnicians.isEmpty)
-          const Text('No hay técnicos activos en tu zona.', style: TextStyle(color: Colors.grey))
+          Text(tr('no_active_techs_zone'), style: const TextStyle(color: Colors.grey))
         else
           SizedBox(
             height: 110,
@@ -726,7 +726,7 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             Text(tech.name, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14), maxLines: 1, overflow: TextOverflow.ellipsis),
-                            Text(tech.specialties.isNotEmpty ? tech.specialties.first : 'Especialista', style: const TextStyle(fontSize: 11, color: Colors.grey)),
+                            Text(tech.specialties.isNotEmpty ? ServiceConstants.getDisplayName(tech.specialties.first) : tr('general_technician'), style: const TextStyle(fontSize: 11, color: Colors.grey)),
                             Row(children: [const Icon(Icons.star, color: Colors.amber, size: 14), Text(' ${tech.rating.toStringAsFixed(1)}', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold))]),
                           ],
                         ),
@@ -771,7 +771,7 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text('Trabajos para tu especialidad', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+        Text(tr('jobs_for_specialty'), style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
         const SizedBox(height: 16),
         GestureDetector(
           onTap: () => widget.onViewMap?.call(null),
@@ -779,12 +779,12 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
             height: 150,
             width: double.infinity,
             decoration: BoxDecoration(borderRadius: BorderRadius.circular(16), color: Colors.grey[100]),
-            child: Center(child: Container(padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8), decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(20), boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 4)]), child: const Text('Ver en el mapa', style: TextStyle(fontWeight: FontWeight.bold)))),
+            child: Center(child: Container(padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8), decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(20), boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 4)]), child: Text(tr('ver_en_mapa'), style: const TextStyle(fontWeight: FontWeight.bold)))),
           ),
         ),
         const SizedBox(height: 20),
         if (jobs.isEmpty)
-          const Text('No hay trabajos nuevos en tu área.', style: TextStyle(color: Colors.grey))
+          Text(tr('no_new_jobs_area'), style: const TextStyle(color: Colors.grey))
         else
           SizedBox(
             height: 180, // Compactado de 220 a 180
@@ -828,7 +828,7 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
               backgroundColor: const Color(0xFFFF8A00),
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
             ),
-            child: const Text('Ir a mi perfil'),
+            child: Text(tr('go_to_profile')),
           ),
         ],
       ),

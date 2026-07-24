@@ -37,7 +37,7 @@ class _CommunityStatsScreenState extends State<CommunityStatsScreen> {
           }
           
           if (!snapshot.hasData) {
-            return const Center(child: Text('No hay datos disponibles aún.'));
+            return Center(child: Text(tr('no_data_yet')));
           }
 
           final stats = snapshot.data!;
@@ -67,19 +67,19 @@ class _CommunityStatsScreenState extends State<CommunityStatsScreen> {
                 const SizedBox(height: 32),
 
                 // SECTION 2: TOP CATEGORIES
-                _buildSectionHeader('Categorías Populares'),
+                _buildSectionHeader(tr('popular_categories')),
                 _buildCategoryCard(stats.categoryDistribution),
 
                 const SizedBox(height: 32),
 
                 // SECTION 3: HOTTEST AREAS
-                _buildSectionHeader('Zonas con más Tesoros'),
+                _buildSectionHeader(tr('zones_most_treasures')),
                 ...stats.hottestAreas.map((area) => _buildAreaTile(area)).toList(),
 
                 const SizedBox(height: 32),
 
                 // SECTION 4: ENVIRONMENTAL IMPACT
-                _buildSectionHeader('Impacto Ecológico'),
+                _buildSectionHeader(tr('eco_impact')),
                 _buildImpactSection(stats.environmentalImpact),
 
                 const SizedBox(height: 40),
@@ -193,7 +193,7 @@ class _CommunityStatsScreenState extends State<CommunityStatsScreen> {
               Navigator.pop(context);
               // Logic to move map would go here via a callback or event bus
             },
-            child: const Text('Ver en Mapa', style: TextStyle(color: Color(0xFFFF8A00), fontWeight: FontWeight.bold)),
+            child: Text(tr('view_on_map'), style: const TextStyle(color: Color(0xFFFF8A00), fontWeight: FontWeight.bold)),
           ),
         ],
       ),
@@ -221,7 +221,7 @@ class _CommunityStatsScreenState extends State<CommunityStatsScreen> {
           'Emisiones CO₂ Evitadas',
           '${impact.co2SavedKg.toInt()} kg',
           '🌎',
-          'Ahorro estimado en producción nueva',
+          tr('estimated_savings'),
         ),
       ],
     );

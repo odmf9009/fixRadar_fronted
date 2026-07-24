@@ -1,3 +1,5 @@
+import '../services/language_service.dart';
+
 class UserModel {
   final String id;
   final String name;
@@ -230,11 +232,11 @@ class UserModel {
 
   String get levelTitle {
     final l = calculateLevel(totalXp);
-    if (l <= 1) return 'Fixer Novato';
-    if (l <= 2) return 'Técnico Jr.';
-    if (l <= 3) return 'Especialista';
-    if (l <= 4) return 'Maestro de Obras';
-    return 'Ingeniero de la Casa';
+    if (l <= 1) return tr('level_title_1');
+    if (l <= 2) return tr('level_title_2');
+    if (l <= 3) return tr('level_title_3');
+    if (l <= 4) return tr('level_title_4');
+    return tr('level_title_5');
   }
 
   double get levelProgress {

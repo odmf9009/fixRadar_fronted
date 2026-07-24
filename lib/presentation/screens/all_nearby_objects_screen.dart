@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import '../../core/models/service_request.dart';
 import '../../core/config/routes.dart';
+import '../../core/services/language_service.dart';
 import 'widgets/category_badge.dart';
 
 class AllNearbyRequestsScreen extends StatelessWidget {
@@ -30,9 +31,9 @@ class AllNearbyRequestsScreen extends StatelessWidget {
         centerTitle: true,
       ),
       body: displayedRequests.isEmpty
-          ? const Center(
-              child: Text('No hay pedidos en tu rango de búsqueda',
-                  style: TextStyle(color: Colors.grey)),
+          ? Center(
+              child: Text(tr('no_orders_in_range'),
+                  style: const TextStyle(color: Colors.grey)),
             )
           : ListView.separated(
               padding: const EdgeInsets.all(16),

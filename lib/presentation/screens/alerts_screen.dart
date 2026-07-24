@@ -106,10 +106,10 @@ class _AlertsScreenState extends State<AlertsScreen> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('¿Limpiar historial?'),
-        content: const Text('Se eliminarán permanentemente todas tus notificaciones guardadas.'),
+        title: Text(tr('clear_history_q')),
+        content: Text(tr('clear_history_confirm')),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancelar')),
+          TextButton(onPressed: () => Navigator.pop(context), child: Text(tr('cancel'))),
               ElevatedButton(
                 onPressed: () async {
                   final uid = AuthService.currentUidSync;
@@ -119,19 +119,19 @@ class _AlertsScreenState extends State<AlertsScreen> {
                       if (mounted) {
                         Navigator.pop(context);
                         _radarTabKey.currentState?.refresh();
-                        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Historial limpiado.')));
+                        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(tr('history_cleared'))));
                       }
                     } catch (e) {
                       if (mounted) {
                         ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(content: Text('Error al limpiar: $e'), backgroundColor: Colors.red),
+                          SnackBar(content: Text(tr('error_clearing').replaceAll('{e}', '$e')), backgroundColor: Colors.red),
                         );
                       }
                     }
                   }
                 },
                 style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-                child: const Text('Eliminar Todo', style: TextStyle(color: Colors.white)),
+                child: Text(tr('delete_all'), style: const TextStyle(color: Colors.white)),
               ),
         ],
       ),
@@ -182,7 +182,7 @@ class _RadarTabState extends State<_RadarTab> with AutomaticKeepAliveClientMixin
       stream: _alertsStream,
       builder: (context, alertsSnapshot) {
         if (alertsSnapshot.hasError) {
-          return Center(child: Text('Error: ${alertsSnapshot.error}'));
+          return Center(child: Text('${tr('error_label')}: ${alertsSnapshot.error}'));
         }
         
         // If we have data, we show it. Even if it's empty.
@@ -226,7 +226,7 @@ class _RadarTabState extends State<_RadarTab> with AutomaticKeepAliveClientMixin
           if (alert.quoteId != null) {
             try {
               final quote = await _fs.getQuoteById(alert.quoteId!);
-              String title = 'Chat de Cotización';
+              String title = tr('quote_chat_title');
               String? otherName = quote?.technicianName;
               if (quote != null) {
                 final req = await _fs.getServiceRequestById(quote.requestId);
@@ -339,7 +339,7 @@ class _NovedadesTabState extends State<_NovedadesTab> with AutomaticKeepAliveCli
       ),
       builder: (context, snapshot) {
         if (snapshot.hasError) {
-          return Center(child: Text('Error: ${snapshot.error}'));
+          return Center(child: Text('${tr('error_label')}: ${snapshot.error}'));
         }
         if (!snapshot.hasData) return const Center(child: CircularProgressIndicator());
         var allReqs = snapshot.data!;

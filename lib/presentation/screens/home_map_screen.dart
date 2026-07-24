@@ -326,13 +326,13 @@ class HomeMapScreenState extends State<HomeMapScreen> {
           if (_isLocating)
             Container(
               color: Colors.white.withOpacity(0.7),
-              child: const Center(
+              child: Center(
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    CircularProgressIndicator(color: Color(0xFFFF8A00)),
-                    SizedBox(height: 16),
-                    Text('Obteniendo tu ubicación...', style: TextStyle(fontWeight: FontWeight.bold, color: Color(0xFFFF8A00))),
+                    const CircularProgressIndicator(color: Color(0xFFFF8A00)),
+                    const SizedBox(height: 16),
+                    Text(tr('getting_location'), style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFFFF8A00))),
                   ],
                 ),
               ),
@@ -411,11 +411,11 @@ class HomeMapScreenState extends State<HomeMapScreen> {
       ),
       child: TextField(
         controller: _searchController,
-        decoration: const InputDecoration(
-          hintText: 'Buscar trabajos...',
-          prefixIcon: Icon(Icons.search, color: Color(0xFFFF8A00)),
+        decoration: InputDecoration(
+          hintText: tr('search_jobs_hint'),
+          prefixIcon: const Icon(Icons.search, color: Color(0xFFFF8A00)),
           border: InputBorder.none,
-          contentPadding: EdgeInsets.symmetric(vertical: 15),
+          contentPadding: const EdgeInsets.symmetric(vertical: 15),
         ),
         onChanged: (val) {
           setState(() => _currentFilters = _currentFilters.copyWith(searchQuery: val));
@@ -444,7 +444,7 @@ class HomeMapScreenState extends State<HomeMapScreen> {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text('Trabajos cercanos (${_nearbyRequests.length})', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                  Text(tr('nearby_jobs_count').replaceAll('{n}', '${_nearbyRequests.length}'), style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
                   IconButton(
                     icon: const Icon(Icons.tune, color: Color(0xFFFF8A00)),
                     onPressed: _openFilters,
@@ -456,7 +456,7 @@ class HomeMapScreenState extends State<HomeMapScreen> {
               child: _currentUser?.role == 'technician' && (_currentUser?.specialties.isEmpty ?? true)
                 ? _buildMissingSpecialtiesMessage()
                 : _nearbyRequests.isEmpty
-                  ? const Center(child: Text('No hay trabajos en esta zona.'))
+                  ? Center(child: Text(tr('no_jobs_in_zone')))
                   : ListView.builder(
                       scrollDirection: Axis.horizontal,
                       padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -486,7 +486,7 @@ class HomeMapScreenState extends State<HomeMapScreen> {
             const SizedBox(height: 8),
             TextButton(
               onPressed: () => Navigator.pushNamed(context, AppRoutes.profile),
-              child: const Text('Ir a mi perfil', style: TextStyle(color: Color(0xFFFF8A00), fontWeight: FontWeight.bold)),
+              child: Text(tr('go_to_profile'), style: const TextStyle(color: Color(0xFFFF8A00), fontWeight: FontWeight.bold)),
             ),
           ],
         ),

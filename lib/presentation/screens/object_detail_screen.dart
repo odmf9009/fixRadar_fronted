@@ -13,6 +13,7 @@ import '../../core/services/location_service.dart';
 import '../../core/services/upload_service.dart';
 import '../../core/services/language_service.dart';
 import '../../core/config/routes.dart';
+import '../../core/config/service_constants.dart';
 
 class RequestDetailScreen extends StatefulWidget {
   const RequestDetailScreen({super.key});
@@ -88,7 +89,7 @@ class _RequestDetailScreenState extends State<RequestDetailScreen> {
       initialRequest = args['request'] as ServiceRequest?;
     }
 
-    if (initialRequest == null) return const Scaffold(body: Center(child: Text('Error: No se encontró el pedido')));
+    if (initialRequest == null) return Scaffold(body: Center(child: Text(tr('error_order_not_found'))));
 
     final ServiceRequest actualInitialRequest = initialRequest!;
 
@@ -211,7 +212,7 @@ class _RequestDetailScreenState extends State<RequestDetailScreen> {
               minimumSize: const Size(double.infinity, 44),
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
             ),
-            child: const Text('Aceptar esta cotización', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+            child: Text(tr('accept_quote'), style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
           ),
         ],
       ),
@@ -222,10 +223,10 @@ class _RequestDetailScreenState extends State<RequestDetailScreen> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Confirmar Asignación'),
-        content: Text('¿Deseas contratar a ${quote.technicianName} para este trabajo?'),
+        title: Text(tr('confirm_assignment')),
+        content: Text(tr('hire_confirm').replaceAll('{name}', quote.technicianName)),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancelar')),
+          TextButton(onPressed: () => Navigator.pop(context), child: Text(tr('cancel'))),
           ElevatedButton(
             onPressed: () async {
               Navigator.pop(context);
@@ -234,14 +235,14 @@ class _RequestDetailScreenState extends State<RequestDetailScreen> {
                 await _firestoreService.acceptQuote(request.id, quote);
                 if (mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Técnico asignado correctamente.'))
+                    SnackBar(content: Text(tr('tech_assigned')))
                   );
                   setState(() => _selectedQuote = null);
                 }
               } catch (e) {
                 if (mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red)
+                    SnackBar(content: Text('${tr('error_label')}: $e'), backgroundColor: Colors.red)
                   );
                 }
               } finally {
@@ -249,7 +250,7 @@ class _RequestDetailScreenState extends State<RequestDetailScreen> {
               }
             },
             style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFFF8A00)),
-            child: const Text('Confirmar', style: TextStyle(color: Colors.white)),
+            child: Text(tr('confirm'), style: const TextStyle(color: Colors.white)),
           ),
         ],
       ),
@@ -287,7 +288,7 @@ class _RequestDetailScreenState extends State<RequestDetailScreen> {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
               decoration: BoxDecoration(color: Colors.blue[50], borderRadius: BorderRadius.circular(20)),
-              child: Text(request.category.toUpperCase(), style: TextStyle(color: Colors.blue[700], fontSize: 12, fontWeight: FontWeight.bold)),
+              child: Text(ServiceConstants.getDisplayName(request.category).toUpperCase(), style: TextStyle(color: Colors.blue[700], fontSize: 12, fontWeight: FontWeight.bold)),
             ),
             const SizedBox(width: 12),
             _buildStatusBadge(request.status),
@@ -297,7 +298,7 @@ class _RequestDetailScreenState extends State<RequestDetailScreen> {
         Text(request.title, style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
         const SizedBox(height: 8),
         Text(
-          'Publicado hace ${_getTimeAgo(request.createdAt)} • a ${_distance.toStringAsFixed(1)} millas de ti',
+          tr('posted_ago_distance').replaceAll('{time}', _getTimeAgo(request.createdAt)).replaceAll('{dist}', _distance.toStringAsFixed(1)),
           style: const TextStyle(color: Colors.grey, fontSize: 14),
         ),
         const SizedBox(height: 12),
@@ -315,7 +316,7 @@ class _RequestDetailScreenState extends State<RequestDetailScreen> {
               const Icon(Icons.map_outlined, size: 16, color: Color(0xFFFF8A00)),
               const SizedBox(width: 4),
               Text(
-                'Ver ubicación en el mapa',
+                tr('view_location_map'),
                 style: TextStyle(color: const Color(0xFFFF8A00), fontWeight: FontWeight.bold, fontSize: 14),
               ),
             ],
@@ -331,31 +332,31 @@ class _RequestDetailScreenState extends State<RequestDetailScreen> {
     switch (status) {
       case ServiceRequestStatus.open:
         color = Colors.green;
-        text = 'BUSCANDO TÉCNICO';
+        text = tr('badge_searching_tech');
         break;
       case ServiceRequestStatus.assigned:
         color = Colors.blue;
-        text = 'TÉCNICO ASIGNADO';
+        text = tr('badge_tech_assigned');
         break;
       case ServiceRequestStatus.inProgress:
         color = Colors.orange;
-        text = 'EN CURSO';
+        text = tr('badge_in_progress');
         break;
       case ServiceRequestStatus.finishedByTechnician:
         color = Colors.blue;
-        text = 'FINALIZADO (TÉCNICO)';
+        text = tr('badge_finished_tech');
         break;
       case ServiceRequestStatus.completed:
         color = Colors.grey;
-        text = 'COMPLETADO';
+        text = tr('badge_completed');
         break;
       case ServiceRequestStatus.cancelled:
         color = Colors.red;
-        text = 'CANCELADO';
+        text = tr('badge_cancelled');
         break;
       default:
         color = Colors.grey;
-        text = 'ESTADO DESCONOCIDO';
+        text = tr('badge_unknown_status');
         break;
     }
     return Container(
@@ -369,7 +370,7 @@ class _RequestDetailScreenState extends State<RequestDetailScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text('Descripción', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+        Text(tr('descripcion'), style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
         const SizedBox(height: 12),
         Text(request.description, style: const TextStyle(fontSize: 16, height: 1.6, color: Colors.black87)),
       ],
@@ -458,7 +459,7 @@ class _RequestDetailScreenState extends State<RequestDetailScreen> {
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text('Presupuesto acordado', style: TextStyle(fontSize: 12, color: Colors.grey, fontWeight: FontWeight.bold)),
+              Text(tr('agreed_budget'), style: const TextStyle(fontSize: 12, color: Colors.grey, fontWeight: FontWeight.bold)),
               Text(budgetText, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFFFF8A00))),
             ],
           ),
@@ -471,11 +472,11 @@ class _RequestDetailScreenState extends State<RequestDetailScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text('Información adicional', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+        Text(tr('additional_info'), style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
         const SizedBox(height: 16),
-        _infoTile(Icons.home_outlined, 'Casa residencial'),
-        _infoTile(Icons.security_outlined, 'Entorno seguro'),
-        _infoTile(Icons.schedule_outlined, 'Atención inmediata preferida'),
+        _infoTile(Icons.home_outlined, tr('residential_house')),
+        _infoTile(Icons.security_outlined, tr('safe_environment')),
+        _infoTile(Icons.schedule_outlined, tr('immediate_attention')),
       ],
     );
   }
@@ -499,7 +500,7 @@ class _RequestDetailScreenState extends State<RequestDetailScreen> {
         return ElevatedButton.icon(
           onPressed: () => _showReviewDialog(request),
           icon: const Icon(Icons.star_outline),
-          label: const Text('Calificar Servicio'),
+          label: Text(tr('rate_service')),
           style: ElevatedButton.styleFrom(backgroundColor: Colors.amber[700], minimumSize: const Size(double.infinity, 56)),
         );
       }
@@ -509,7 +510,7 @@ class _RequestDetailScreenState extends State<RequestDetailScreen> {
         decoration: BoxDecoration(color: Colors.grey[100], borderRadius: BorderRadius.circular(16)),
         child: Column(
           children: [
-            const Text('Trabajo Finalizado', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.grey)),
+            Text(tr('work_finished_status'), style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.grey)),
             if (request.reviewRating != null) ...[
               const SizedBox(height: 8),
               Row(mainAxisAlignment: MainAxisAlignment.center, children: List.generate(5, (i) => Icon(i < request.reviewRating! ? Icons.star : Icons.star_border, color: Colors.amber, size: 20))),
@@ -534,7 +535,7 @@ class _RequestDetailScreenState extends State<RequestDetailScreen> {
               OutlinedButton.icon(
                 onPressed: () => Navigator.pushNamed(context, AppRoutes.chat, arguments: request),
                 icon: const Icon(Icons.chat_bubble_outline),
-                label: const Text('Chat de Trabajo'),
+                label: Text(tr('job_chat')),
                 style: OutlinedButton.styleFrom(minimumSize: const Size(double.infinity, 56)),
               ),
             ],
@@ -545,7 +546,7 @@ class _RequestDetailScreenState extends State<RequestDetailScreen> {
           return ElevatedButton.icon(
             onPressed: () => _showCompletionDialog(request),
             icon: const Icon(Icons.check_circle_outline),
-            label: const Text('Finalizar Trabajo'),
+            label: Text(tr('finish_job')),
             style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFFF8A00), minimumSize: const Size(double.infinity, 56)),
           );
         }
@@ -555,21 +556,21 @@ class _RequestDetailScreenState extends State<RequestDetailScreen> {
             width: double.infinity,
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(color: Colors.blue[50], borderRadius: BorderRadius.circular(16)),
-            child: const Column(
+            child: Column(
               children: [
-                Text('Trabajo Finalizado', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.blue)),
-                SizedBox(height: 4),
-                Text('Esperando validación del cliente...', style: TextStyle(fontSize: 12, color: Colors.grey)),
+                Text(tr('work_finished_status'), style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.blue)),
+                const SizedBox(height: 4),
+                Text(tr('awaiting_client_validation'), style: const TextStyle(fontSize: 12, color: Colors.grey)),
               ],
             ),
           );
         }
       }
-      return const Center(child: Text('Este trabajo ya ha sido asignado.', style: TextStyle(color: Colors.grey, fontWeight: FontWeight.bold)));
+      return Center(child: Text(tr('job_already_assigned'), style: const TextStyle(color: Colors.grey, fontWeight: FontWeight.bold)));
     }
 
     if (isClient) {
-      final String techName = request.technicianName ?? 'Técnico';
+      final String techName = request.technicianName ?? tr('technician');
       
       return Column(
         children: [
@@ -577,7 +578,7 @@ class _RequestDetailScreenState extends State<RequestDetailScreen> {
              ElevatedButton.icon(
               onPressed: () => _confirmAcceptCompletionInDetails(request),
               icon: const Icon(Icons.check_circle_outline),
-              label: const Text('Confirmar Trabajo Terminado'),
+              label: Text(tr('confirm_work_done')),
               style: ElevatedButton.styleFrom(backgroundColor: Colors.green, minimumSize: const Size(double.infinity, 56)),
             ),
             const SizedBox(height: 12),
@@ -586,7 +587,7 @@ class _RequestDetailScreenState extends State<RequestDetailScreen> {
             OutlinedButton.icon(
               onPressed: () => Navigator.pushNamed(context, AppRoutes.chat, arguments: request),
               icon: const Icon(Icons.chat_bubble_outline),
-              label: Text('Chatear con $techName'),
+              label: Text(tr('chat_with').replaceAll('{name}', techName)),
               style: OutlinedButton.styleFrom(minimumSize: const Size(double.infinity, 56)),
             ),
           ] else if (request.status == ServiceRequestStatus.assigned || request.status == ServiceRequestStatus.inProgress) ...[
@@ -595,14 +596,14 @@ class _RequestDetailScreenState extends State<RequestDetailScreen> {
             ElevatedButton.icon(
               onPressed: () => Navigator.pushNamed(context, AppRoutes.chat, arguments: request),
               icon: const Icon(Icons.chat_bubble_outline),
-              label: Text('Chatear con $techName'),
+              label: Text(tr('chat_with').replaceAll('{name}', techName)),
               style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF1976D2), minimumSize: const Size(double.infinity, 56)),
             ),
             if (request.status == ServiceRequestStatus.assigned) ...[
               const SizedBox(height: 12),
               TextButton(
                 onPressed: () => _showCancelAssignmentDialog(request),
-                child: const Text('Cancelar asignación y volver a abrir', style: TextStyle(color: Colors.orange)),
+                child: Text(tr('cancel_assignment_reopen'), style: const TextStyle(color: Colors.orange)),
               ),
             ],
           ] else
@@ -613,13 +614,13 @@ class _RequestDetailScreenState extends State<RequestDetailScreen> {
                 disabledBackgroundColor: Colors.grey[300],
                 minimumSize: const Size(double.infinity, 56)
               ),
-              child: Text(request.responsesCount > 0 ? 'Ver técnicos que respondieron (${request.responsesCount})' : 'Esperando técnicos...'),
+              child: Text(request.responsesCount > 0 ? tr('view_responders').replaceAll('{n}', '${request.responsesCount}') : tr('awaiting_techs')),
             ),
           const SizedBox(height: 16),
           if (request.status == ServiceRequestStatus.open)
             TextButton(
               onPressed: () => _showCancelOrderDialog(request),
-              child: const Text('Cancelar pedido', style: TextStyle(color: Colors.red)),
+              child: Text(tr('cancel_order'), style: const TextStyle(color: Colors.red)),
             ),
         ],
       );
@@ -659,11 +660,11 @@ class _RequestDetailScreenState extends State<RequestDetailScreen> {
               ),
               const SizedBox(height: 4),
               Text(
-                isFinalRejected 
-                  ? 'El cliente rechazó definitivamente tu propuesta.' 
-                  : (isFirstRejected 
-                      ? 'Esta propuesta fue rechazada. Tienes una oportunidad de contraoferta.' 
-                      : (isAccepted ? '¡Felicidades! Fuiste seleccionado.' : (isCounterOffer ? 'Contraoferta enviada. Esperando respuesta...' : 'Esperando respuesta del cliente...'))), 
+                isFinalRejected
+                  ? tr('client_rejected')
+                  : (isFirstRejected
+                      ? tr('first_rejected')
+                      : (isAccepted ? tr('you_were_selected') : (isCounterOffer ? tr('counter_sent') : tr('awaiting_client_response')))),
                 textAlign: TextAlign.center,
                 style: const TextStyle(fontSize: 12, color: Colors.grey)
               ),
@@ -682,7 +683,7 @@ class _RequestDetailScreenState extends State<RequestDetailScreen> {
                       },
                     ),
                     icon: const Icon(Icons.chat_bubble_outline, size: 16, color: Color(0xFFFF8A00)),
-                    label: const Text('Chat de cotización', style: TextStyle(color: Color(0xFFFF8A00), fontSize: 13)),
+                    label: Text(tr('quote_chat_title'), style: const TextStyle(color: Color(0xFFFF8A00), fontSize: 13)),
                     style: OutlinedButton.styleFrom(
                       side: const BorderSide(color: Color(0xFFFF8A00)),
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
@@ -695,7 +696,7 @@ class _RequestDetailScreenState extends State<RequestDetailScreen> {
                 ElevatedButton.icon(
                   onPressed: () => _showSendQuoteDialog(request, isCounterOffer: true),
                   icon: const Icon(Icons.refresh, color: Colors.white, size: 18),
-                  label: const Text('Enviar Contraoferta', style: TextStyle(color: Colors.white)),
+                  label: Text(tr('send_counter'), style: const TextStyle(color: Colors.white)),
                   style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFFF8A00)),
                 ),
               ],
@@ -704,7 +705,7 @@ class _RequestDetailScreenState extends State<RequestDetailScreen> {
                 OutlinedButton.icon(
                   onPressed: () => _confirmHideRequest(request),
                   icon: const Icon(Icons.delete_outline, color: Colors.red, size: 18),
-                  label: const Text('Ocultar este problema', style: TextStyle(color: Colors.red)),
+                  label: Text(tr('hide_this_problem'), style: const TextStyle(color: Colors.red)),
                   style: OutlinedButton.styleFrom(side: const BorderSide(color: Colors.red)),
                 ),
               ],
@@ -716,7 +717,7 @@ class _RequestDetailScreenState extends State<RequestDetailScreen> {
       return ElevatedButton(
         onPressed: () => _showSendQuoteDialog(request),
         style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFFF8A00)),
-        child: const Text('Enviar Propuesta'),
+        child: Text(tr('send_proposal')),
       );
     }
     
@@ -747,7 +748,7 @@ class _RequestDetailScreenState extends State<RequestDetailScreen> {
                     child: TextField(
                       controller: minPriceController, 
                       keyboardType: TextInputType.number, 
-                      decoration: const InputDecoration(labelText: 'Precio Mín (\$)', hintText: 'Ej: 100')
+                      decoration: InputDecoration(labelText: tr('price_min'), hintText: tr('price_hint_min'))
                     ),
                   ),
                   const SizedBox(width: 16),
@@ -755,19 +756,19 @@ class _RequestDetailScreenState extends State<RequestDetailScreen> {
                     child: TextField(
                       controller: maxPriceController, 
                       keyboardType: TextInputType.number, 
-                      decoration: const InputDecoration(labelText: 'Precio Máx (\$)', hintText: 'Ej: 200')
+                      decoration: InputDecoration(labelText: tr('price_max'), hintText: tr('price_hint_max'))
                     ),
                   ),
                 ],
               ),
               const SizedBox(height: 16),
-              TextField(controller: quoteController, maxLines: 3, decoration: const InputDecoration(labelText: 'Mensaje para el cliente', hintText: 'Hola, puedo ayudarte con tu problema...')),
+              TextField(controller: quoteController, maxLines: 3, decoration: InputDecoration(labelText: tr('message_to_client'), hintText: tr('message_hint'))),
               const SizedBox(height: 24),
               ElevatedButton(
                 onPressed: _isLoading ? null : () async {
                   if (minPriceController.text.isEmpty) {
                     ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Por favor, ingresa al menos el precio mínimo.')),
+                      SnackBar(content: Text(tr('enter_min_price'))),
                     );
                     return;
                   }
@@ -777,8 +778,8 @@ class _RequestDetailScreenState extends State<RequestDetailScreen> {
                   
                   if (maxInput != null && maxInput < min) {
                     ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('El precio máximo no puede ser menor al precio mínimo.'),
+                      SnackBar(
+                        content: Text(tr('max_less_min')),
                         backgroundColor: Colors.red,
                       ),
                     );
@@ -802,7 +803,7 @@ class _RequestDetailScreenState extends State<RequestDetailScreen> {
                         requestId: request.id,
                         clientId: request.clientId,
                         technicianId: _currentUserId,
-                        technicianName: _currentUser?.displayName ?? 'Técnico',
+                        technicianName: _currentUser?.displayName ?? tr('technician'),
                         technicianPhotoUrl: _currentUser?.profileImageUrl,
                         technicianRating: _currentUser?.rating ?? 5.0,
                         price: min,
@@ -825,12 +826,12 @@ class _RequestDetailScreenState extends State<RequestDetailScreen> {
                     if (context.mounted) {
                       Navigator.pop(context); // Close bottom sheet
                       ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('¡Propuesta enviada con éxito!'), backgroundColor: Colors.green),
+                        SnackBar(content: Text(tr('proposal_sent')), backgroundColor: Colors.green),
                       );
                     }
                   } catch (e) {
                     print('Error sending quote: $e');
-                    String errorMsg = 'Error al enviar la propuesta. Inténtalo de nuevo.';
+                    String errorMsg = tr('proposal_send_error');
                     
                     if (e is DioException) {
                       final dynamic serverData = e.response?.data;
@@ -889,21 +890,21 @@ class _RequestDetailScreenState extends State<RequestDetailScreen> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Ocultar problema'),
-        content: const Text('¿Seguro que deseas ocultar este problema? No volverás a verlo en ninguna parte de la aplicación.'),
+        title: Text(tr('hide_problem')),
+        content: Text(tr('hide_problem_confirm')),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancelar')),
+          TextButton(onPressed: () => Navigator.pop(context), child: Text(tr('cancel'))),
           ElevatedButton(
             onPressed: () async {
               await _firestoreService.hideServiceRequest(_currentUserId, request.id);
               if (mounted) {
                 Navigator.pop(context); // Close dialog
                 Navigator.pop(context); // Go back from detail
-                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Problema ocultado.')));
+                ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(tr('problem_hidden'))));
               }
             },
             style: ElevatedButton.styleFrom(backgroundColor: Colors.grey),
-            child: const Text('Ocultar definitivamente', style: TextStyle(color: Colors.white)),
+            child: Text(tr('hide_permanently'), style: const TextStyle(color: Colors.white)),
           ),
         ],
       ),
@@ -920,11 +921,11 @@ class _RequestDetailScreenState extends State<RequestDetailScreen> {
         builder: (context, setDialogState) {
           return AlertDialog(
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-            title: const Text('Calificar Servicio', style: TextStyle(fontWeight: FontWeight.bold)),
+            title: Text(tr('rate_service'), style: const TextStyle(fontWeight: FontWeight.bold)),
             content: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Text('¿Cómo calificarías el trabajo del técnico?'),
+                Text(tr('rate_tech_question')),
                 const SizedBox(height: 20),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
@@ -943,15 +944,15 @@ class _RequestDetailScreenState extends State<RequestDetailScreen> {
                 TextField(
                   controller: commentController,
                   maxLines: 2,
-                  decoration: const InputDecoration(
-                    hintText: 'Escribe un comentario (opcional)',
-                    border: OutlineInputBorder(),
+                  decoration: InputDecoration(
+                    hintText: tr('write_comment_optional'),
+                    border: const OutlineInputBorder(),
                   ),
                 ),
               ],
             ),
             actions: [
-              TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancelar')),
+              TextButton(onPressed: () => Navigator.pop(context), child: Text(tr('cancel'))),
               ElevatedButton(
                 onPressed: tempRating == 0
                     ? null
@@ -964,7 +965,7 @@ class _RequestDetailScreenState extends State<RequestDetailScreen> {
                         );
                         if (context.mounted) Navigator.pop(context);
                       },
-                child: const Text('Enviar'),
+                child: Text(tr('send')),
               ),
             ],
           );
@@ -977,10 +978,10 @@ class _RequestDetailScreenState extends State<RequestDetailScreen> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Cancelar Asignación'),
-        content: const Text('¿Estás seguro de que deseas cancelar la asignación de este técnico? El pedido volverá a estar abierto para recibir nuevas propuestas.'),
+        title: Text(tr('cancel_assignment')),
+        content: Text(tr('cancel_assignment_confirm')),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text('No, mantener')),
+          TextButton(onPressed: () => Navigator.pop(context), child: Text(tr('no_keep'))),
           ElevatedButton(
             onPressed: () async {
               Navigator.pop(context);
@@ -989,13 +990,13 @@ class _RequestDetailScreenState extends State<RequestDetailScreen> {
                 await _firestoreService.cancelAssignment(request.id);
                 if (mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Asignación cancelada. El pedido vuelve a estar abierto.'))
+                    SnackBar(content: Text(tr('assignment_cancelled')))
                   );
                 }
               } catch (e) {
                 if (mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red)
+                    SnackBar(content: Text('${tr('error_label')}: $e'), backgroundColor: Colors.red)
                   );
                 }
               } finally {
@@ -1003,7 +1004,7 @@ class _RequestDetailScreenState extends State<RequestDetailScreen> {
               }
             },
             style: ElevatedButton.styleFrom(backgroundColor: Colors.orange),
-            child: const Text('Sí, cancelar'),
+            child: Text(tr('yes_cancel')),
           ),
         ],
       ),
@@ -1025,7 +1026,7 @@ class _RequestDetailScreenState extends State<RequestDetailScreen> {
           }
 
           return AlertDialog(
-            title: const Text('Finalizar Trabajo'),
+            title: Text(tr('finish_job')),
             content: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -1083,7 +1084,7 @@ class _RequestDetailScreenState extends State<RequestDetailScreen> {
               ],
             ),
             actions: [
-              TextButton(onPressed: () => Navigator.pop(dialogContext), child: const Text('Cancelar')),
+              TextButton(onPressed: () => Navigator.pop(dialogContext), child: Text(tr('cancel'))),
               ElevatedButton(
                 onPressed: photos.isEmpty
                     ? null
@@ -1100,13 +1101,13 @@ class _RequestDetailScreenState extends State<RequestDetailScreen> {
 
                           if (mounted) {
                             ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text('Trabajo marcado como finalizado con fotos. Esperando confirmación del cliente.')),
+                              SnackBar(content: Text(tr('work_finished_photos'))),
                             );
                           }
                         } catch (e) {
                           if (mounted) {
                             ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(content: Text('Error al finalizar: $e'), backgroundColor: Colors.red),
+                              SnackBar(content: Text(tr('error_finishing').replaceAll('{e}', '$e')), backgroundColor: Colors.red),
                             );
                           }
                         } finally {
@@ -1127,10 +1128,10 @@ class _RequestDetailScreenState extends State<RequestDetailScreen> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('¿Confirmar trabajo terminado?'),
-        content: const Text('Al confirmar, se cerrará el pedido y podrás calificar al técnico.'),
+        title: Text(tr('confirm_work_done_q')),
+        content: Text(tr('confirm_work_done_desc')),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancelar')),
+          TextButton(onPressed: () => Navigator.pop(context), child: Text(tr('cancel'))),
           ElevatedButton(
             onPressed: () async {
               Navigator.pop(context);
@@ -1139,13 +1140,13 @@ class _RequestDetailScreenState extends State<RequestDetailScreen> {
                 await _firestoreService.updateRequestStatus(request.id, ServiceRequestStatus.completed);
                 if (mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('¡Trabajo finalizado con éxito!'))
+                    SnackBar(content: Text(tr('work_finished_success')))
                   );
                 }
               } catch (e) {
                 if (mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red)
+                    SnackBar(content: Text('${tr('error_label')}: $e'), backgroundColor: Colors.red)
                   );
                 }
               } finally {
@@ -1153,7 +1154,7 @@ class _RequestDetailScreenState extends State<RequestDetailScreen> {
               }
             },
             style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
-            child: const Text('Confirmar', style: TextStyle(color: Colors.white)),
+            child: Text(tr('confirm'), style: const TextStyle(color: Colors.white)),
           ),
         ],
       ),
@@ -1164,10 +1165,10 @@ class _RequestDetailScreenState extends State<RequestDetailScreen> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('¿Cancelar este pedido?'),
-        content: const Text('Se eliminarán todas las propuestas recibidas y los técnicos serán notificados de la cancelación.'),
+        title: Text(tr('cancel_order_q')),
+        content: Text(tr('cancel_order_desc')),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text('No, volver')),
+          TextButton(onPressed: () => Navigator.pop(context), child: Text(tr('no_go_back'))),
           ElevatedButton(
             onPressed: () async {
               Navigator.pop(context); // Close dialog
@@ -1178,20 +1179,20 @@ class _RequestDetailScreenState extends State<RequestDetailScreen> {
                   setState(() => _isLoading = false);
                   Navigator.pop(context, true); // Go back with success
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Pedido cancelado correctamente'))
+                    SnackBar(content: Text(tr('order_cancelled_success')))
                   );
                 }
               } catch (e) {
                 if (mounted) {
                   setState(() => _isLoading = false);
                   ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('Error al cancelar: $e'), backgroundColor: Colors.red)
+                    SnackBar(content: Text(tr('error_cancelling').replaceAll('{e}', '$e')), backgroundColor: Colors.red)
                   );
                 }
               }
             },
             style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-            child: const Text('Sí, cancelar pedido', style: TextStyle(color: Colors.white)),
+            child: Text(tr('yes_cancel_order'), style: const TextStyle(color: Colors.white)),
           ),
         ],
       ),
@@ -1212,9 +1213,9 @@ class _RequestDetailScreenState extends State<RequestDetailScreen> {
       future: _firestoreService.getUser(request.technicianId!),
       builder: (context, snapshot) {
         final tech = snapshot.data;
-        final String name = tech?.displayName ?? request.technicianName ?? 'Técnico';
+        final String name = tech?.displayName ?? request.technicianName ?? tr('technician');
         final String? photo = tech?.profileImageUrl ?? request.technicianPhotoUrl;
-        final String specialty = tech?.specialties.isNotEmpty == true ? tech!.specialties.first : request.category;
+        final String specialty = ServiceConstants.getDisplayName(tech?.specialties.isNotEmpty == true ? tech!.specialties.first : request.category);
         final double rating = tech?.rating ?? 5.0;
 
         return Container(
@@ -1230,11 +1231,11 @@ class _RequestDetailScreenState extends State<RequestDetailScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Row(
+              Row(
                 children: [
-                  Icon(Icons.engineering_outlined, size: 16, color: Color(0xFFFF8A00)),
-                  SizedBox(width: 8),
-                  Text('Técnico asignado', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Color(0xFFFF8A00))),
+                  const Icon(Icons.engineering_outlined, size: 16, color: Color(0xFFFF8A00)),
+                  const SizedBox(width: 8),
+                  Text(tr('tech_assigned_label'), style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Color(0xFFFF8A00))),
                 ],
               ),
               const SizedBox(height: 16),

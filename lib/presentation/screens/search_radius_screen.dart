@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../../core/services/language_service.dart';
 
 class SearchRadiusScreen extends StatefulWidget {
   const SearchRadiusScreen({super.key});
@@ -40,9 +41,9 @@ class _SearchRadiusScreenState extends State<SearchRadiusScreen> {
           icon: const Icon(Icons.arrow_back, color: Colors.white),
           onPressed: () => Navigator.pop(context, _radius),
         ),
-        title: const Text(
-          'Radio de Búsqueda',
-          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+        title: Text(
+          tr('search_radius_title'),
+          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
         ),
         backgroundColor: const Color(0xFF121212),
         elevation: 0,
@@ -55,13 +56,13 @@ class _SearchRadiusScreenState extends State<SearchRadiusScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
-                    'Define el radio por defecto',
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  Text(
+                    tr('define_default_radius'),
+                    style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    'Este será el rango de distancia inicial que usará el mapa para mostrarte tesoros cercanos.',
+                    tr('search_radius_desc'),
                     style: TextStyle(color: Colors.grey[600], fontSize: 14),
                   ),
                   const SizedBox(height: 60),
@@ -78,7 +79,7 @@ class _SearchRadiusScreenState extends State<SearchRadiusScreen> {
                         ),
                         const SizedBox(height: 24),
                         Text(
-                          '${_radius.toInt()} millas',
+                          tr('x_miles').replaceAll('{n}', '${_radius.toInt()}'),
                           style: const TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: Color(0xFFFF8A00)),
                         ),
                       ],
@@ -112,7 +113,7 @@ class _SearchRadiusScreenState extends State<SearchRadiusScreen> {
                       minimumSize: const Size(double.infinity, 56),
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                     ),
-                    child: const Text('Guardar configuración', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                    child: Text(tr('save_config'), style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
                   ),
                   const SizedBox(height: 20),
                 ],

@@ -52,16 +52,16 @@ class _RewardsScreenState extends State<RewardsScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      _buildSectionHeader('Canjear Recompensas'),
+                      _buildSectionHeader(tr('redeem_rewards')),
                       _buildRewardsCatalog(user),
                       const SizedBox(height: 32),
-                      _buildSectionHeader('Cómo Ganar XP'),
+                      _buildSectionHeader(tr('how_to_earn_xp')),
                       _buildXPActionList(),
                       const SizedBox(height: 32),
-                      _buildSectionHeader('Historial de XP'),
+                      _buildSectionHeader(tr('xp_history')),
                       _buildXPHistory(),
                       const SizedBox(height: 32),
-                      _buildSectionHeader('Sistema de Niveles'),
+                      _buildSectionHeader(tr('level_system')),
                       _buildLevelSystem(),
                       const SizedBox(height: 40),
                     ],
@@ -92,10 +92,10 @@ class _RewardsScreenState extends State<RewardsScreen> {
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text('TU PROGRESO', style: TextStyle(color: Color(0xFFFF8A00), fontWeight: FontWeight.bold, fontSize: 12, letterSpacing: 1.2)),
+                  Text(tr('your_progress'), style: const TextStyle(color: Color(0xFFFF8A00), fontWeight: FontWeight.bold, fontSize: 12, letterSpacing: 1.2)),
                   const SizedBox(height: 8),
                   Text(
-                    'Nivel ${user.level}: ${user.levelTitle}',
+                    tr('level_colon_title').replaceAll('{n}', '${user.level}').replaceAll('{title}', user.levelTitle),
                     style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold),
                   ),
                 ],
@@ -128,7 +128,7 @@ class _RewardsScreenState extends State<RewardsScreen> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text('${user.totalXp - user.currentLevelBaseXp} / ${user.nextLevelXp - user.currentLevelBaseXp} XP', style: TextStyle(color: Colors.white.withOpacity(0.6), fontSize: 12)),
-              Text('Total: ${user.totalXp} XP', style: TextStyle(color: Colors.white.withOpacity(0.6), fontSize: 12, fontWeight: FontWeight.bold)),
+              Text(tr('total_xp').replaceAll('{xp}', '${user.totalXp}'), style: TextStyle(color: Colors.white.withOpacity(0.6), fontSize: 12, fontWeight: FontWeight.bold)),
             ],
           ),
         ],
@@ -211,12 +211,12 @@ class _RewardsScreenState extends State<RewardsScreen> {
 
   Widget _buildXPActionList() {
     final actions = [
-      {'title': 'Publicar un Objeto', 'xp': '+50 XP', 'icon': Icons.add_a_photo},
-      {'title': 'Marcar como Recogido', 'xp': '+100 XP', 'icon': Icons.check_circle},
-      {'title': 'Referido Exitoso', 'xp': '+100 XP', 'icon': Icons.group_add},
-      {'title': 'Primera Acción de Referido', 'xp': '+150 XP', 'icon': Icons.bolt},
-      {'title': 'Racha de 7 Días', 'xp': '+200 XP', 'icon': Icons.calendar_today},
-      {'title': 'Reporte Válido', 'xp': '+25 XP', 'icon': Icons.flag},
+      {'title': tr('task_publish'), 'xp': '+50 XP', 'icon': Icons.add_a_photo},
+      {'title': tr('task_mark_collected'), 'xp': '+100 XP', 'icon': Icons.check_circle},
+      {'title': tr('task_successful_referral'), 'xp': '+100 XP', 'icon': Icons.group_add},
+      {'title': tr('task_first_referral_action'), 'xp': '+150 XP', 'icon': Icons.bolt},
+      {'title': tr('task_7_day_streak'), 'xp': '+200 XP', 'icon': Icons.calendar_today},
+      {'title': tr('task_valid_report'), 'xp': '+25 XP', 'icon': Icons.flag},
     ];
 
     return Column(
@@ -248,7 +248,7 @@ class _RewardsScreenState extends State<RewardsScreen> {
         }
 
         if (!snapshot.hasData || snapshot.data!.isEmpty) {
-          return const Center(child: Text('Aún no tienes historial de XP.', style: TextStyle(color: Colors.grey)));
+          return Center(child: Text(tr('no_xp_history'), style: const TextStyle(color: Colors.grey)));
         }
 
         return ListView.builder(
@@ -289,11 +289,11 @@ class _RewardsScreenState extends State<RewardsScreen> {
 
   Widget _buildLevelSystem() {
     final levels = [
-      {'level': '1', 'title': 'Buscador Novato', 'xp': '0 XP', 'icon': Icons.star_border},
-      {'level': '2', 'title': 'Explorador', 'xp': '1,000 XP', 'icon': Icons.explore_outlined},
-      {'level': '3', 'title': 'Cazador de Curb', 'xp': '2,500 XP', 'icon': Icons.radar},
-      {'level': '4', 'title': 'Héroe de la Comunidad', 'xp': '5,000 XP', 'icon': Icons.favorite_border},
-      {'level': '5', 'title': 'Reciclador Élite', 'xp': '10,000 XP', 'icon': Icons.auto_awesome},
+      {'level': '1', 'title': tr('tier_1'), 'xp': '0 XP', 'icon': Icons.star_border},
+      {'level': '2', 'title': tr('tier_2'), 'xp': '1,000 XP', 'icon': Icons.explore_outlined},
+      {'level': '3', 'title': tr('tier_3'), 'xp': '2,500 XP', 'icon': Icons.radar},
+      {'level': '4', 'title': tr('tier_4'), 'xp': '5,000 XP', 'icon': Icons.favorite_border},
+      {'level': '5', 'title': tr('tier_5'), 'xp': '10,000 XP', 'icon': Icons.auto_awesome},
     ];
 
     return Container(
@@ -336,17 +336,17 @@ class _RewardsScreenState extends State<RewardsScreen> {
       context: context,
       builder: (context) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: Text('Canjear ${reward.title}'),
-        content: Text('¿Deseas canjear esta recompensa por ${reward.xpRequired} XP?'),
+        title: Text(tr('redeem_reward_title').replaceAll('{title}', reward.title)),
+        content: Text(tr('redeem_confirm').replaceAll('{xp}', '${reward.xpRequired}')),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancelar')),
+          TextButton(onPressed: () => Navigator.pop(context), child: Text(tr('cancel'))),
           ElevatedButton(
             onPressed: () {
               Navigator.pop(context);
               _processRedemption(reward);
             },
             style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFFF8A00), foregroundColor: Colors.white),
-            child: const Text('Confirmar'),
+            child: Text(tr('confirm')),
           ),
         ],
       ),
@@ -367,14 +367,14 @@ class _RewardsScreenState extends State<RewardsScreen> {
       if (success) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('¡Recompensa "${reward.title}" canjeada con éxito!'),
+            content: Text(tr('reward_redeemed').replaceAll('{title}', reward.title)),
             backgroundColor: Colors.green,
           ),
         );
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('No tienes suficientes XP o hubo un error.'),
+          SnackBar(
+            content: Text(tr('not_enough_xp')),
             backgroundColor: Colors.red,
           ),
         );

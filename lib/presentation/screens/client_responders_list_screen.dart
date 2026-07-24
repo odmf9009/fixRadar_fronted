@@ -30,13 +30,13 @@ class _ClientRespondersListScreenState extends State<ClientRespondersListScreen>
       appBar: AppBar(
         title: Column(
           children: [
-            const Text('Técnicos que respondieron',
-                style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold, fontSize: 18)),
+            Text(tr('techs_responded'),
+                style: const TextStyle(color: Colors.black, fontWeight: FontWeight.bold, fontSize: 18)),
             StreamBuilder<List<Quote>>(
               stream: _quotesStream,
               builder: (context, snapshot) {
                 final count = snapshot.data?.length ?? 0;
-                return Text('$count técnicos disponibles', style: const TextStyle(color: Colors.grey, fontSize: 13));
+                return Text(tr('techs_available').replaceAll('{count}', '$count'), style: const TextStyle(color: Colors.grey, fontSize: 13));
               },
             ),
           ],
@@ -69,15 +69,15 @@ class _ClientRespondersListScreenState extends State<ClientRespondersListScreen>
                     children: [
                       Icon(Icons.person_search_outlined, size: 64, color: Colors.grey[300]),
                       const SizedBox(height: 16),
-                      const Text('Aún no tienes propuestas',
-                          style: TextStyle(color: Colors.grey, fontSize: 16, fontWeight: FontWeight.bold)),
+                      Text(tr('no_proposals_yet'),
+                          style: const TextStyle(color: Colors.grey, fontSize: 16, fontWeight: FontWeight.bold)),
                       const SizedBox(height: 8),
-                      const Padding(
-                        padding: EdgeInsets.symmetric(horizontal: 40),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 40),
                         child: Text(
-                          'Cuando un técnico responda a tu pedido, aparecerá aquí con su presupuesto.',
+                          tr('proposals_appear_here'),
                           textAlign: TextAlign.center,
-                          style: TextStyle(color: Colors.grey, fontSize: 14),
+                          style: const TextStyle(color: Colors.grey, fontSize: 14),
                         ),
                       ),
                       const SizedBox(height: 24),
@@ -86,7 +86,7 @@ class _ClientRespondersListScreenState extends State<ClientRespondersListScreen>
                           _quotesStream = _firestoreService.getQuotesForClient(_currentUserId);
                         }),
                         icon: const Icon(Icons.refresh, color: Color(0xFFFF8A00)),
-                        label: const Text('Actualizar', style: TextStyle(color: Color(0xFFFF8A00))),
+                        label: Text(tr('refresh'), style: const TextStyle(color: Color(0xFFFF8A00))),
                       )
                     ],
                   ),
@@ -150,13 +150,13 @@ class _ClientRespondersListScreenState extends State<ClientRespondersListScreen>
                     Text(' ${quote.technicianRating.toStringAsFixed(1)}',
                         style:
                             const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Color(0xFFFF8A00))),
-                    const Text(' (200)', style: TextStyle(fontSize: 12, color: Colors.grey)),
+                    Text(' ${tr('reviews_count_demo')}', style: const TextStyle(fontSize: 12, color: Colors.grey)),
                   ],
                 ),
                 const SizedBox(height: 4),
-                const Text('A 0.4 millas', style: TextStyle(color: Colors.grey, fontSize: 13)),
+                Text(tr('at_distance_demo'), style: const TextStyle(color: Colors.grey, fontSize: 13)),
                 const SizedBox(height: 2),
-                const Text('Plomería • 6 años exp.', style: TextStyle(color: Colors.grey, fontSize: 13)),
+                Text(tr('plumbing_demo'), style: const TextStyle(color: Colors.grey, fontSize: 13)),
                 const SizedBox(height: 12),
                 Row(
                   children: [
@@ -172,8 +172,8 @@ class _ClientRespondersListScreenState extends State<ClientRespondersListScreen>
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                             padding: const EdgeInsets.symmetric(horizontal: 16),
                           ),
-                          child: const Text('Ver perfil',
-                              style: TextStyle(color: Color(0xFF4CAF50), fontWeight: FontWeight.bold, fontSize: 12)),
+                          child: Text(tr('view_profile'),
+                              style: const TextStyle(color: Color(0xFF4CAF50), fontWeight: FontWeight.bold, fontSize: 12)),
                         ),
                       ),
                     ),
@@ -188,8 +188,8 @@ class _ClientRespondersListScreenState extends State<ClientRespondersListScreen>
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                             padding: const EdgeInsets.symmetric(horizontal: 16),
                           ),
-                          child: const Text('Rechazar',
-                              style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold, fontSize: 12)),
+                          child: Text(tr('reject'),
+                              style: const TextStyle(color: Colors.red, fontWeight: FontWeight.bold, fontSize: 12)),
                         ),
                       ),
                     ),
@@ -213,8 +213,8 @@ class _ClientRespondersListScreenState extends State<ClientRespondersListScreen>
                             } else {
                               // El pedido ya no existe (fue eliminado): avisar en vez de no hacer nada.
                               ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text('Este pedido ya no está disponible.'),
+                                SnackBar(
+                                  content: Text(tr('order_unavailable')),
                                 ),
                               );
                             }
@@ -224,8 +224,8 @@ class _ClientRespondersListScreenState extends State<ClientRespondersListScreen>
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                             elevation: 0,
                           ),
-                          child: const Text('Ver pedido',
-                              style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12)),
+                          child: Text(tr('view_order'),
+                              style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12)),
                         ),
                       ),
                     ),
@@ -244,11 +244,11 @@ class _ClientRespondersListScreenState extends State<ClientRespondersListScreen>
       context: context,
       builder: (context) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: const Text('Rechazar Propuesta', style: TextStyle(fontWeight: FontWeight.bold)),
+        title: Text(tr('reject_proposal'), style: const TextStyle(fontWeight: FontWeight.bold)),
         content: Text(
-            '¿Estás seguro de que deseas rechazar la propuesta de ${quote.technicianName}? Esta acción no se puede deshacer.'),
+            tr('reject_proposal_confirm').replaceAll('{name}', quote.technicianName)),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancelar', style: TextStyle(color: Colors.grey))),
+          TextButton(onPressed: () => Navigator.pop(context), child: Text(tr('cancel'), style: const TextStyle(color: Colors.grey))),
           ElevatedButton(
             onPressed: () async {
               try {
@@ -256,7 +256,7 @@ class _ClientRespondersListScreenState extends State<ClientRespondersListScreen>
                 if (mounted) {
                   Navigator.pop(context); // Close dialog
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Propuesta rechazada'), backgroundColor: Colors.orange),
+                    SnackBar(content: Text(tr('proposal_rejected')), backgroundColor: Colors.orange),
                   );
                   // Force a manual refresh in case socket is slow
                   setState(() {
@@ -266,13 +266,13 @@ class _ClientRespondersListScreenState extends State<ClientRespondersListScreen>
               } catch (e) {
                 if (mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
+                    SnackBar(content: Text('${tr('error_label')}: $e'), backgroundColor: Colors.red),
                   );
                 }
               }
             },
             style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-            child: const Text('Rechazar', style: TextStyle(color: Colors.white)),
+            child: Text(tr('reject'), style: const TextStyle(color: Colors.white)),
           ),
         ],
       ),

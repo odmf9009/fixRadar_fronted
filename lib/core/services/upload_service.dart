@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter_image_compress/flutter_image_compress.dart';
 import 'package:uuid/uuid.dart';
+import 'language_service.dart';
 
 class UploadService {
   final FirebaseStorage _storage = FirebaseStorage.instance;
@@ -86,7 +87,7 @@ class UploadService {
         minHeight: 1024,
       );
       if (fullCompressed == null) {
-        throw Exception('No se pudo procesar la imagen (compresión falló).');
+        throw Exception(tr('image_process_failed'));
       }
       final fullRef = _storage.ref('$folder/$fileName.jpg');
       await fullRef.putData(fullCompressed);
@@ -100,7 +101,7 @@ class UploadService {
         minHeight: 256,
       );
       if (thumbCompressed == null) {
-        throw Exception('No se pudo procesar la miniatura (compresión falló).');
+        throw Exception(tr('thumbnail_process_failed'));
       }
       final thumbRef = _storage.ref('$folder/${fileName}_thumb.jpg');
       await thumbRef.putData(thumbCompressed);

@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import '../../core/services/auth_service.dart';
+import '../../core/services/language_service.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../core/models/service_request.dart';
@@ -40,7 +41,7 @@ class _ChatScreenState extends State<ChatScreen> {
   late final Stream<List<ChatMessage>> _chatStream;
 
   bool get _isQuoteChat => widget.quoteId != null;
-  String get _chatTitle => _isQuoteChat ? (widget.quoteTitle ?? 'Chat de Cotización') : widget.request!.title;
+  String get _chatTitle => _isQuoteChat ? (widget.quoteTitle ?? tr('quote_chat_title')) : widget.request!.title;
   String get _chatSubtitle => _isQuoteChat
       ? (widget.quoteTechnicianName != null ? 'Con ${widget.quoteTechnicianName}' : 'Chat privado')
       : (widget.request!.technicianName != null ? 'Con ${widget.request!.technicianName}' : 'Chat de servicio');
@@ -106,7 +107,7 @@ class _ChatScreenState extends State<ChatScreen> {
           quoteId: widget.quoteId,
           senderId: _currentUserId,
           senderName: _currentUserName,
-          text: '📍 Mi ubicación actual',
+          text: tr('my_current_location'),
           latitude: pos.latitude,
           longitude: pos.longitude,
           type: MessageType.location,
@@ -236,7 +237,7 @@ class _ChatScreenState extends State<ChatScreen> {
           Expanded(
             child: Text(
               _isQuoteChat
-                  ? 'Chat de negociación. Acuerda los detalles antes de aceptar la propuesta.'
+                  ? tr('negotiation_chat_hint')
                   : 'Por tu seguridad, no compartas datos bancarios fuera de la plataforma.',
               style: TextStyle(
                 fontSize: 11,
@@ -278,11 +279,11 @@ class _ChatScreenState extends State<ChatScreen> {
                 children: [
                   Icon(Icons.location_on, color: isMe ? Colors.white : const Color(0xFFFF8A00), size: 20),
                   const SizedBox(width: 8),
-                  Text('Ubicación compartida', style: TextStyle(color: isMe ? Colors.white : Colors.black87, fontWeight: FontWeight.bold)),
+                  Text(tr('location_shared'), style: TextStyle(color: isMe ? Colors.white : Colors.black87, fontWeight: FontWeight.bold)),
                 ],
               ),
               const SizedBox(height: 8),
-              Text('Toca para ver en el mapa', style: TextStyle(color: isMe ? Colors.white70 : Colors.grey, fontSize: 12)),
+              Text(tr('tap_view_map'), style: TextStyle(color: isMe ? Colors.white70 : Colors.grey, fontSize: 12)),
             ],
           ),
         );
@@ -334,7 +335,7 @@ class _ChatScreenState extends State<ChatScreen> {
               child: TextField(
                 controller: _messageController,
                 decoration: InputDecoration(
-                  hintText: 'Escribe un mensaje...',
+                  hintText: tr('write_a_message'),
                   border: OutlineInputBorder(borderRadius: BorderRadius.circular(24), borderSide: BorderSide.none),
                   filled: true,
                   fillColor: Colors.grey[100],
@@ -366,14 +367,14 @@ class _ChatScreenState extends State<ChatScreen> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Text('Acciones Rápidas', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            Text(tr('quick_actions'), style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
             const SizedBox(height: 24),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
                 _buildActionItem(
                   Icons.location_on_outlined,
-                  'Ubicación',
+                  tr('ubicacion'),
                   Colors.green,
                   () {
                     Navigator.pop(context);
@@ -382,7 +383,7 @@ class _ChatScreenState extends State<ChatScreen> {
                 ),
                 _buildActionItem(
                   Icons.camera_alt_outlined,
-                  'Cámara',
+                  tr('camera'),
                   Colors.blue,
                   () {
                     Navigator.pop(context);

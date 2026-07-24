@@ -1,3 +1,5 @@
+import '../services/language_service.dart';
+
 enum QuoteStatus {
   pending,
   accepted,
@@ -67,7 +69,7 @@ class Quote {
       requestId: json['requestId'] ?? '',
       clientId: json['clientId'] ?? '',
       technicianId: json['technicianId'] ?? '',
-      technicianName: json['technicianName'] ?? 'Técnico',
+      technicianName: json['technicianName'] ?? tr('technician'),
       technicianPhotoUrl: json['technicianPhotoUrl'],
       technicianRating: (json['technicianRating'] as num?)?.toDouble() ?? 5.0,
       price: p,

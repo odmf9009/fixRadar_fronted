@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../core/services/language_service.dart';
 
 class PremiumScreen extends StatelessWidget {
   const PremiumScreen({super.key});
@@ -6,16 +7,16 @@ class PremiumScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Go Premium')),
+      appBar: AppBar(title: Text(tr('go_premium'))),
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             const Icon(Icons.workspace_premium, size: 80, color: Colors.orange),
             const SizedBox(height: 24),
-            const Text('Unlock Advanced Features', style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
+            Text(tr('unlock_advanced_features'), style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
             const SizedBox(height: 32),
-            ElevatedButton(onPressed: () {}, child: const Text('Subscribe Now')),
+            ElevatedButton(onPressed: () {}, child: Text(tr('subscribe_now'))),
           ],
         ),
       ),

@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import '../../core/config/routes.dart';
 import '../../core/services/auth_service.dart';
+import '../../core/services/language_service.dart';
 import '../../core/models/user_model.dart';
 import '../../core/utils/auth_error_mapper.dart';
 
@@ -48,7 +49,7 @@ class _LoginScreenState extends State<LoginScreen> {
   Future<void> _sendVerificationCode() async {
     final email = _emailController.text.trim();
     if (!email.contains('@')) {
-      _showError('Ingresa un email válido primero');
+      _showError(tr('enter_valid_email_first'));
       return;
     }
 
@@ -62,9 +63,9 @@ class _LoginScreenState extends State<LoginScreen> {
       _startResendTimer();
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Código enviado. Revisa tu correo.'),
-            backgroundColor: Color(0xFFFF8A00),
+          SnackBar(
+            content: Text(tr('code_sent_check_email')),
+            backgroundColor: const Color(0xFFFF8A00),
           ),
         );
       }
@@ -92,7 +93,7 @@ class _LoginScreenState extends State<LoginScreen> {
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
     if (!_isLogin && !_codeSent) {
-      _showError('Primero envía el código de verificación a tu correo');
+      _showError(tr('send_code_first'));
       return;
     }
 
@@ -200,7 +201,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 const SizedBox(height: 32),
                 Center(
                   child: Text(
-                    _isLogin ? 'Bienvenido de nuevo' : 'Crea tu cuenta',
+                    _isLogin ? tr('welcome_back') : tr('create_account_title'),
                     style: const TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
                   ),
                 ),
@@ -208,8 +209,8 @@ class _LoginScreenState extends State<LoginScreen> {
                 Center(
                   child: Text(
                     _isLogin
-                        ? 'Encuentra soluciones para tu hogar'
-                        : 'Únete a la comunidad de FixRadar',
+                        ? tr('login_subtitle')
+                        : tr('register_subtitle'),
                     style: const TextStyle(color: Colors.grey),
                   ),
                 ),
@@ -217,13 +218,13 @@ class _LoginScreenState extends State<LoginScreen> {
 
                 // ── Name (register only) ────────────────────────────────────
                 if (!_isLogin) ...[
-                  _label('Nombre completo'),
+                  _label(tr('full_name')),
                   const SizedBox(height: 8),
                   TextFormField(
                     controller: _nameController,
                     textCapitalization: TextCapitalization.words,
-                    decoration: _inputDecoration('Tu nombre', Icons.person_outline),
-                    validator: (v) => v!.trim().isEmpty ? 'Ingresa tu nombre' : null,
+                    decoration: _inputDecoration(tr('your_name'), Icons.person_outline),
+                    validator: (v) => v!.trim().isEmpty ? tr('enter_your_name') : null,
                   ),
                   const SizedBox(height: 20),
                 ],
@@ -234,13 +235,13 @@ class _LoginScreenState extends State<LoginScreen> {
                 TextFormField(
                   controller: _emailController,
                   keyboardType: TextInputType.emailAddress,
-                  decoration: _inputDecoration('tu@email.com', Icons.email_outlined),
-                  validator: (v) => !v!.contains('@') ? 'Email inválido' : null,
+                  decoration: _inputDecoration(tr('email_hint'), Icons.email_outlined),
+                  validator: (v) => !v!.contains('@') ? tr('invalid_email') : null,
                 ),
                 const SizedBox(height: 20),
 
                 // ── Password ────────────────────────────────────────────────
-                _label('Contraseña'),
+                _label(tr('password')),
                 const SizedBox(height: 8),
                 TextFormField(
                   controller: _passwordController,
@@ -257,13 +258,13 @@ class _LoginScreenState extends State<LoginScreen> {
                       onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
                     ),
                   ),
-                  validator: (v) => v!.length < 6 ? 'Mínimo 6 caracteres' : null,
+                  validator: (v) => v!.length < 6 ? tr('min_6_chars') : null,
                 ),
 
                 // ── Register-only fields ─────────────────────────────────────
                 if (!_isLogin) ...[
                   const SizedBox(height: 20),
-                  _label('Código de referido (Opcional)'),
+                  _label(tr('referral_code_optional')),
                   const SizedBox(height: 8),
                   TextFormField(
                     controller: _referralController,
@@ -291,7 +292,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             : const Icon(Icons.mark_email_unread_outlined,
                                 color: Color(0xFFFF8A00)),
                         label: Text(
-                          _isSendingCode ? 'Enviando...' : 'Enviar código al correo',
+                          _isSendingCode ? tr('sending') : tr('send_code_email'),
                           style: const TextStyle(color: Color(0xFFFF8A00), fontSize: 15),
                         ),
                         style: OutlinedButton.styleFrom(
@@ -308,14 +309,14 @@ class _LoginScreenState extends State<LoginScreen> {
                       children: [
                         const Icon(Icons.check_circle, color: Color(0xFFFF8A00), size: 18),
                         const SizedBox(width: 6),
-                        const Text(
-                          'Código enviado a tu correo',
-                          style: TextStyle(color: Color(0xFFFF8A00), fontWeight: FontWeight.w600),
+                        Text(
+                          tr('code_sent_to_email'),
+                          style: const TextStyle(color: Color(0xFFFF8A00), fontWeight: FontWeight.w600),
                         ),
                       ],
                     ),
                     const SizedBox(height: 12),
-                    _label('Código de verificación'),
+                    _label(tr('verification_code')),
                     const SizedBox(height: 8),
                     TextFormField(
                       controller: _codeController,
@@ -323,7 +324,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       maxLength: 6,
                       decoration: _inputDecoration('123456', Icons.security_outlined),
                       validator: (v) =>
-                          (v == null || v.trim().length < 4) ? 'Ingresa el código' : null,
+                          (v == null || v.trim().length < 4) ? tr('enter_the_code') : null,
                     ),
                     const SizedBox(height: 4),
                     Align(
@@ -332,8 +333,8 @@ class _LoginScreenState extends State<LoginScreen> {
                         onPressed: _resendCountdown > 0 ? null : _sendVerificationCode,
                         child: Text(
                           _resendCountdown > 0
-                              ? 'Reenviar en ${_resendCountdown}s'
-                              : 'Reenviar código',
+                              ? tr('resend_in').replaceAll('{s}', '${_resendCountdown}')
+                              : tr('resend_code'),
                           style: TextStyle(
                             color: _resendCountdown > 0 ? Colors.grey : const Color(0xFFFF8A00),
                             fontSize: 13,
@@ -361,7 +362,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   child: _isLoading
                       ? const CircularProgressIndicator(color: Colors.white, strokeWidth: 2.5)
                       : Text(
-                          _isLogin ? 'Iniciar sesión' : 'Crear cuenta',
+                          _isLogin ? tr('sign_in') : tr('create_account_btn'),
                           style: const TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.bold,
@@ -371,8 +372,8 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
 
                 const SizedBox(height: 24),
-                const Center(
-                  child: Text('O continuar con', style: TextStyle(color: Colors.grey)),
+                Center(
+                  child: Text(tr('or_continue_with'), style: const TextStyle(color: Colors.grey)),
                 ),
                 const SizedBox(height: 24),
 
@@ -412,8 +413,8 @@ class _LoginScreenState extends State<LoginScreen> {
                     onPressed: _toggleMode,
                     child: Text(
                       _isLogin
-                          ? '¿No tienes cuenta? Regístrate'
-                          : '¿Ya tienes cuenta? Inicia sesión',
+                          ? tr('no_account_register')
+                          : tr('have_account_signin'),
                       style: const TextStyle(
                         color: Color(0xFFFF8A00),
                         fontWeight: FontWeight.bold,

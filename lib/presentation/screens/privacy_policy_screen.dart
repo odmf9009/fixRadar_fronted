@@ -24,9 +24,9 @@ class PrivacyPolicyScreen extends StatelessWidget {
           icon: const Icon(Icons.arrow_back, color: Colors.white),
           onPressed: () => Navigator.pop(context),
         ),
-        title: const Text(
-          'Política de Privacidad',
-          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+        title: Text(
+          tr('politica_privacidad'),
+          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
         ),
         backgroundColor: const Color(0xFF121212),
         elevation: 0,
@@ -37,48 +37,33 @@ class PrivacyPolicyScreen extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
-              'POLÍTICA DE PRIVACIDAD DE FIX_RADAR',
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+            Text(
+              tr('privacy_title'),
+              style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 8),
             Text(
-              'Última actualización: ${DateTime.now().day}/${DateTime.now().month}/${DateTime.now().year}',
+              tr('last_updated').replaceAll('{date}', '${DateTime.now().day}/${DateTime.now().month}/${DateTime.now().year}'),
               style: const TextStyle(color: Colors.grey, fontSize: 14),
             ),
             const SizedBox(height: 20),
-            const Text(
-              'Bienvenido a Fix_Radar. Su privacidad es fundamental para la confianza de nuestra red de servicios técnicos. Esta Política de Privacidad explica cómo recopilamos, utilizamos y protegemos su información cuando utiliza nuestra aplicación para reportar averías o prestar servicios.\n\nAl utilizar Fix_Radar, usted acepta las prácticas descritas en esta Política de Privacidad.',
-              style: TextStyle(fontSize: 14, height: 1.5),
+            Text(
+              tr('privacy_intro'),
+              style: const TextStyle(fontSize: 14, height: 1.5),
             ),
             const SizedBox(height: 24),
-            
-            _buildSection('1. INFORMACIÓN QUE RECOPILAMOS', 
-              'Información proporcionada por el usuario\n• Nombre y apellidos\n• Dirección de correo electrónico\n• Foto de perfil y de trabajos realizados\n• Especialidades técnicas (para técnicos)\n• Descripción de averías y fotos del problema\n• Mensajes de chat entre cliente y técnico\n\nInformación de ubicación\nPara conectar averías con técnicos cercanos, recopilamos:\n• Ubicación actual del dispositivo (en primer y segundo plano si se activa el radar técnico)\n• Dirección aproximada del reporte de avería\n\nLa ubicación es crítica para que el sistema de alertas notifique a los técnicos adecuados según su proximidad.'),
 
-            _buildSection('2. CÓMO UTILIZAMOS LA INFORMACIÓN',
-              'Utilizamos la información para:\n• Conectar clientes con técnicos locales.\n• Notificar a los técnicos sobre nuevas averías en su área.\n• Permitir la comunicación directa para coordinar reparaciones.\n• Mostrar la reputación y valoraciones de los usuarios.\n• Mejorar la seguridad de la red técnica.'),
-
-            _buildSection('3. INFORMACIÓN COMPARTIDA CON OTROS USUARIOS',
-              'Para facilitar el servicio, compartimos:\n• Fotos y detalles de la avería.\n• Nombre de usuario y calificación.\n• Ubicación de la avería (visible para técnicos registrados).\n\nNo compartimos su número de teléfono ni dirección exacta hasta que usted decida hacerlo a través del chat privado para coordinar la visita.'),
-
-            _buildSection('4. ANALÍTICAS Y MEJORA DEL SERVICIO',
-              'Fix_Radar utiliza herramientas para:\n• Analizar qué tipos de averías son más comunes.\n• Optimizar el radio de búsqueda de técnicos.\n• Detectar errores técnicos en la aplicación.'),
-
-            _buildSection('5. SEGURIDAD DE LOS DATOS',
-              'Implementamos cifrado y medidas de seguridad de Firebase para proteger sus mensajes y datos personales.\nSin embargo, el usuario es responsable de la información sensible compartida voluntariamente a través del chat.'),
-
-            _buildSection('6. RETENCIÓN Y ELIMINACIÓN',
-              'Conservamos el historial de trabajos para fines de reputación y garantía.\nUsted puede solicitar la eliminación de su cuenta en cualquier momento desde los ajustes.'),
-
-            _buildSection('7. MENORES DE EDAD',
-              'Fix_Radar está dirigida exclusivamente a adultos con capacidad legal para contratar servicios técnicos o realizarlos.'),
-
-            _buildSection('8. DERECHOS DEL USUARIO',
-              'Usted tiene derecho a acceder, rectificar o eliminar sus datos personales enviando una solicitud a nuestro soporte técnico.'),
-
-            _buildSection('9. CONTACTO',
-              'Si tiene dudas sobre su privacidad:\nCorreo electrónico: support@fixradar.tech',
+            _buildSection(tr('privacy_s1_title'), tr('privacy_s1_body')),
+            _buildSection(tr('privacy_s2_title'), tr('privacy_s2_body')),
+            _buildSection(tr('privacy_s3_title'), tr('privacy_s3_body')),
+            _buildSection(tr('privacy_s4_title'), tr('privacy_s4_body')),
+            _buildSection(tr('privacy_s5_title'), tr('privacy_s5_body')),
+            _buildSection(tr('privacy_s6_title'), tr('privacy_s6_body')),
+            _buildSection(tr('privacy_s7_title'), tr('privacy_s7_body')),
+            _buildSection(tr('privacy_s8_title'), tr('privacy_s8_body')),
+            _buildSection(
+              tr('privacy_s9_title'),
+              tr('privacy_s9_body'),
               onTap: () => _launchEmail('support@fixradar.tech')),
 
             const SizedBox(height: 32),
@@ -92,25 +77,25 @@ class PrivacyPolicyScreen extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
-                    'RESUMEN DE PRIVACIDAD FIX_RADAR',
-                    style: TextStyle(fontWeight: FontWeight.bold, color: Colors.blue),
+                  Text(
+                    tr('privacy_summary_title'),
+                    style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.blue),
                   ),
                   const SizedBox(height: 16),
-                  _buildSummaryItem('✅ Ubicación: Usada solo para emparejar averías con técnicos.'),
-                  _buildSummaryItem('✅ Datos: No vendemos tu información a anunciantes.'),
-                  _buildSummaryItem('✅ Chat: Los mensajes están protegidos para tu seguridad.'),
-                  _buildSummaryItem('✅ Transparencia: Tú controlas cuándo compartes tu dirección exacta.'),
+                  _buildSummaryItem(tr('privacy_summary_1')),
+                  _buildSummaryItem(tr('privacy_summary_2')),
+                  _buildSummaryItem(tr('privacy_summary_3')),
+                  _buildSummaryItem(tr('privacy_summary_4')),
                 ],
               ),
             ),
             
             const SizedBox(height: 40),
-            const Center(
+            Center(
               child: Text(
-                'Fix_Radar: Conectando habilidades técnicas con necesidades del hogar de forma segura y privada. 🛠️🏡🛡️',
+                tr('privacy_footer'),
                 textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 13, color: Colors.grey, fontStyle: FontStyle.italic),
+                style: const TextStyle(fontSize: 13, color: Colors.grey, fontStyle: FontStyle.italic),
               ),
             ),
             const SizedBox(height: 60),

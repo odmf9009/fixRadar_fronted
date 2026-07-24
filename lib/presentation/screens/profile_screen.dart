@@ -42,17 +42,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Configurar Alias Público', style: TextStyle(fontWeight: FontWeight.bold)),
+        title: Text(tr('set_public_alias'), style: const TextStyle(fontWeight: FontWeight.bold)),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('Este nombre se mostrará a otros usuarios en la comunidad.', style: TextStyle(fontSize: 12, color: Colors.grey)),
+            Text(tr('alias_desc'), style: const TextStyle(fontSize: 12, color: Colors.grey)),
             const SizedBox(height: 16),
             TextField(
               controller: controller,
               decoration: InputDecoration(
-                hintText: 'Ej: FixerMister99',
+                hintText: tr('alias_hint'),
                 filled: true,
                 fillColor: Colors.grey[100],
                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
@@ -61,23 +61,23 @@ class _ProfileScreenState extends State<ProfileScreen> {
           ],
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancelar')),
+          TextButton(onPressed: () => Navigator.pop(context), child: Text(tr('cancel'))),
           ElevatedButton(
             onPressed: () async {
               try {
                 await service.updateUserAlias(user.id, controller.text.trim());
                 if (context.mounted) {
                   Navigator.pop(context);
-                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Alias actualizado correctamente')));
+                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(tr('alias_updated'))));
                 }
               } catch (e) {
                 if (context.mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red));
+                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('${tr('error_label')}: $e'), backgroundColor: Colors.red));
                 }
               }
             },
             style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFFF8A00), minimumSize: const Size(80, 36)),
-            child: const Text('Guardar', style: TextStyle(color: Colors.white)),
+            child: Text(tr('save'), style: const TextStyle(color: Colors.white)),
           ),
         ],
       ),
@@ -96,7 +96,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           return AlertDialog(
             backgroundColor: const Color(0xFFF5E6D3), // Matching the beige/nude tone from image
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
-            title: const Text('Mis Especialidades', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 22)),
+            title: Text(tr('my_specialties'), style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 22)),
             content: SizedBox(
               width: double.maxFinite,
               child: SingleChildScrollView(
@@ -131,7 +131,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           ],
                         ),
                         child: Text(
-                          cat,
+                          ServiceConstants.getDisplayName(cat),
                           style: TextStyle(
                             color: isSelected ? Colors.white : Colors.black87,
                             fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
@@ -147,7 +147,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(context), 
-                child: const Text('Cancelar', style: TextStyle(color: Color(0xFFFF8A00), fontWeight: FontWeight.bold))
+                child: Text(tr('cancel'), style: const TextStyle(color: Color(0xFFFF8A00), fontWeight: FontWeight.bold))
               ),
               const SizedBox(height: 8),
               ElevatedButton(
@@ -162,7 +162,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                   elevation: 0,
                 ),
-                child: const Text('Guardar', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
+                child: Text(tr('save'), style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
               ),
             ],
             actionsAlignment: MainAxisAlignment.center,
@@ -195,13 +195,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
       
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('¡Foto de perfil actualizada!')),
+          SnackBar(content: Text(tr('profile_photo_updated'))),
         );
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error al subir foto: $e'), backgroundColor: Colors.red),
+          SnackBar(content: Text(tr('error_uploading_photo').replaceAll('{e}', '$e')), backgroundColor: Colors.red),
         );
       }
     } finally {
@@ -314,7 +314,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                       child: Text(
                                         user?.username != null && user!.username.isNotEmpty 
                                           ? '@${user.username}' 
-                                          : 'Sin alias configurado',
+                                          : tr('no_alias_configured'),
                                         style: TextStyle(color: Colors.grey[600], fontSize: 14),
                                         overflow: TextOverflow.ellipsis,
                                       ),
@@ -326,7 +326,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                   ],
                                 ),
                                 Text(
-                                  'Nivel ${user?.level ?? 1} - ${user?.levelTitle ?? 'Explorador'}',
+                                  tr('level_prefix').replaceAll('{n}', '${user?.level ?? 1}').replaceAll('{title}', user?.levelTitle ?? tr('explorer_default')),
                                   style: const TextStyle(color: Color(0xFFFF8A00), fontWeight: FontWeight.w600, fontSize: 13),
                                 ),
                               ],
@@ -371,9 +371,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.spaceAround,
                         children: [
-                          _buildStatItem(requests.length.toString(), 'Pedidos'),
-                          _buildStatItem(completedCount.toString(), 'Completados'),
-                          _buildStatItem('${(user?.rating ?? 0.0).toStringAsFixed(1)}', 'Calificación'),
+                          _buildStatItem(requests.length.toString(), tr('pedidos_stat')),
+                          _buildStatItem(completedCount.toString(), tr('completados_stat')),
+                          _buildStatItem('${(user?.rating ?? 0.0).toStringAsFixed(1)}', tr('rating_stat')),
                         ],
                       ),
                     ),
@@ -386,7 +386,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Text('Configuración de Técnico', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+                            Text(tr('tech_settings'), style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
                             const SizedBox(height: 16),
                             Material(
                               color: Colors.grey[50],
@@ -401,8 +401,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                   children: [
                                     ListTile(
                                       contentPadding: const EdgeInsets.symmetric(horizontal: 16),
-                                      title: const Text('Estado Técnico', style: TextStyle(fontWeight: FontWeight.bold)),
-                                      subtitle: const Text('Activa o desactiva las alertas de nuevos trabajos.', style: TextStyle(fontSize: 12)),
+                                      title: Text(tr('tech_status'), style: const TextStyle(fontWeight: FontWeight.bold)),
+                                      subtitle: Text(tr('tech_status_desc'), style: const TextStyle(fontSize: 12)),
                                       trailing: Switch(
                                         activeThumbColor: const Color(0xFFFF8A00),
                                         value: user?.notificationsEnabled ?? true,
@@ -423,10 +423,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                               child: Column(
                                                 crossAxisAlignment: CrossAxisAlignment.start,
                                                 children: [
-                                                  const Text('Mis Especialidades', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                                                  Text(tr('my_specialties'), style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
                                                   const SizedBox(height: 6),
                                                   user!.specialties.isEmpty
-                                                      ? const Text('Ninguna seleccionada', style: TextStyle(fontSize: 12, color: Colors.grey))
+                                                      ? Text(tr('none_selected'), style: const TextStyle(fontSize: 12, color: Colors.grey))
                                                       : Wrap(
                                                           spacing: 6,
                                                           runSpacing: 6,
@@ -437,7 +437,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                                               borderRadius: BorderRadius.circular(20),
                                                               border: Border.all(color: const Color(0xFFFF8A00).withValues(alpha: 0.4)),
                                                             ),
-                                                            child: Text(s, style: const TextStyle(fontSize: 12, color: Color(0xFFCC6F00), fontWeight: FontWeight.w500)),
+                                                            child: Text(ServiceConstants.getDisplayName(s), style: const TextStyle(fontSize: 12, color: Color(0xFFCC6F00), fontWeight: FontWeight.w500)),
                                                           )).toList(),
                                                         ),
                                                 ],
@@ -452,16 +452,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                     const Divider(height: 1),
                                     ListTile(
                                       contentPadding: const EdgeInsets.symmetric(horizontal: 16),
-                                      title: const Text('Mi Portafolio', style: TextStyle(fontWeight: FontWeight.bold)),
-                                      subtitle: const Text('Muestra tus trabajos a los clientes.', style: TextStyle(fontSize: 12)),
+                                      title: Text(tr('my_portfolio'), style: const TextStyle(fontWeight: FontWeight.bold)),
+                                      subtitle: Text(tr('my_portfolio_desc'), style: const TextStyle(fontSize: 12)),
                                       trailing: const Icon(Icons.chevron_right),
                                       onTap: () => Navigator.pushNamed(context, AppRoutes.managePortfolio),
                                     ),
                                     const Divider(height: 1),
                                     ListTile(
                                       contentPadding: const EdgeInsets.symmetric(horizontal: 16),
-                                      title: const Text('Perfil Profesional', style: TextStyle(fontWeight: FontWeight.bold)),
-                                      subtitle: const Text('Completa tu información para los clientes.', style: TextStyle(fontSize: 12)),
+                                      title: Text(tr('professional_profile'), style: const TextStyle(fontWeight: FontWeight.bold)),
+                                      subtitle: Text(tr('professional_profile_desc'), style: const TextStyle(fontSize: 12)),
                                       trailing: const Icon(Icons.chevron_right),
                                       onTap: () => Navigator.pushNamed(context, AppRoutes.editTechProfile, arguments: user),
                                     ),
@@ -482,7 +482,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     _buildMenuItem(Icons.edit_note_outlined, proView ? tr('my_jobs') : tr('my_orders'), () {
                       Navigator.pushNamed(context, AppRoutes.myPosts);
                     }, count: activeCount),
-                    _buildMenuItem(Icons.history, 'Historial', () {
+                    _buildMenuItem(Icons.history, tr('historial_menu'), () {
                       Navigator.pushNamed(context, AppRoutes.activityHistory);
                     }),
                     

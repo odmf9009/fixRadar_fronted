@@ -41,7 +41,7 @@ class AchievementsScreen extends StatelessWidget {
               }
               final user = userSnapshot.data;
               if (user == null) {
-                return const Center(child: Text('Error al cargar perfil'));
+                return Center(child: Text(tr('error_loading_profile_short')));
               }
 
               return StreamBuilder<List<AchievementModel>>(

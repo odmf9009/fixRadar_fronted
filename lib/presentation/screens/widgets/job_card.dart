@@ -1,4 +1,5 @@
 import '../../../core/services/auth_service.dart';
+import '../../../core/services/language_service.dart';
 import 'package:flutter/material.dart';
 import '../../../core/models/service_request.dart';
 import '../../../core/config/routes.dart';
@@ -113,7 +114,7 @@ class JobCard extends StatelessWidget {
                     Text(
                       alreadyQuoted 
                         ? 'Ofertado'
-                        : '${request.responsesCount} técnicos',
+                        : tr('x_technicians').replaceAll('{n}', '${request.responsesCount}'),
                       style: TextStyle(
                         color: alreadyQuoted ? Colors.blue : Colors.grey, 
                         fontSize: 12,

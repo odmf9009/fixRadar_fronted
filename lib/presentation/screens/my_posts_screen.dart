@@ -5,6 +5,7 @@ import '../../core/services/firestore_service.dart';
 import '../../core/services/language_service.dart';
 import '../../core/services/view_mode_service.dart';
 import '../../core/config/routes.dart';
+import '../../core/config/service_constants.dart';
 
 // Identificadores estables de las pestañas (independientes del idioma/lente).
 enum _PostFilter { active, middle, finished }
@@ -111,7 +112,7 @@ class _MyPostsScreenState extends State<MyPostsScreen> {
                     }
 
                     if (snapshot.hasError) {
-                      return Center(child: Text('Error: ${snapshot.error}'));
+                      return Center(child: Text('${tr('error_label')}: ${snapshot.error}'));
                     }
 
                     final filteredPosts = _filter(snapshot.data ?? []);
@@ -175,15 +176,15 @@ class _MyPostsScreenState extends State<MyPostsScreen> {
     switch (post.status) {
       case ServiceRequestStatus.open:
         statusColor = const Color(0xFF4CAF50);
-        statusText = 'Buscando técnico';
+        statusText = tr('searching_technician');
         break;
       case ServiceRequestStatus.assigned:
         statusColor = const Color(0xFF2196F3);
-        statusText = 'Técnico asignado';
+        statusText = tr('tech_assigned_label');
         break;
       case ServiceRequestStatus.inProgress:
         statusColor = Colors.orange;
-        statusText = 'En reparación';
+        statusText = tr('in_repair');
         break;
       case ServiceRequestStatus.finishedByTechnician:
         statusColor = Colors.blue;
@@ -239,7 +240,7 @@ class _MyPostsScreenState extends State<MyPostsScreen> {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    'Categoría: ${post.category}',
+                    tr('category_label').replaceAll('{c}', ServiceConstants.getDisplayName(post.category)),
                     style: const TextStyle(color: Colors.grey, fontSize: 12),
                   ),
                   const SizedBox(height: 4),
@@ -274,20 +275,20 @@ class _MyPostsScreenState extends State<MyPostsScreen> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Eliminar pedido', style: TextStyle(fontWeight: FontWeight.bold)),
-        content: Text('¿Estás seguro de que deseas eliminar "${request.title}"? Esta acción no se puede deshacer.'),
+        title: Text(tr('delete_order'), style: const TextStyle(fontWeight: FontWeight.bold)),
+        content: Text(tr('delete_order_confirm').replaceAll('{title}', request.title)),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancelar')),
+          TextButton(onPressed: () => Navigator.pop(context), child: Text(tr('cancel'))),
           ElevatedButton(
             onPressed: () async {
               Navigator.pop(context);
               await _firestoreService.deleteServiceRequest(request.id);
               if (mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Pedido eliminado correctamente')));
+                ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(tr('order_deleted'))));
               }
             },
             style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-            child: const Text('Eliminar', style: TextStyle(color: Colors.white)),
+            child: Text(tr('delete'), style: const TextStyle(color: Colors.white)),
           ),
         ],
       ),

@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import '../../core/services/firestore_service.dart';
 import '../../core/services/auth_service.dart';
 import '../../core/config/routes.dart';
+import '../../core/services/language_service.dart';
 
 class RoleSelectionScreen extends StatefulWidget {
   const RoleSelectionScreen({super.key});
@@ -51,7 +52,7 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error al guardar: $e'), backgroundColor: Colors.red),
+          SnackBar(content: Text(tr('error_saving').replaceAll('{e}', '$e')), backgroundColor: Colors.red),
         );
       }
     } finally {
@@ -72,32 +73,32 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
               const SizedBox(height: 20),
               Image.asset('assets/logo_centro.png', height: 120),
               const SizedBox(height: 30),
-              const Text(
-                '¡Bienvenido a FixRadar!',
-                style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+              Text(
+                tr('onb_1_title'),
+                style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 16),
-              const Text(
-                '¿Cómo planeas usar la aplicación?',
-                style: TextStyle(fontSize: 16, color: Colors.grey),
+              Text(
+                tr('how_will_you_use'),
+                style: const TextStyle(fontSize: 16, color: Colors.grey),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 60),
-              
+
               _roleCard(
-                title: 'Soy Cliente',
-                description: 'Busco ayuda experta para reparaciones y mantenimiento en mi hogar.',
+                title: tr('i_am_client'),
+                description: tr('i_am_client_desc'),
                 icon: Icons.home_repair_service_outlined,
                 color: const Color(0xFF1976D2),
                 onTap: () => _selectRole('client'),
               ),
-              
+
               const SizedBox(height: 24),
-              
+
               _roleCard(
-                title: 'Soy Técnico',
-                description: 'Ofrezco mis servicios profesionales y busco nuevos trabajos.',
+                title: tr('i_am_technician'),
+                description: tr('i_am_technician_desc'),
                 icon: Icons.engineering_outlined,
                 color: const Color(0xFFFF8A00),
                 onTap: () => _selectRole('technician'),

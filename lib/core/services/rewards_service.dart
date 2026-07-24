@@ -1,6 +1,7 @@
 // Migrated: stubbed — no backend rewards endpoint yet
 import 'dart:async';
 import '../models/reward_model.dart';
+import 'language_service.dart';
 
 class RewardsService {
   /// Returns XP history — stubbed (empty stream)
@@ -19,36 +20,36 @@ class RewardsService {
     return [
       RewardItem(
         id: 'premium_7d',
-        title: '7 Días Acceso Premium',
-        description: 'Desbloquea todas las funciones avanzadas por una semana.',
+        title: tr('reward_premium_title'),
+        description: tr('reward_premium_desc'),
         icon: '👑',
         xpRequired: 1000,
       ),
       RewardItem(
         id: 'adv_alerts',
-        title: 'Alertas Avanzadas',
-        description: 'Recibe notificaciones prioritarias de objetos valiosos.',
+        title: tr('reward_alerts_title'),
+        description: tr('reward_alerts_desc'),
         icon: '🔔',
         xpRequired: 500,
       ),
       RewardItem(
         id: 'radius_ext',
-        title: 'Radio de Búsqueda Extendido',
-        description: 'Aumenta tu radar hasta 20 millas adicionales.',
+        title: tr('reward_radius_title'),
+        description: tr('reward_radius_desc'),
         icon: '📍',
         xpRequired: 750,
       ),
       RewardItem(
         id: 'hot_zones',
-        title: 'Acceso a Zonas Calientes',
-        description: 'Visualiza áreas de alta actividad en tiempo real.',
+        title: tr('reward_hotzones_title'),
+        description: tr('reward_hotzones_desc'),
         icon: '🔥',
         xpRequired: 1200,
       ),
       RewardItem(
         id: 'profile_badge',
-        title: 'Insignia de Perfil Exclusiva',
-        description: 'Muestra tu estatus de Cazador Élite a la comunidad.',
+        title: tr('reward_badge_title'),
+        description: tr('reward_badge_desc'),
         icon: '🏅',
         xpRequired: 2000,
       ),
@@ -56,11 +57,11 @@ class RewardsService {
   }
 
   static String getLevelTitle(int level) {
-    if (level <= 1) return 'Buscador Novato';
-    if (level <= 5) return 'Explorador';
-    if (level <= 10) return 'Cazador de Curb';
-    if (level <= 20) return 'Héroe de la Comunidad';
-    return 'Reciclador Élite';
+    if (level <= 1) return tr('level_service_1');
+    if (level <= 5) return tr('level_service_2');
+    if (level <= 10) return tr('level_service_3');
+    if (level <= 20) return tr('level_service_4');
+    return tr('level_service_5');
   }
 
   static int getXPForNextLevel(int currentLevel) {

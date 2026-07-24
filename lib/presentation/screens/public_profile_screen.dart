@@ -1,10 +1,12 @@
 import '../../core/services/auth_service.dart';
+import '../../core/services/language_service.dart';
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:intl/intl.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../core/models/user_model.dart';
+import '../../core/config/service_constants.dart';
 import '../../core/models/portfolio_item.dart';
 import '../../core/models/review_model.dart';
 import '../../core/services/firestore_service.dart';
@@ -36,7 +38,7 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
 
         final user = snapshot.data;
         if (user == null) {
-          return const Scaffold(body: Center(child: Text('Usuario no encontrado')));
+          return Scaffold(body: Center(child: Text(tr('user_not_found'))));
         }
 
         return StreamBuilder<UserModel?>(
@@ -56,9 +58,9 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
                         _buildMainInfo(user),
                         _buildStats(user),
                         _buildSection('Especialidades', _buildSpecialties(user)),
-                        _buildSection('Acerca del Técnico', _buildAbout(user)),
+                        _buildSection(tr('about_technician'), _buildAbout(user)),
                         _buildSection('Insignias y Verificaciones', _buildVerifications(user)),
-                        _buildSection('Información Comercial', _buildBusinessInfo(user)),
+                        _buildSection(tr('business_info'), _buildBusinessInfo(user)),
                         _buildSection('Área de Servicio', _buildServiceArea(user)),
                         _buildSection('Portafolio de Trabajos', _buildPortfolio(user)),
                         _buildSection('Opiniones de Clientes', _buildReviews(user)),
@@ -158,7 +160,7 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      user.specialties.isNotEmpty ? user.specialties.first : 'Especialista General',
+                      user.specialties.isNotEmpty ? ServiceConstants.getDisplayName(user.specialties.first) : tr('general_technician'),
                       style: TextStyle(color: primaryColor, fontWeight: FontWeight.bold, fontSize: 16),
                     ),
                     if (user.companyName != null && user.companyName!.isNotEmpty)
@@ -177,7 +179,7 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
             children: [
               Icon(Icons.history, size: 16, color: Colors.grey[600]),
               const SizedBox(width: 4),
-              Text('${user.yearsOfExperience} años de experiencia', style: TextStyle(color: Colors.grey[600])),
+              Text(tr('years_experience').replaceAll('{n}', '${user.yearsOfExperience}'), style: TextStyle(color: Colors.grey[600])),
               const SizedBox(width: 16),
               Icon(Icons.location_on_outlined, size: 16, color: Colors.grey[600]),
               const SizedBox(width: 4),
@@ -206,7 +208,7 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
       }
     } else {
       color = Colors.grey;
-      label = 'Fuera de línea';
+      label = tr('offline_status');
       icon = Icons.offline_bolt;
     }
 
@@ -238,11 +240,11 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
         padding: const EdgeInsets.symmetric(horizontal: 20),
         child: Row(
           children: [
-            _statCard('Calificación', '${user.rating.toStringAsFixed(1)} ⭐', 'Promedio'),
-            _statCard('Reseñas', '${user.reviewsCount}', 'Opiniones'),
-            _statCard('Trabajos', '${user.completedJobsCount}', 'Completados'),
-            _statCard('Respuesta', user.avgResponseTime ?? 'Rápida', 'Tiempo prom.'),
-            _statCard('Satisfacción', '${user.satisfactionPercentage.toInt()}%', 'Clientes felices'),
+            _statCard(tr('rating_stat'), '${user.rating.toStringAsFixed(1)} ⭐', tr('average')),
+            _statCard(tr('reviews'), '${user.reviewsCount}', tr('opinions')),
+            _statCard(tr('trabajos_stat'), '${user.completedJobsCount}', tr('completados_stat')),
+            _statCard(tr('response'), user.avgResponseTime ?? tr('fast'), tr('avg_time')),
+            _statCard(tr('satisfaction'), '${user.satisfactionPercentage.toInt()}%', tr('happy_clients')),
           ],
         ),
       ),
@@ -290,20 +292,20 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
 
   Widget _buildAbout(UserModel user) {
     return Text(
-      user.bio.isNotEmpty ? user.bio : 'Este técnico aún no ha agregado una descripción profesional.',
+      user.bio.isNotEmpty ? user.bio : tr('no_professional_desc'),
       style: TextStyle(color: Colors.grey[700], height: 1.5),
     );
   }
 
   Widget _buildSpecialties(UserModel user) {
     if (user.specialties.isEmpty) {
-      return const Text('Sin especialidades registradas.', style: TextStyle(color: Colors.grey));
+      return Text(tr('no_specialties'), style: const TextStyle(color: Colors.grey));
     }
     return Wrap(
       spacing: 8,
       runSpacing: 8,
       children: user.specialties.map((spec) => Chip(
-        label: Text(spec),
+        label: Text(ServiceConstants.getDisplayName(spec)),
         backgroundColor: primaryColor.withOpacity(0.1),
         side: BorderSide(color: primaryColor.withOpacity(0.2)),
         labelStyle: TextStyle(color: primaryColor, fontWeight: FontWeight.bold, fontSize: 12),
@@ -319,7 +321,7 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
           mainAxisAlignment: MainAxisAlignment.spaceAround,
           children: [
             _verifItem(Icons.badge, 'ID', user.idVerified),
-            _verifItem(Icons.phone_android, 'Teléfono', user.phoneVerified),
+            _verifItem(Icons.phone_android, tr('phone_label'), user.phoneVerified),
             _verifItem(Icons.email, 'Email', user.emailVerified),
             _verifItem(Icons.description, 'Licencia', user.licenseVerified),
             _verifItem(Icons.security, 'Seguro', user.insuranceVerified),
@@ -329,16 +331,16 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
         const Divider(),
         const SizedBox(height: 16),
         // Badges
-        const Text('Insignias de Reputación', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+        Text(tr('reputation_badges'), style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
         const SizedBox(height: 12),
         Wrap(
           spacing: 12,
           runSpacing: 12,
           children: [
-            if (user.rating >= 4.8) _reputationBadge(Icons.star, 'Top Técnico', Colors.amber),
-            _reputationBadge(Icons.speed, 'Respuesta Rápida', Colors.blue),
-            if (user.idVerified) _reputationBadge(Icons.verified_user, 'Verificado', Colors.green),
-            if (user.completedJobsCount > 100) _reputationBadge(Icons.workspace_premium, '100+ Trabajos', Colors.purple),
+            if (user.rating >= 4.8) _reputationBadge(Icons.star, tr('top_technician_badge'), Colors.amber),
+            _reputationBadge(Icons.speed, tr('fast_response_badge'), Colors.blue),
+            if (user.idVerified) _reputationBadge(Icons.verified_user, tr('verified_badge'), Colors.green),
+            if (user.completedJobsCount > 100) _reputationBadge(Icons.workspace_premium, tr('jobs_100_plus'), Colors.purple),
           ],
         ),
       ],
@@ -427,7 +429,9 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
           children: [
             const Icon(Icons.location_city, size: 16, color: Colors.grey),
             const SizedBox(width: 8),
-            Text('${user.city.isNotEmpty ? user.city : 'Área'} - Radio de ${user.serviceRadius.toInt()} km'),
+            Text(tr('radius_of_km')
+                .replaceAll('{place}', user.city.isNotEmpty ? user.city : tr('area_label'))
+                .replaceAll('{km}', '${user.serviceRadius.toInt()}')),
           ],
         ),
         const SizedBox(height: 12),
@@ -458,7 +462,7 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
                   zoomControlsEnabled: false,
                   myLocationButtonEnabled: false,
                 )
-              : const Center(child: Text('Ubicación no disponible')),
+              : Center(child: Text(tr('location_unavailable'))),
           ),
         ),
       ],
@@ -471,7 +475,7 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
       builder: (context, snapshot) {
         final items = snapshot.data ?? [];
         if (items.isEmpty) {
-          return const Text('No hay trabajos en el portafolio todavía.', style: TextStyle(color: Colors.grey));
+          return Text(tr('no_portfolio_jobs'), style: const TextStyle(color: Colors.grey));
         }
         return SizedBox(
           height: 200,
@@ -507,7 +511,7 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(item.title, style: const TextStyle(fontWeight: FontWeight.bold), maxLines: 1, overflow: TextOverflow.ellipsis),
-                            Text(item.category, style: TextStyle(color: primaryColor, fontSize: 11)),
+                            Text(ServiceConstants.getDisplayName(item.category), style: TextStyle(color: primaryColor, fontSize: 11)),
                           ],
                         ),
                       ),
@@ -528,7 +532,7 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
       builder: (context, snapshot) {
         final reviews = snapshot.data ?? [];
         if (reviews.isEmpty) {
-          return const Text('Aún no tiene opiniones de clientes.', style: TextStyle(color: Colors.grey));
+          return Text(tr('no_client_reviews'), style: const TextStyle(color: Colors.grey));
         }
         return Column(
           children: reviews.take(5).map((rev) => Container(
@@ -594,7 +598,7 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
             ],
             _circleAction(Icons.chat_bubble_outline, primaryColor, () {
               // Usually needs a request context, but we can open a generic chat or handle via route
-              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Iniciando chat directo...')));
+              ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(tr('starting_direct_chat'))));
             }),
             const SizedBox(width: 12),
             Expanded(
@@ -606,7 +610,7 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                   elevation: 0,
                 ),
-                child: const Text('Solicitar Cotización', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                child: Text(tr('request_quote'), style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
               ),
             ),
           ],
@@ -649,11 +653,11 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
             children: [
               Text(item.title, style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
               const SizedBox(height: 4),
-              Text(item.category, style: TextStyle(color: primaryColor, fontWeight: FontWeight.bold)),
+              Text(ServiceConstants.getDisplayName(item.category), style: TextStyle(color: primaryColor, fontWeight: FontWeight.bold)),
               const SizedBox(height: 16),
               Text(item.description, style: const TextStyle(fontSize: 16, height: 1.5)),
               const SizedBox(height: 24),
-              const Text('Galería de fotos', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+              Text(tr('photo_gallery'), style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
               const SizedBox(height: 16),
               // High-res images gallery
               ...item.imageUrls.map((url) => Padding(

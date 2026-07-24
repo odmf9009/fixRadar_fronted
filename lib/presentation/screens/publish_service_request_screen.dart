@@ -38,7 +38,7 @@ class _PublishServiceRequestScreenState extends State<PublishServiceRequestScree
   final List<File> _imageFiles = [];
   final TextEditingController _titleController = TextEditingController();
   final TextEditingController _descriptionController = TextEditingController();
-  final TextEditingController _addressController = TextEditingController(text: 'Detectando ubicación...');
+  final TextEditingController _addressController = TextEditingController(text: tr('detecting_location'));
   UrgencyLevel _selectedUrgency = UrgencyLevel.medium;
   Position? _currentPosition;
   String? _targetTechnicianId;
@@ -97,10 +97,10 @@ class _PublishServiceRequestScreenState extends State<PublishServiceRequestScree
           address += place.locality!;
         }
         
-        setState(() => _addressController.text = address.isNotEmpty ? address : 'Ubicación detectada');
+        setState(() => _addressController.text = address.isNotEmpty ? address : tr('location_detected'));
       }
     } catch (e) {
-      setState(() => _addressController.text = 'Ubicación manual');
+      setState(() => _addressController.text = tr('location_manual'));
     }
   }
 
@@ -146,7 +146,7 @@ class _PublishServiceRequestScreenState extends State<PublishServiceRequestScree
   Future<void> _publish() async {
     if (_titleController.text.isEmpty || _selectedCategory == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Por favor selecciona una categoría y escribe un título.')),
+        SnackBar(content: Text(tr('select_category_title'))),
       );
       return;
     }
@@ -209,7 +209,7 @@ class _PublishServiceRequestScreenState extends State<PublishServiceRequestScree
       
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('¡Problema publicado con éxito!'), backgroundColor: Colors.green),
+          SnackBar(content: Text(tr('problem_published')), backgroundColor: Colors.green),
         );
         Navigator.pop(context);
       }
@@ -219,7 +219,7 @@ class _PublishServiceRequestScreenState extends State<PublishServiceRequestScree
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error: ${e.toString()}'),
+            content: Text('${tr('error_label')}: ${e.toString()}'),
             backgroundColor: Colors.red,
             duration: const Duration(seconds: 5),
           ),
@@ -235,7 +235,7 @@ class _PublishServiceRequestScreenState extends State<PublishServiceRequestScree
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
-        title: const Text('Publicar problema'),
+        title: Text(tr('publish_problem')),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
           onPressed: () {
@@ -275,7 +275,7 @@ class _PublishServiceRequestScreenState extends State<PublishServiceRequestScree
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
-                    'Solicitando cotización directa a ${_targetTechnician!.name}',
+                    tr('requesting_direct_quote').replaceAll('{name}', _targetTechnician!.name),
                     style: const TextStyle(color: Colors.blue, fontWeight: FontWeight.bold, fontSize: 12),
                   ),
                 ),
@@ -334,7 +334,7 @@ class _PublishServiceRequestScreenState extends State<PublishServiceRequestScree
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text('¿Qué tipo de problema es?', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+        Text(tr('what_problem_type'), style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
         const SizedBox(height: 24),
         GridView.builder(
           shrinkWrap: true,
@@ -362,7 +362,7 @@ class _PublishServiceRequestScreenState extends State<PublishServiceRequestScree
                   children: [
                     Icon(cat['icon'], color: isSelected ? Colors.white : cat['color']),
                     const SizedBox(width: 8),
-                    Flexible(child: Text(cat['name'], style: TextStyle(color: isSelected ? Colors.white : Colors.black87, fontWeight: FontWeight.w500))),
+                    Flexible(child: Text(ServiceConstants.getDisplayName(cat['name']), style: TextStyle(color: isSelected ? Colors.white : Colors.black87, fontWeight: FontWeight.w500))),
                   ],
                 ),
               ),
@@ -377,11 +377,11 @@ class _PublishServiceRequestScreenState extends State<PublishServiceRequestScree
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text('Cuéntanos más detalles', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+        Text(tr('tell_us_more'), style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
         const SizedBox(height: 24),
         
         // Photos (hasta 3, cámara o galería)
-        const Text('1. Agrega fotos del problema (hasta 3)', style: TextStyle(fontWeight: FontWeight.bold)),
+        Text(tr('step_add_photos'), style: const TextStyle(fontWeight: FontWeight.bold)),
         const SizedBox(height: 12),
         SizedBox(
           height: 110,
@@ -396,7 +396,7 @@ class _PublishServiceRequestScreenState extends State<PublishServiceRequestScree
         const SizedBox(height: 24),
 
         // Title
-        const Text('2. Título del problema', style: TextStyle(fontWeight: FontWeight.bold)),
+        Text(tr('step_problem_title'), style: const TextStyle(fontWeight: FontWeight.bold)),
         const SizedBox(height: 8),
         TextField(
           controller: _titleController, 
@@ -405,7 +405,7 @@ class _PublishServiceRequestScreenState extends State<PublishServiceRequestScree
         const SizedBox(height: 24),
 
         // Description
-        const Text('3. Describe el problema', style: TextStyle(fontWeight: FontWeight.bold)),
+        Text(tr('step_describe_problem'), style: const TextStyle(fontWeight: FontWeight.bold)),
         const SizedBox(height: 8),
         TextField(
           controller: _descriptionController, 
@@ -415,7 +415,7 @@ class _PublishServiceRequestScreenState extends State<PublishServiceRequestScree
         const SizedBox(height: 24),
 
         // Urgency
-        const Text('4. ¿Qué tan urgente es?', style: TextStyle(fontWeight: FontWeight.bold)),
+        Text(tr('step_urgency'), style: const TextStyle(fontWeight: FontWeight.bold)),
         const SizedBox(height: 12),
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -494,7 +494,7 @@ class _PublishServiceRequestScreenState extends State<PublishServiceRequestScree
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text('Confirma tu ubicación', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+        Text(tr('confirm_location'), style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
         const SizedBox(height: 24),
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -524,9 +524,9 @@ class _PublishServiceRequestScreenState extends State<PublishServiceRequestScree
           ),
         ),
         const SizedBox(height: 20),
-        const Text('Puedes corregir el número de casa o calle si es necesario.', style: TextStyle(color: Colors.grey, fontSize: 13)),
+        Text(tr('address_correct_hint'), style: const TextStyle(color: Colors.grey, fontSize: 13)),
         const SizedBox(height: 4),
-        const Text('Un técnico llegará a esta dirección para asistirte.', style: TextStyle(color: Colors.grey)),
+        Text(tr('tech_will_arrive'), style: const TextStyle(color: Colors.grey)),
       ],
     );
   }
@@ -548,58 +548,58 @@ class _PublishServiceRequestScreenState extends State<PublishServiceRequestScree
           backgroundColor: const Color(0xFFFF8A00),
           disabledBackgroundColor: Colors.grey[300],
         ),
-        child: Text(_currentStep == 3 ? 'Publicar ahora' : 'Siguiente'),
+        child: Text(_currentStep == 3 ? tr('publish_now') : tr('next')),
       ),
     );
   }
 
   String _getUrgencyText(UrgencyLevel u) {
     switch (u) {
-      case UrgencyLevel.low: return 'Baja';
-      case UrgencyLevel.medium: return 'Media';
-      case UrgencyLevel.high: return 'Alta';
+      case UrgencyLevel.low: return tr('urgency_low');
+      case UrgencyLevel.medium: return tr('urgency_medium');
+      case UrgencyLevel.high: return tr('urgency_high');
     }
   }
 
   String _getTitleHint() {
     switch (_selectedCategory) {
-      case 'Electricidad': return 'Ej: Cortocircuito / Tomacorriente quemado';
-      case 'Plomería': return 'Ej: Tubería rota / Fuga de agua';
-      case 'Aire Acond.': return 'Ej: Aire no enfría / Goteo unidad interna';
-      case 'Pintura': return 'Ej: Pintar fachada / Humedad en pared';
-      case 'Techos': return 'Ej: Gotera en el techo / Teja rota';
-      case 'Carpintería': return 'Ej: Puerta no cierra / Mueble roto';
-      case 'Drywall y Reparación de Paredes': return 'Ej: Hueco en la pared / Grieta en el techo';
-      case 'Electrodomésticos': return 'Ej: Lavadora no centrifuga / Refrigerador ruidoso';
-      case 'Jardinería': return 'Ej: Podar césped / Plaga en plantas';
-      case 'Limpieza': return 'Ej: Limpieza profunda / Lavado de alfombras';
-      case 'Cámaras y Seguridad': return 'Ej: Cámara no graba / Instalación de DVR';
-      case 'TV y Montaje': return 'Ej: Montaje de TV 65" / Cableado oculto';
-      case 'Puertas y Ventanas': return 'Ej: Cerradura trabada / Vidrio roto';
-      case 'Mudanzas': return 'Ej: Mudanza pequeña / Acarreo de muebles';
-      case 'Handyman': return 'Ej: Reparación general / Varios arreglos';
-      default: return 'Ej: Describa brevemente el problema';
+      case 'Electricidad': return tr('th_elec');
+      case 'Plomería': return tr('th_plom');
+      case 'Aire Acond.': return tr('th_aire');
+      case 'Pintura': return tr('th_pint');
+      case 'Techos': return tr('th_tech');
+      case 'Carpintería': return tr('th_carp');
+      case 'Drywall y Reparación de Paredes': return tr('th_drywall');
+      case 'Electrodomésticos': return tr('th_appliance');
+      case 'Jardinería': return tr('th_garden');
+      case 'Limpieza': return tr('th_clean');
+      case 'Cámaras y Seguridad': return tr('th_security');
+      case 'TV y Montaje': return tr('th_tv');
+      case 'Puertas y Ventanas': return tr('th_doors');
+      case 'Mudanzas': return tr('th_moving');
+      case 'Handyman': return tr('th_handyman');
+      default: return tr('th_default');
     }
   }
 
   String _getDescriptionHint() {
     switch (_selectedCategory) {
-      case 'Electricidad': return 'Se fue la luz en la cocina después de conectar el horno...';
-      case 'Plomería': return 'Se rompió la tubería debajo del fregadero y hay mucha agua...';
-      case 'Aire Acond.': return 'El aire acondicionado enciende pero no sale aire frío...';
-      case 'Pintura': return 'Necesito pintar el cuarto de los niños, unos 12 m2 aprox...';
-      case 'Techos': return 'Cada vez que llueve cae agua cerca de la lámpara del comedor...';
-      case 'Carpintería': return 'La bisagra de la puerta principal se rompió y no cierra bien...';
-      case 'Drywall y Reparación de Paredes': return 'Se hizo un hueco en la pared de yeso al mover un mueble...';
-      case 'Electrodomésticos': return 'La lavadora se detiene a mitad del ciclo y muestra un error E3...';
-      case 'Jardinería': return 'El césped está muy alto y necesito podar los arbustos del frente...';
-      case 'Limpieza': return 'Busco limpieza general de un apartamento de 2 habitaciones...';
-      case 'Cámaras y Seguridad': return 'Necesito instalar 4 cámaras de seguridad con visión nocturna...';
-      case 'TV y Montaje': return 'Instalación de soporte de pared para TV y configuración de sonido...';
-      case 'Puertas y Ventanas': return 'La ventana no desliza bien y la cerradura está floja...';
-      case 'Mudanzas': return 'Traslado de muebles de un piso 2 a una casa de una planta...';
-      case 'Handyman': return 'Tengo varios arreglos pequeños pendientes en casa...';
-      default: return 'Cuéntanos más detalles sobre el problema técnico...';
+      case 'Electricidad': return tr('dh_elec');
+      case 'Plomería': return tr('dh_plom');
+      case 'Aire Acond.': return tr('dh_aire');
+      case 'Pintura': return tr('dh_pint');
+      case 'Techos': return tr('dh_tech');
+      case 'Carpintería': return tr('dh_carp');
+      case 'Drywall y Reparación de Paredes': return tr('dh_drywall');
+      case 'Electrodomésticos': return tr('dh_appliance');
+      case 'Jardinería': return tr('dh_garden');
+      case 'Limpieza': return tr('dh_clean');
+      case 'Cámaras y Seguridad': return tr('dh_security');
+      case 'TV y Montaje': return tr('dh_tv');
+      case 'Puertas y Ventanas': return tr('dh_doors');
+      case 'Mudanzas': return tr('dh_moving');
+      case 'Handyman': return tr('dh_handyman');
+      default: return tr('dh_default');
     }
   }
 }

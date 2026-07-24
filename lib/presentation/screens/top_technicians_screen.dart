@@ -3,6 +3,7 @@ import '../../core/models/user_model.dart';
 import '../../core/services/firestore_service.dart';
 import '../../core/services/language_service.dart';
 import '../../core/config/routes.dart';
+import '../../core/config/service_constants.dart';
 import 'public_profile_screen.dart';
 
 class TopTechniciansScreen extends StatelessWidget {
@@ -15,7 +16,7 @@ class TopTechniciansScreen extends StatelessWidget {
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
-        title: const Text('Mejores Técnicos', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
+        title: Text(tr('top_technicians'), style: const TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
         backgroundColor: Colors.white,
         elevation: 0,
         centerTitle: true,
@@ -38,7 +39,7 @@ class TopTechniciansScreen extends StatelessWidget {
                 children: [
                   Icon(Icons.person_off_outlined, size: 64, color: Colors.grey[300]),
                   const SizedBox(height: 16),
-                  const Text('No hay técnicos destacados en este momento', style: TextStyle(color: Colors.grey)),
+                  Text(tr('no_top_techs'), style: const TextStyle(color: Colors.grey)),
                 ],
               ),
             );
@@ -119,7 +120,7 @@ class TopTechniciansScreen extends StatelessWidget {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      tech.specialties.isNotEmpty ? tech.specialties.join(', ') : 'Técnico General',
+                      tech.specialties.isNotEmpty ? tech.specialties.map(ServiceConstants.getDisplayName).join(', ') : tr('general_technician'),
                       style: TextStyle(color: Colors.grey[600], fontSize: 13),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
@@ -135,7 +136,7 @@ class TopTechniciansScreen extends StatelessWidget {
                         ),
                         const SizedBox(width: 8),
                         Text(
-                          '(${tech.reviewsCount} reseñas)',
+                          tr('reviews_count').replaceAll('{n}', '${tech.reviewsCount}'),
                           style: TextStyle(color: Colors.grey[500], fontSize: 12),
                         ),
                       ],

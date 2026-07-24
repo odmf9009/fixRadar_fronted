@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../core/models/user_model.dart';
 import '../../core/services/firestore_service.dart';
+import '../../core/services/language_service.dart';
 
 class AdminPanelScreen extends StatelessWidget {
   const AdminPanelScreen({super.key});
@@ -56,7 +57,7 @@ class AdminPanelScreen extends StatelessWidget {
         final users = snapshot.data ?? [];
 
         if (users.isEmpty) {
-          return const Center(child: Text('No hay usuarios registrados'));
+          return Center(child: Text(tr('no_users_registered')));
         }
 
         return Column(
@@ -102,7 +103,7 @@ class AdminPanelScreen extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(user.username.isNotEmpty ? '@${user.username} (${user.email})' : user.email, style: const TextStyle(fontSize: 12, color: Colors.grey)),
-                        Text('Nivel ${user.level} • ${user.points} pts', style: const TextStyle(color: Color(0xFFFF8A00), fontSize: 12, fontWeight: FontWeight.w500)),
+                        Text(tr('level_pts').replaceAll('{level}', '${user.level}').replaceAll('{pts}', '${user.points}'), style: const TextStyle(color: Color(0xFFFF8A00), fontSize: 12, fontWeight: FontWeight.w500)),
                       ],
                     ),
                     trailing: Row(
@@ -132,20 +133,20 @@ class AdminPanelScreen extends StatelessWidget {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text('Eliminar a ${user.name}'),
-        content: const Text('Se eliminará el perfil y TODOS los pedidos asociados a este usuario. Esta acción no se puede deshacer.'),
+        title: Text(tr('delete_user_title').replaceAll('{name}', user.name)),
+        content: Text(tr('delete_user_confirm')),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancelar')),
+          TextButton(onPressed: () => Navigator.pop(context), child: Text(tr('cancel'))),
           ElevatedButton(
             onPressed: () async {
               await service.deleteUserAccount(user.id);
               if (context.mounted) {
                 Navigator.pop(context);
-                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Usuario y datos eliminados.')));
+                ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(tr('user_data_deleted'))));
               }
             },
             style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-            child: const Text('Eliminar Permanentemente', style: TextStyle(color: Colors.white)),
+            child: Text(tr('delete_permanently'), style: const TextStyle(color: Colors.white)),
           ),
         ],
       ),
@@ -176,22 +177,22 @@ class AdminPanelScreen extends StatelessWidget {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text('Cambiar rol de ${user.name}'),
-        content: const Text('Selecciona el nuevo rol para este usuario:'),
+        title: Text(tr('change_role_title').replaceAll('{name}', user.name)),
+        content: Text(tr('select_new_role')),
         actions: [
           TextButton(
             onPressed: () async {
               await service.updateUserRole(user.id, 'client');
               if (context.mounted) Navigator.pop(context);
             },
-            child: const Text('Hacer CLIENTE', style: TextStyle(color: Colors.blue)),
+            child: Text(tr('make_client'), style: const TextStyle(color: Colors.blue)),
           ),
           TextButton(
             onPressed: () async {
               await service.updateUserRole(user.id, 'technician');
               if (context.mounted) Navigator.pop(context);
             },
-            child: const Text('Hacer TÉCNICO', style: TextStyle(color: Colors.orange)),
+            child: Text(tr('make_technician'), style: const TextStyle(color: Colors.orange)),
           ),
         ],
       ),

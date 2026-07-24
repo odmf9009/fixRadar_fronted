@@ -37,7 +37,7 @@ class CategoryBadge extends StatelessWidget {
           ),
           const SizedBox(width: 6),
           Text(
-            category.toUpperCase(),
+            ServiceConstants.getDisplayName(category).toUpperCase(),
             style: TextStyle(
               color: color,
               fontSize: fontSize,

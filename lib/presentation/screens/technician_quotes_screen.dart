@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import '../../core/models/service_request.dart';
 import '../../core/services/firestore_service.dart';
 import '../../core/config/routes.dart';
+import '../../core/services/language_service.dart';
 
 class TechnicianQuotesScreen extends StatefulWidget {
   const TechnicianQuotesScreen({super.key});
@@ -28,7 +29,7 @@ class _TechnicianQuotesScreenState extends State<TechnicianQuotesScreen> {
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
-        title: const Text('Solicitudes Directas', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black)),
+        title: Text(tr('direct_requests_title'), style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.black)),
         backgroundColor: Colors.white,
         elevation: 0,
         centerTitle: true,
@@ -49,13 +50,13 @@ class _TechnicianQuotesScreenState extends State<TechnicianQuotesScreen> {
                 children: [
                   Icon(Icons.request_quote_outlined, size: 64, color: Colors.grey[300]),
                   const SizedBox(height: 16),
-                  const Text('No tienes solicitudes directas todavía', style: TextStyle(color: Colors.grey, fontSize: 16)),
-                  const Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 40, vertical: 8),
+                  Text(tr('no_direct_requests'), style: const TextStyle(color: Colors.grey, fontSize: 16)),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 8),
                     child: Text(
-                      'Cuando un cliente te solicite una cotización desde tu perfil, aparecerá aquí.',
+                      tr('direct_requests_appear'),
                       textAlign: TextAlign.center,
-                      style: TextStyle(color: Colors.grey, fontSize: 14),
+                      style: const TextStyle(color: Colors.grey, fontSize: 14),
                     ),
                   ),
                 ],
@@ -99,7 +100,7 @@ class _TechnicianQuotesScreenState extends State<TechnicianQuotesScreen> {
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                     decoration: BoxDecoration(color: Colors.blue.withOpacity(0.1), borderRadius: BorderRadius.circular(8)),
-                    child: const Text('SOLICITUD DIRECTA', style: TextStyle(color: Colors.blue, fontSize: 10, fontWeight: FontWeight.bold)),
+                    child: Text(tr('direct_request_badge'), style: const TextStyle(color: Colors.blue, fontSize: 10, fontWeight: FontWeight.bold)),
                   ),
                   Text(
                     DateFormat('dd MMM').format(request.createdAt),
@@ -116,7 +117,7 @@ class _TechnicianQuotesScreenState extends State<TechnicianQuotesScreen> {
                       children: [
                         Text(request.title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18), maxLines: 1, overflow: TextOverflow.ellipsis),
                         const SizedBox(height: 4),
-                        Text('De: ${request.clientName}', style: const TextStyle(color: Color(0xFFFF8A00), fontWeight: FontWeight.w500, fontSize: 14)),
+                        Text(tr('from_label').replaceAll('{name}', request.clientName), style: const TextStyle(color: Color(0xFFFF8A00), fontWeight: FontWeight.w500, fontSize: 14)),
                       ],
                     ),
                   ),
@@ -138,7 +139,7 @@ class _TechnicianQuotesScreenState extends State<TechnicianQuotesScreen> {
                     backgroundColor: const Color(0xFFFF8A00),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                   ),
-                  child: const Text('Enviar Cotización', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                  child: Text(tr('send_quote'), style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
                 ),
               ),
             ],

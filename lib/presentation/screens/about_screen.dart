@@ -57,9 +57,9 @@ class AboutScreen extends StatelessWidget {
                 children: [
                   const Icon(Icons.build_circle_rounded, color: Color(0xFFFF8A00), size: 48),
                   const SizedBox(height: 16),
-                  const Text(
-                    'Technical Support Network',
-                    style: TextStyle(
+                  Text(
+                    tr('tech_support_network'),
+                    style: const TextStyle(
                       color: Colors.white,
                       fontSize: 14,
                       fontWeight: FontWeight.bold,
@@ -77,7 +77,7 @@ class AboutScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 12),
                   Text(
-                    'Soluciones técnicas para tu hogar en minutos',
+                    tr('about_tagline'),
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       color: Colors.white.withOpacity(0.8),
@@ -93,39 +93,39 @@ class AboutScreen extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
-                    '🚀 ¿Qué es Fix_Radar?',
-                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                  Text(
+                    tr('what_is_fixradar'),
+                    style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 12),
-                  const Text(
-                    'Fix_Radar es una plataforma colaborativa que conecta a personas con problemas técnicos en su hogar con expertos y técnicos locales dispuestos a ayudar.\n\nNuestra misión es facilitar el mantenimiento del hogar, reducir tiempos de espera en emergencias y crear una red de soporte técnico confiable en cada vecindario.',
-                    style: TextStyle(fontSize: 15, height: 1.6, color: Colors.black87),
+                  Text(
+                    tr('what_is_fixradar_body'),
+                    style: const TextStyle(fontSize: 15, height: 1.6, color: Colors.black87),
                   ),
 
                   const SizedBox(height: 32),
                   _buildSectionCard(
-                    '🏠 Nuestra Misión',
-                    'Asegurar que ningún hogar se quede sin asistencia técnica, conectando la necesidad con la habilidad de forma inmediata.',
+                    tr('our_mission'),
+                    tr('our_mission_body'),
                     Colors.blue.withOpacity(0.1),
                     Colors.blue,
                   ),
 
                   const SizedBox(height: 32),
-                  const Text(
-                    '🛠️ Cómo Funciona',
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  Text(
+                    tr('how_it_works'),
+                    style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 16),
-                  _buildStep(1, 'Detecta una avería en tu casa.'),
-                  _buildStep(2, 'Reporta el problema con una foto.'),
-                  _buildStep(3, 'Técnicos cercanos reciben la alerta.'),
-                  _buildStep(4, 'Un experto acude a solucionar el problema.'),
+                  _buildStep(1, tr('step_1')),
+                  _buildStep(2, tr('step_2')),
+                  _buildStep(3, tr('step_3')),
+                  _buildStep(4, tr('step_4')),
 
                   const SizedBox(height: 32),
-                  const Text(
-                    '📊 Estadísticas de la Comunidad',
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  Text(
+                    tr('community_stats_title'),
+                    style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 16),
                   StreamBuilder<Map<String, dynamic>>(
@@ -142,15 +142,15 @@ class AboutScreen extends StatelessWidget {
                         children: [
                           Row(
                             children: [
-                              Expanded(child: _buildStatItem('🔧', stats['totalObjectsPosted'].toString(), 'Reportes')),
-                              Expanded(child: _buildStatItem('✅', stats['totalObjectsReused'].toString(), 'Reparados')),
+                              Expanded(child: _buildStatItem('🔧', stats['totalObjectsPosted'].toString(), tr('reports_stat'))),
+                              Expanded(child: _buildStatItem('✅', stats['totalObjectsReused'].toString(), tr('repaired_stat'))),
                             ],
                           ),
                           const SizedBox(height: 12),
                           Row(
                             children: [
-                              Expanded(child: _buildStatItem('👤', stats['totalUsers'].toString(), 'Fixers')),
-                              Expanded(child: _buildStatItem('📍', stats['totalCities'].toString(), 'Zonas')),
+                              Expanded(child: _buildStatItem('👤', stats['totalUsers'].toString(), tr('fixers_stat'))),
+                              Expanded(child: _buildStatItem('📍', stats['totalCities'].toString(), tr('zones_stat'))),
                             ],
                           ),
                         ],
@@ -159,27 +159,27 @@ class AboutScreen extends StatelessWidget {
                   ),
 
                   const SizedBox(height: 32),
-                  const Text(
-                    '🎯 ¿Por qué usar Fix_Radar?',
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  Text(
+                    tr('why_use_fixradar'),
+                    style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 12),
-                  _buildBulletPoint('Asistencia técnica ultra-local'),
-                  _buildBulletPoint('Respuesta rápida ante emergencias'),
-                  _buildBulletPoint('Técnicos calificados por la comunidad'),
-                  _buildBulletPoint('Ahorro de tiempo y dinero'),
-                  _buildBulletPoint('Soporte constante en tu vecindario'),
+                  _buildBulletPoint(tr('bullet_ultra_local')),
+                  _buildBulletPoint(tr('bullet_fast_response')),
+                  _buildBulletPoint(tr('bullet_qualified_techs')),
+                  _buildBulletPoint(tr('bullet_save_time')),
+                  _buildBulletPoint(tr('bullet_constant_support')),
 
                   const SizedBox(height: 40),
-                  const Center(
+                  Center(
                     child: Column(
                       children: [
                         Text(
-                          '⭐ Versión',
-                          style: TextStyle(fontWeight: FontWeight.bold),
+                          tr('version_label'),
+                          style: const TextStyle(fontWeight: FontWeight.bold),
                         ),
-                        SizedBox(height: 4),
-                        Text('Versión: 1.0.0', style: TextStyle(color: Colors.grey)),
+                        const SizedBox(height: 4),
+                        Text(tr('version_number'), style: const TextStyle(color: Colors.grey)),
                       ],
                     ),
                   ),
@@ -187,35 +187,35 @@ class AboutScreen extends StatelessWidget {
                   const SizedBox(height: 32),
                   const Divider(),
                   const SizedBox(height: 16),
-                  const Text(
-                    '🔗 Enlaces',
-                    style: TextStyle(fontWeight: FontWeight.bold),
+                  Text(
+                    tr('links_label'),
+                    style: const TextStyle(fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 8),
                   _buildLink(
-                    context, 
-                    'Política de Privacidad', 
+                    context,
+                    tr('politica_privacidad'),
                     onTap: () => Navigator.pushNamed(context, AppRoutes.privacyPolicy)
                   ),
                   _buildLink(
-                    context, 
-                    'Términos y Condiciones', 
+                    context,
+                    tr('terminos_condiciones'),
                     onTap: () => Navigator.pushNamed(context, AppRoutes.terms)
                   ),
                   _buildLink(
-                    context, 
-                    'Soporte', 
-                    onTap: () => _launchEmail('support@fixradar.tech', subject: 'Soporte')
+                    context,
+                    tr('support_link'),
+                    onTap: () => _launchEmail('support@fixradar.tech', subject: tr('email_subject_support'))
                   ),
                   _buildLink(
-                    context, 
-                    'Reportar un problema', 
-                    onTap: () => _launchEmail('support@fixradar.tech', subject: 'Reporte de problema')
+                    context,
+                    tr('report_problem_link'),
+                    onTap: () => _launchEmail('support@fixradar.tech', subject: tr('email_subject_problem_report'))
                   ),
                   _buildLink(
-                    context, 
-                    'Contacto', 
-                    onTap: () => _launchEmail('support@fixradar.tech', subject: 'Contacto')
+                    context,
+                    tr('contact_link'),
+                    onTap: () => _launchEmail('support@fixradar.tech', subject: tr('email_subject_contact'))
                   ),
 
                   const SizedBox(height: 40),
@@ -226,17 +226,17 @@ class AboutScreen extends StatelessWidget {
                       borderRadius: BorderRadius.circular(20),
                       border: Border.all(color: Colors.grey[200]!),
                     ),
-                    child: const Column(
+                    child: Column(
                       children: [
                         Text(
-                          '❤️ Hecho para la comunidad',
-                          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                          tr('made_for_community'),
+                          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                         ),
-                        SizedBox(height: 12),
+                        const SizedBox(height: 12),
                         Text(
-                          '"Fix_Radar transforma la forma en que cuidamos nuestro hogar. Lo que es un problema para ti, es una oportunidad de servicio para alguien capacitado."',
+                          tr('made_for_community_quote'),
                           textAlign: TextAlign.center,
-                          style: TextStyle(
+                          style: const TextStyle(
                             fontStyle: FontStyle.italic,
                             color: Colors.black54,
                             height: 1.5,
@@ -246,10 +246,10 @@ class AboutScreen extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 24),
-                  const Center(
+                  Center(
                     child: Text(
-                      '"Turn every fix into a local mission."',
-                      style: TextStyle(
+                      tr('turn_fix_mission'),
+                      style: const TextStyle(
                         color: Color(0xFFFF8A00),
                         fontWeight: FontWeight.bold,
                         fontSize: 14,

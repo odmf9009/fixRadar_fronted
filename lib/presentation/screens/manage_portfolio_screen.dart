@@ -2,11 +2,13 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../core/services/auth_service.dart';
+import '../../core/services/language_service.dart';
 import 'package:intl/intl.dart';
 import '../../core/models/portfolio_item.dart';
 import '../../core/models/user_model.dart';
 import '../../core/services/firestore_service.dart';
 import '../../core/services/upload_service.dart';
+import '../../core/config/service_constants.dart';
 
 class ManagePortfolioScreen extends StatefulWidget {
   const ManagePortfolioScreen({super.key});
@@ -26,7 +28,7 @@ class _ManagePortfolioScreenState extends State<ManagePortfolioScreen> {
     return Scaffold(
           backgroundColor: Colors.white,
           appBar: AppBar(
-            title: const Text('Mi Portafolio', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+            title: Text(tr('my_portfolio'), style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
             backgroundColor: const Color(0xFF121212),
             elevation: 0,
             centerTitle: true,
@@ -122,22 +124,22 @@ class _ManagePortfolioScreenState extends State<ManagePortfolioScreen> {
           children: [
             Icon(Icons.work_outline, size: 80, color: Colors.grey[300]),
             const SizedBox(height: 24),
-            const Text(
-              'Todavía no has agregado trabajos a tu portafolio.',
+            Text(
+              tr('no_portfolio_yet'),
               textAlign: TextAlign.center,
-              style: TextStyle(color: Colors.black87, fontSize: 18, fontWeight: FontWeight.bold),
+              style: const TextStyle(color: Colors.black87, fontSize: 18, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 12),
-            const Text(
-              'Muestra tus mejores proyectos para atraer a más clientes.',
+            Text(
+              tr('show_best_projects'),
               textAlign: TextAlign.center,
-              style: TextStyle(color: Colors.grey, fontSize: 14),
+              style: const TextStyle(color: Colors.grey, fontSize: 14),
             ),
             const SizedBox(height: 32),
             ElevatedButton.icon(
               onPressed: () => _showAddItemSheet(),
               icon: const Icon(Icons.add),
-              label: const Text('Agregar Proyecto'),
+              label: Text(tr('add_project')),
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFFFF8A00),
                 foregroundColor: Colors.white,
@@ -160,11 +162,11 @@ class _ManagePortfolioScreenState extends State<ManagePortfolioScreen> {
           children: [
             const Icon(Icons.error_outline, color: Colors.red, size: 48),
             const SizedBox(height: 16),
-            const Text('Error al cargar datos', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+            Text(tr('error_loading_data'), style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
             const SizedBox(height: 8),
             Text(error, textAlign: TextAlign.center, style: const TextStyle(color: Colors.grey)),
             const SizedBox(height: 24),
-            ElevatedButton(onPressed: () => setState(() {}), child: const Text('Reintentar')),
+            ElevatedButton(onPressed: () => setState(() {}), child: Text(tr('retry'))),
           ],
         ),
       ),
@@ -239,7 +241,7 @@ class _ManagePortfolioScreenState extends State<ManagePortfolioScreen> {
                           borderRadius: BorderRadius.circular(4),
                         ),
                         child: Text(
-                          item.category,
+                          ServiceConstants.getDisplayName(item.category),
                           style: const TextStyle(color: Color(0xFFFF8A00), fontWeight: FontWeight.bold, fontSize: 11),
                         ),
                       ),
@@ -308,8 +310,8 @@ class _ManagePortfolioScreenState extends State<ManagePortfolioScreen> {
         }
       },
       itemBuilder: (context) => [
-        const PopupMenuItem(value: 'edit', child: Row(children: [Icon(Icons.edit, size: 20), SizedBox(width: 8), Text('Editar')])),
-        const PopupMenuItem(value: 'delete', child: Row(children: [Icon(Icons.delete_outline, color: Colors.red, size: 20), SizedBox(width: 8), Text('Eliminar', style: TextStyle(color: Colors.red))])),
+        PopupMenuItem(value: 'edit', child: Row(children: [const Icon(Icons.edit, size: 20), const SizedBox(width: 8), Text(tr('edit'))])),
+        PopupMenuItem(value: 'delete', child: Row(children: [const Icon(Icons.delete_outline, color: Colors.red, size: 20), const SizedBox(width: 8), Text(tr('delete'), style: const TextStyle(color: Colors.red))])),
       ],
     );
   }
@@ -344,7 +346,7 @@ class _ManagePortfolioScreenState extends State<ManagePortfolioScreen> {
                 children: [
                   const Icon(Icons.category_outlined, size: 16, color: Color(0xFFFF8A00)),
                   const SizedBox(width: 4),
-                  Text(item.category, style: const TextStyle(color: Color(0xFFFF8A00), fontWeight: FontWeight.bold)),
+                  Text(ServiceConstants.getDisplayName(item.category), style: const TextStyle(color: Color(0xFFFF8A00), fontWeight: FontWeight.bold)),
                   const SizedBox(width: 16),
                   const Icon(Icons.calendar_today_outlined, size: 16, color: Colors.grey),
                   const SizedBox(width: 4),
@@ -362,11 +364,11 @@ class _ManagePortfolioScreenState extends State<ManagePortfolioScreen> {
                 ),
               ],
               const SizedBox(height: 24),
-              const Text('Descripción', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+              Text(tr('descripcion'), style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
               const SizedBox(height: 12),
               Text(item.description, style: const TextStyle(fontSize: 16, height: 1.6, color: Colors.black87)),
               const SizedBox(height: 32),
-              const Text('Galería de Fotos', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+              Text(tr('photo_gallery'), style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
               const SizedBox(height: 16),
               ...item.imageUrls.map((url) => Padding(
                 padding: const EdgeInsets.only(bottom: 16),
@@ -397,10 +399,10 @@ class _ManagePortfolioScreenState extends State<ManagePortfolioScreen> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Eliminar proyecto'),
-        content: Text('¿Estás seguro de que deseas eliminar "${item.title}"? Esta acción no se puede deshacer.'),
+        title: Text(tr('delete_project')),
+        content: Text(tr('delete_project_confirm').replaceAll('{title}', item.title)),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancelar')),
+          TextButton(onPressed: () => Navigator.pop(context), child: Text(tr('cancel'))),
           ElevatedButton(
             onPressed: () async {
               Navigator.pop(context);
@@ -414,16 +416,16 @@ class _ManagePortfolioScreenState extends State<ManagePortfolioScreen> {
                   await _uploadService.deleteImageByUrl(url);
                 }
                 if (mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Proyecto eliminado')));
+                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(tr('project_deleted'))));
                 }
               } catch (e) {
                 if (mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error al eliminar: $e'), backgroundColor: Colors.red));
+                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(tr('error_deleting').replaceAll('{e}', '$e')), backgroundColor: Colors.red));
                 }
               }
             },
             style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-            child: const Text('Eliminar', style: TextStyle(color: Colors.white)),
+            child: Text(tr('delete'), style: const TextStyle(color: Colors.white)),
           ),
         ],
       ),
@@ -531,33 +533,33 @@ class _AddPortfolioItemSheetState extends State<AddPortfolioItemSheet> {
                     SizedBox(width: 8),
                     Expanded(
                       child: Text(
-                        'No tienes especialidades configuradas. Por favor, edita tu perfil primero.',
-                        style: TextStyle(fontSize: 12, color: Colors.brown),
+                        tr('no_specialties_set_warning'),
+                        style: const TextStyle(fontSize: 12, color: Colors.brown),
                       ),
                     ),
                   ],
                 ),
               ),
-            _buildTextField(_titleController, 'Título del proyecto', 'Ej: Renovación de Cocina Moderna'),
+            _buildTextField(_titleController, tr('project_title'), tr('project_title_hint')),
             const SizedBox(height: 16),
             DropdownButtonFormField<String>(
               value: displayCategories.contains(_category) ? _category : displayCategories.first,
               items: displayCategories
-                  .map((e) => DropdownMenuItem(value: e, child: Text(e))).toList(),
+                  .map((e) => DropdownMenuItem(value: e, child: Text(ServiceConstants.getDisplayName(e)))).toList(),
               onChanged: (val) => setState(() => _category = val!),
-              decoration: _inputDecoration('Categoría', 'Basado en tus especialidades'),
+              decoration: _inputDecoration(tr('categoria'), tr('based_on_specialties')),
             ),
             const SizedBox(height: 16),
-            _buildTextField(_descController, 'Descripción', 'Cuéntanos qué hiciste en este proyecto...', maxLines: 3),
+            _buildTextField(_descController, tr('descripcion'), tr('project_desc_hint'), maxLines: 3),
             const SizedBox(height: 16),
             _buildDatePicker(),
             const SizedBox(height: 16),
-            _buildTextField(_locationController, 'Ubicación (Opcional)', 'Ciudad o área del trabajo', icon: Icons.location_on_outlined),
+            _buildTextField(_locationController, tr('location_optional'), tr('city_or_area'), icon: Icons.location_on_outlined),
             const SizedBox(height: 24),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Text('Fotos del proyecto (Máx 5)', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                Text(tr('project_photos_max'), style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
                 Text('${_images.length}/5', 
                   style: TextStyle(color: _images.length >= 5 ? Colors.red : Colors.grey, fontWeight: FontWeight.bold)),
               ],
@@ -576,16 +578,16 @@ class _AddPortfolioItemSheetState extends State<AddPortfolioItemSheet> {
                   elevation: 0,
                 ),
                 child: _isUploading
-                    ? const Row(
+                    ? Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
-                          SizedBox(width: 12),
-                          Text('Guardando...', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                          const CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                          const SizedBox(width: 12),
+                          Text(tr('saving'), style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
                         ],
                       )
                     : Text(
-                        widget.item == null ? 'Publicar Proyecto' : 'Guardar Cambios',
+                        widget.item == null ? tr('publish_project') : tr('save_changes'),
                         style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
                       ),
               ),
@@ -674,12 +676,12 @@ class _AddPortfolioItemSheetState extends State<AddPortfolioItemSheet> {
                   borderRadius: BorderRadius.circular(16),
                   border: Border.all(color: Colors.grey[300]!),
                 ),
-                child: const Column(
+                child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Icon(Icons.add_a_photo_outlined, color: Color(0xFFFF8A00), size: 32),
-                    SizedBox(height: 8),
-                    Text('Añadir fotos', style: TextStyle(color: Colors.grey, fontSize: 11, fontWeight: FontWeight.bold)),
+                    const Icon(Icons.add_a_photo_outlined, color: Color(0xFFFF8A00), size: 32),
+                    const SizedBox(height: 8),
+                    Text(tr('add_photos_label'), style: const TextStyle(color: Colors.grey, fontSize: 11, fontWeight: FontWeight.bold)),
                   ],
                 ),
               ),
@@ -740,7 +742,7 @@ class _AddPortfolioItemSheetState extends State<AddPortfolioItemSheet> {
   Future<void> _save() async {
     if (_titleController.text.trim().isEmpty || _images.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Por favor, agrega un título y al menos una foto del proyecto.')),
+        SnackBar(content: Text(tr('add_title_photo'))),
       );
       return;
     }
@@ -793,7 +795,7 @@ class _AddPortfolioItemSheetState extends State<AddPortfolioItemSheet> {
         Navigator.pop(context);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(widget.item == null ? '¡Proyecto publicado con éxito!' : 'Cambios guardados'), 
+            content: Text(widget.item == null ? tr('project_published') : tr('changes_saved')),
             backgroundColor: Colors.green
           ),
         );
@@ -801,7 +803,7 @@ class _AddPortfolioItemSheetState extends State<AddPortfolioItemSheet> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error al guardar: $e'), backgroundColor: Colors.red),
+          SnackBar(content: Text(tr('error_saving').replaceAll('{e}', '$e')), backgroundColor: Colors.red),
         );
       }
     } finally {

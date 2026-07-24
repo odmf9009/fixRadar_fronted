@@ -4,7 +4,9 @@ import '../../core/services/auth_service.dart';
 import '../../core/models/user_model.dart';
 import '../../core/services/firestore_service.dart';
 import '../../core/services/location_service.dart';
+import '../../core/services/language_service.dart';
 import '../../core/config/routes.dart';
+import '../../core/config/service_constants.dart';
 
 class FavoriteTechniciansScreen extends StatefulWidget {
   const FavoriteTechniciansScreen({super.key});
@@ -36,13 +38,13 @@ class _FavoriteTechniciansScreenState extends State<FavoriteTechniciansScreen> {
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
-        title: const Text('Mis Favoritos', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black)),
+        title: Text(tr('my_favorites'), style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.black)),
         backgroundColor: Colors.white,
         elevation: 0,
         centerTitle: true,
       ),
       body: currentUserId.isEmpty
-          ? const Center(child: Text('Inicia sesión para ver tus favoritos'))
+          ? Center(child: Text(tr('login_to_see_favorites')))
           : StreamBuilder<UserModel?>(
               stream: _firestoreService.getUserStream(currentUserId),
               builder: (context, userSnapshot) {
@@ -56,7 +58,7 @@ class _FavoriteTechniciansScreenState extends State<FavoriteTechniciansScreen> {
                       children: [
                         Icon(Icons.favorite_border, size: 64, color: Colors.grey[300]),
                         const SizedBox(height: 16),
-                        const Text('No tienes técnicos en favoritos', style: TextStyle(color: Colors.grey)),
+                        Text(tr('no_favorite_techs'), style: const TextStyle(color: Colors.grey)),
                       ],
                     ),
                   );
@@ -118,7 +120,7 @@ class _FavoriteTechniciansScreenState extends State<FavoriteTechniciansScreen> {
         subtitle: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(tech.specialties.first, style: const TextStyle(color: Color(0xFFFF8A00), fontSize: 12)),
+            Text(ServiceConstants.getDisplayName(tech.specialties.first), style: const TextStyle(color: Color(0xFFFF8A00), fontSize: 12)),
             const SizedBox(height: 4),
             Row(
               children: [

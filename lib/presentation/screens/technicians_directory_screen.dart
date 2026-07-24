@@ -63,7 +63,7 @@ class _TechniciansDirectoryScreenState extends State<TechniciansDirectoryScreen>
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
-        title: const Text('Directorio de Técnicos', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black)),
+        title: Text(tr('technicians_directory'), style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.black)),
         backgroundColor: Colors.white,
         elevation: 0,
         centerTitle: true,
@@ -173,11 +173,11 @@ class _TechniciansDirectoryScreenState extends State<TechniciansDirectoryScreen>
         ),
         child: TextField(
           onChanged: (val) => setState(() => _searchQuery = val),
-          decoration: const InputDecoration(
-            hintText: 'Buscar por nombre, especialidad...',
-            prefixIcon: Icon(Icons.search, color: Colors.grey),
+          decoration: InputDecoration(
+            hintText: tr('search_by_name_specialty'),
+            prefixIcon: const Icon(Icons.search, color: Colors.grey),
             border: InputBorder.none,
-            contentPadding: EdgeInsets.symmetric(vertical: 14),
+            contentPadding: const EdgeInsets.symmetric(vertical: 14),
           ),
         ),
       ),
@@ -212,7 +212,7 @@ class _TechniciansDirectoryScreenState extends State<TechniciansDirectoryScreen>
                   ),
                   const SizedBox(height: 6),
                   Text(
-                    cat['name'],
+                    ServiceConstants.getDisplayName(cat['name']),
                     style: TextStyle(
                       fontSize: 9,
                       fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
@@ -237,15 +237,15 @@ class _TechniciansDirectoryScreenState extends State<TechniciansDirectoryScreen>
       padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
       child: Row(
         children: [
-          _buildFilterChip('Cercanos', _sortBy == 'distance', () => setState(() => _sortBy = 'distance')),
+          _buildFilterChip(tr('nearby_filter'), _sortBy == 'distance', () => setState(() => _sortBy = 'distance')),
           const SizedBox(width: 8),
-          _buildFilterChip('Mejor Valorados', _sortBy == 'rating', () => setState(() => _sortBy = 'rating')),
+          _buildFilterChip(tr('top_rated_filter'), _sortBy == 'rating', () => setState(() => _sortBy = 'rating')),
           const SizedBox(width: 8),
-          _buildFilterChip('Más Trabajos', _sortBy == 'completedJobs', () => setState(() => _sortBy = 'completedJobs')),
+          _buildFilterChip(tr('most_jobs'), _sortBy == 'completedJobs', () => setState(() => _sortBy = 'completedJobs')),
           const SizedBox(width: 8),
-          _buildFilterChip('Verificados', _onlyVerified, () => setState(() => _onlyVerified = !_onlyVerified)),
+          _buildFilterChip(tr('verified_filter'), _onlyVerified, () => setState(() => _onlyVerified = !_onlyVerified)),
           const SizedBox(width: 8),
-          _buildFilterChip('Disponibles', _onlyAvailable, () => setState(() => _onlyAvailable = !_onlyAvailable)),
+          _buildFilterChip(tr('available_filter'), _onlyAvailable, () => setState(() => _onlyAvailable = !_onlyAvailable)),
         ],
       ),
     );
@@ -270,7 +270,7 @@ class _TechniciansDirectoryScreenState extends State<TechniciansDirectoryScreen>
         children: [
           Icon(Icons.person_off_outlined, size: 64, color: Colors.grey[300]),
           const SizedBox(height: 16),
-          const Text('No se encontraron técnicos', style: TextStyle(color: Colors.grey)),
+          Text(tr('no_techs_found'), style: const TextStyle(color: Colors.grey)),
         ],
       ),
     );
@@ -344,7 +344,7 @@ class _TechniciansDirectoryScreenState extends State<TechniciansDirectoryScreen>
                           Text(tech.companyName!, style: TextStyle(color: Colors.grey[700], fontSize: 12, fontStyle: FontStyle.italic)),
                         const SizedBox(height: 4),
                         Text(
-                          tech.specialties.isNotEmpty ? tech.specialties.join(', ') : 'Técnico General',
+                          tech.specialties.isNotEmpty ? tech.specialties.map(ServiceConstants.getDisplayName).join(', ') : tr('general_technician'),
                           style: TextStyle(color: Colors.grey[600], fontSize: 13),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
@@ -360,12 +360,12 @@ class _TechniciansDirectoryScreenState extends State<TechniciansDirectoryScreen>
                             ),
                             const SizedBox(width: 8),
                             Text(
-                              '(${tech.reviewsCount} reseñas)',
+                              tr('reviews_count').replaceAll('{n}', '${tech.reviewsCount}'),
                               style: TextStyle(color: Colors.grey[500], fontSize: 12),
                             ),
                             const Spacer(),
                             Text(
-                              isOnline ? 'Disponible' : (tech.presenceStatus == 'busy' ? 'Ocupado' : 'Fuera de línea'),
+                              isOnline ? tr('disponible_status') : (tech.presenceStatus == 'busy' ? tr('ocupado_status') : tr('offline_status')),
                               style: TextStyle(
                                 color: isOnline ? Colors.green : (tech.presenceStatus == 'busy' ? Colors.orange : Colors.grey),
                                 fontWeight: FontWeight.bold,
@@ -390,7 +390,7 @@ class _TechniciansDirectoryScreenState extends State<TechniciansDirectoryScreen>
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   _buildSmallStat(Icons.location_on_outlined, '${distMiles.toStringAsFixed(1)} mi'),
-                  _buildSmallStat(Icons.check_circle_outline, '${tech.completedJobsCount} trabajos'),
+                  _buildSmallStat(Icons.check_circle_outline, tr('n_jobs').replaceAll('{n}', '${tech.completedJobsCount}')),
                   _buildSmallStat(Icons.timer_outlined, tech.avgResponseTime ?? 'N/A'),
                 ],
               ),

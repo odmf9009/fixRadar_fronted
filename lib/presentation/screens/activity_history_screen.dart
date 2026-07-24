@@ -31,6 +31,15 @@ class _ActivityHistoryScreenState extends State<ActivityHistoryScreen> {
     'Ranking'
   ];
 
+  static const Map<String, String> _filterTrKeys = {
+    'All': 'activity_filter_all',
+    'Publications': 'activity_filter_publications',
+    'Collected': 'activity_filter_collected',
+    'Community': 'activity_filter_community',
+    'Achievements': 'activity_filter_achievements',
+    'Ranking': 'activity_filter_ranking',
+  };
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -109,7 +118,7 @@ class _ActivityHistoryScreenState extends State<ActivityHistoryScreen> {
                             Icon(Icons.history, size: 64, color: Colors.grey[300]),
                             const SizedBox(height: 16),
                             Text(
-                              'No hay actividad reciente en esta categoría',
+                              tr('no_recent_activity'),
                               style: TextStyle(color: Colors.grey[500]),
                             ),
                           ],
@@ -261,7 +270,7 @@ class _ActivityHistoryScreenState extends State<ActivityHistoryScreen> {
               if (achievements.isEmpty) {
                 return Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 20),
-                  child: Center(child: Text('¡Empieza a explorar para ganar insignias!', style: TextStyle(color: Colors.grey[400], fontSize: 12))),
+                  child: Center(child: Text(tr('start_exploring_badges'), style: TextStyle(color: Colors.grey[400], fontSize: 12))),
                 );
               }
               
@@ -320,7 +329,7 @@ class _ActivityHistoryScreenState extends State<ActivityHistoryScreen> {
           return Padding(
             padding: const EdgeInsets.only(right: 8.0),
             child: ChoiceChip(
-              label: Text(filter),
+              label: Text(tr(_filterTrKeys[filter]!)),
               selected: isSelected,
               onSelected: (val) {
                 if (val) setState(() => _activeFilter = filter);
@@ -430,10 +439,10 @@ class _ActivityHistoryScreenState extends State<ActivityHistoryScreen> {
 
   String _formatRelativeTime(DateTime dateTime) {
     final diff = DateTime.now().difference(dateTime);
-    if (diff.inMinutes < 60) return 'hace ${diff.inMinutes} minutos';
-    if (diff.inHours < 24) return 'hace ${diff.inHours} horas';
-    if (diff.inDays == 1) return 'ayer';
-    if (diff.inDays < 7) return 'hace ${diff.inDays} días';
+    if (diff.inMinutes < 60) return tr('minutes_ago').replaceAll('{n}', '${diff.inMinutes}');
+    if (diff.inHours < 24) return tr('hours_ago').replaceAll('{n}', '${diff.inHours}');
+    if (diff.inDays == 1) return tr('yesterday');
+    if (diff.inDays < 7) return tr('days_ago').replaceAll('{n}', '${diff.inDays}');
     return DateFormat('dd/MM/yyyy').format(dateTime);
   }
 

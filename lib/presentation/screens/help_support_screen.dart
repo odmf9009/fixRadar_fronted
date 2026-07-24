@@ -41,17 +41,17 @@ class HelpSupportScreen extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Center(
+            Center(
               child: Column(
                 children: [
                   Text(
-                    '🆘 Ayuda y Soporte',
-                    style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                    tr('help_title'),
+                    style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
                   ),
-                  SizedBox(height: 8),
+                  const SizedBox(height: 8),
                   Text(
-                    '¿En qué podemos ayudarte hoy?',
-                    style: TextStyle(color: Colors.grey),
+                    tr('help_subtitle'),
+                    style: const TextStyle(color: Colors.grey),
                   ),
                 ],
               ),
@@ -67,98 +67,98 @@ class HelpSupportScreen extends StatelessWidget {
               mainAxisSpacing: 16,
               childAspectRatio: 1.2,
               children: [
-                _buildQuickActionButton(Icons.help_outline, '❓ FAQ', Colors.blue, () {}),
-                _buildQuickActionButton(Icons.support_agent, '📧 Contacto', Colors.green, () => _launchEmail('support@fixradar.tech', subject: 'Soporte')),
-                _buildQuickActionButton(Icons.bug_report_outlined, '🐞 Reportar Error', Colors.red, () => _launchEmail('support@fixradar.tech', subject: 'Reporte de Error')),
-                _buildQuickActionButton(Icons.lightbulb_outline, '💡 Sugerencia', Colors.orange, () => _launchEmail('support@fixradar.tech', subject: 'Sugerencia')),
+                _buildQuickActionButton(Icons.help_outline, tr('faq_label'), Colors.blue, () {}),
+                _buildQuickActionButton(Icons.support_agent, tr('contact_label'), Colors.green, () => _launchEmail('support@fixradar.tech', subject: tr('email_subject_support'))),
+                _buildQuickActionButton(Icons.bug_report_outlined, tr('report_error_label'), Colors.red, () => _launchEmail('support@fixradar.tech', subject: tr('email_subject_error'))),
+                _buildQuickActionButton(Icons.lightbulb_outline, tr('suggestion_label'), Colors.orange, () => _launchEmail('support@fixradar.tech', subject: tr('email_subject_suggestion'))),
               ],
             ),
 
             const SizedBox(height: 40),
-            const Text(
-              'Preguntas Frecuentes (FAQ)',
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+            Text(
+              tr('faq_title'),
+              style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 16),
             _buildFAQTile(
-              '¿Qué es Fix_Radar?',
-              'Fix_Radar es una plataforma técnica que conecta hogares con problemas de mantenimiento con expertos locales en tiempo real.',
+              tr('faq_q1'),
+              tr('faq_a1'),
             ),
             _buildFAQTile(
-              '¿Cómo reporto una avería?',
-              '1. Presiona el botón de reporte.\n2. Toma una foto del problema.\n3. Añade una descripción y categoría.\n4. Los técnicos cercanos recibirán tu alerta.',
+              tr('faq_q2'),
+              tr('faq_a2'),
             ),
             _buildFAQTile(
-              '¿Cómo sé si un técnico aceptó mi reporte?',
-              'Recibirás una notificación y podrás ver el estado en el mapa como "Técnico en camino". El chat se habilitará para coordinar los detalles.',
+              tr('faq_q3'),
+              tr('faq_a3'),
             ),
             _buildFAQTile(
-              '¿La aplicación es gratuita?',
-              'Sí. Fix_Radar es gratuita para reportar averías. Los técnicos pueden tener sus propias tarifas por los servicios realizados.',
+              tr('faq_q4'),
+              tr('faq_a4'),
             ),
             _buildFAQTile(
-              '¿Es seguro dejar entrar a un técnico?',
-              'Fix_Radar muestra las valoraciones y reputación de cada técnico. Recomendamos siempre verificar el perfil y las reseñas de otros usuarios antes de coordinar una visita.',
+              tr('faq_q5'),
+              tr('faq_a5'),
             ),
 
             const SizedBox(height: 40),
             _buildInfoCard(
-              '📧 Contacto',
-              '¿Necesitas asistencia?',
+              tr('contact_card_title'),
+              tr('need_assistance'),
               'support@fixradar.tech',
-              'Tiempo de respuesta estimado:\n24 horas hábiles',
+              tr('response_time_est'),
               const Color(0xFFE8F5E9),
               Colors.green[700]!,
-              onTap: () => _launchEmail('support@fixradar.tech', subject: 'Soporte'),
+              onTap: () => _launchEmail('support@fixradar.tech', subject: tr('email_subject_support')),
             ),
 
             const SizedBox(height: 20),
             _buildInfoCard(
-              '🐞 Reportar un Error',
-              'Si encuentras un fallo técnico:',
+              tr('report_error_card_title'),
+              tr('if_you_find_bug'),
               'support@fixradar.tech',
-              'Incluye capturas si es posible',
+              tr('include_screenshots'),
               const Color(0xFFFFEBEE),
               Colors.red[700]!,
-              onTap: () => _launchEmail('support@fixradar.tech', subject: 'Reporte de Error'),
+              onTap: () => _launchEmail('support@fixradar.tech', subject: tr('email_subject_error')),
             ),
 
             const SizedBox(height: 20),
             _buildInfoCard(
-              '💡 Sugerir una Función',
-              '¿Cómo podemos mejorar Fix_Radar?',
+              tr('suggest_feature_title'),
+              tr('how_improve_fixradar'),
               'support@fixradar.tech',
-              'Tus ideas nos ayudan a crecer',
+              tr('ideas_help_grow'),
               const Color(0xFFFFF3E0),
               Colors.orange[700]!,
-              onTap: () => _launchEmail('support@fixradar.tech', subject: 'Sugerencia'),
+              onTap: () => _launchEmail('support@fixradar.tech', subject: tr('email_subject_suggestion')),
             ),
 
             const SizedBox(height: 40),
-            const Text(
-              '📄 Información Legal',
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+            Text(
+              tr('legal_info'),
+              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
             ),
             const SizedBox(height: 8),
-            _buildLinkTile(context, 'Política de Privacidad', AppRoutes.privacyPolicy),
-            _buildLinkTile(context, 'Términos y Condiciones', AppRoutes.terms),
-            _buildLinkTile(context, 'Licencias de terceros', AppRoutes.licenses),
+            _buildLinkTile(context, tr('politica_privacidad'), AppRoutes.privacyPolicy),
+            _buildLinkTile(context, tr('terminos_condiciones'), AppRoutes.terms),
+            _buildLinkTile(context, tr('licencias_terceros'), AppRoutes.licenses),
 
             const SizedBox(height: 60),
-            const Center(
+            Center(
               child: Column(
                 children: [
                   Text(
-                    '❤️ Gracias por usar Fix_Radar',
-                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                    tr('thanks_using'),
+                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                   ),
-                  SizedBox(height: 8),
+                  const SizedBox(height: 8),
                   Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 20),
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
                     child: Text(
-                      '"Conectando habilidades con necesidades para un hogar siempre a punto." 🛠️🏠✨',
+                      tr('connecting_skills'),
                       textAlign: TextAlign.center,
-                      style: TextStyle(fontStyle: FontStyle.italic, color: Colors.black54),
+                      style: const TextStyle(fontStyle: FontStyle.italic, color: Colors.black54),
                     ),
                   ),
                 ],
