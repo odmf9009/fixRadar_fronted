@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import '../../core/services/auth_service.dart';
-import '../../core/services/firestore_service.dart';
 import '../../core/services/language_service.dart';
+import '../../core/widgets/delete_account_dialog.dart';
 
 class PrivacySettingsScreen extends StatefulWidget {
   const PrivacySettingsScreen({super.key});
@@ -108,56 +107,11 @@ class _PrivacySettingsScreenState extends State<PrivacySettingsScreen> {
                   leading: const Icon(Icons.delete_forever, color: Colors.red),
                   title: Text(tr('delete_account'), style: const TextStyle(color: Colors.red, fontWeight: FontWeight.bold)),
                   subtitle: Text(tr('delete_account_desc')),
-                  onTap: () => _showDeleteAccountDialog(context),
+                  onTap: () => showDeleteAccountDialog(context),
                 ),
                 const SizedBox(height: 40),
               ],
             ),
-    );
-  }
-
-  void _showDeleteAccountDialog(BuildContext context) {
-    final uid = AuthService.currentUidSync;
-    if (uid.isEmpty) return;
-
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text(tr('delete_account_q')),
-        content: Text(
-          tr('delete_account_confirm'),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text(tr('cancel')),
-          ),
-          ElevatedButton(
-            onPressed: () async {
-              try {
-                final firestoreService = FirestoreService();
-                // El backend borra la cuenta (datos propios + la de Firebase Auth
-                // si aplica). El cliente solo limpia su sesión local después.
-                await firestoreService.deleteUserAccount(uid);
-                await AuthService().signOut();
-
-                if (mounted) {
-                  Navigator.of(context).pushNamedAndRemoveUntil('/', (route) => false);
-                }
-              } catch (e) {
-                if (mounted) {
-                  Navigator.pop(context);
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text(tr('delete_account_error').replaceAll('{e}', '$e'))),
-                  );
-                }
-              }
-            },
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-            child: Text(tr('delete_all'), style: const TextStyle(color: Colors.white)),
-          ),
-        ],
-      ),
     );
   }
 

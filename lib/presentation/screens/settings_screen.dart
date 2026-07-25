@@ -4,6 +4,7 @@ import '../../core/config/routes.dart';
 import '../../core/services/auth_service.dart';
 import '../../core/services/language_service.dart';
 import '../../core/localization/locale_config.dart';
+import '../../core/widgets/delete_account_dialog.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -112,6 +113,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 onTap: () => Navigator.pushNamed(context, AppRoutes.about),
               ),
               const SizedBox(height: 16),
+              _buildSettingsItem(
+                Icons.delete_forever_rounded,
+                tr('delete_account'),
+                textColor: Colors.red,
+                iconColor: Colors.red,
+                onTap: () => showDeleteAccountDialog(context),
+              ),
               _buildSettingsItem(
                 Icons.logout_rounded,
                 tr('cerrar_sesion'),

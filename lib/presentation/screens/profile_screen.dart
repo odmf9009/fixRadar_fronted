@@ -485,7 +485,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     _buildMenuItem(Icons.history, tr('historial_menu'), () {
                       Navigator.pushNamed(context, AppRoutes.activityHistory);
                     }),
-                    
+
                     const SizedBox(height: 40),
                   ],
                 ),
