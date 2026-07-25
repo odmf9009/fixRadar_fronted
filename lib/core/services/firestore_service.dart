@@ -672,10 +672,12 @@ class FirestoreService {
     await _api.put('/users/me', data: {'notificationsEnabled': enabled});
   }
 
+  /// Borra la cuenta y todos los datos del usuario en el backend.
+  /// A propósito NO atrapa errores: si el borrado falla, la pantalla que
+  /// llama debe enterarse y mostrárselo al usuario en vez de navegarlo
+  /// fuera de la app como si la cuenta ya no existiera.
   Future<void> deleteUserAccount(String userId) async {
-    try {
-      await _api.delete('/users/me');
-    } catch (_) {}
+    await _api.delete('/users/me');
   }
 
   Future<void> toggleFavoriteTechnician(String userId, String technicianId, [bool? isFavorite]) async {

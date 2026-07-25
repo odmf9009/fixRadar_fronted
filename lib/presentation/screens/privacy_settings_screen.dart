@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import '../../core/services/auth_service.dart';
 import '../../core/services/firestore_service.dart';
 import '../../core/services/language_service.dart';
@@ -137,9 +136,11 @@ class _PrivacySettingsScreenState extends State<PrivacySettingsScreen> {
             onPressed: () async {
               try {
                 final firestoreService = FirestoreService();
+                // El backend borra la cuenta (datos propios + la de Firebase Auth
+                // si aplica). El cliente solo limpia su sesión local después.
                 await firestoreService.deleteUserAccount(uid);
-                await FirebaseAuth.instance.currentUser?.delete();
-                
+                await AuthService().signOut();
+
                 if (mounted) {
                   Navigator.of(context).pushNamedAndRemoveUntil('/', (route) => false);
                 }

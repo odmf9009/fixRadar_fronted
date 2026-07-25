@@ -70,6 +70,14 @@
 	<string>Necesitamos tu ubicación para mostrarte trabajos y técnicos cercanos a ti.</string>
 	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
 	<string>Necesitamos tu ubicación para mostrarte trabajos y técnicos cercanos a ti.</string>
+	<key>NSCameraUsageDescription</key>
+	<string>Necesitamos acceso a tu cámara para que puedas tomar fotos de tu perfil, del problema a reparar y del trabajo terminado.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Necesitamos acceso a tus fotos para que puedas elegir imágenes de tu perfil, del problema a reparar y del trabajo terminado.</string>
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>Necesitamos guardar imágenes en tu galería cuando lo solicites.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>La cámara puede requerir acceso al micrófono para funcionar correctamente al tomar fotos.</string>
 	<key>ITSAppUsesNonExemptEncryption</key>
 	<false/>
 </dict>

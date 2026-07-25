@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io' show Platform;
 import 'package:flutter/material.dart';
 import '../../core/config/routes.dart';
 import '../../core/services/auth_service.dart';
@@ -134,6 +135,22 @@ class _LoginScreenState extends State<LoginScreen> {
     setState(() => _isLoading = true);
     try {
       final userModel = await _authService.signInWithGoogle();
+      if (mounted && userModel != null) {
+        _navigateAfterAuth(userModel);
+      }
+    } catch (e) {
+      if (mounted) _showError(_parseError(e));
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  // ─── Sign in with Apple ────────────────────────────────────────────────────
+
+  Future<void> _signInWithApple() async {
+    setState(() => _isLoading = true);
+    try {
+      final userModel = await _authService.signInWithApple();
       if (mounted && userModel != null) {
         _navigateAfterAuth(userModel);
       }
@@ -404,6 +421,33 @@ class _LoginScreenState extends State<LoginScreen> {
                     ],
                   ),
                 ),
+
+                // ── Apple button (Guideline 4.8: requerido junto a Google en iOS) ──
+                if (Platform.isIOS || Platform.isMacOS) ...[
+                  const SizedBox(height: 12),
+                  OutlinedButton(
+                    onPressed: _isLoading ? null : _signInWithApple,
+                    style: OutlinedButton.styleFrom(
+                      minimumSize: const Size(double.infinity, 56),
+                      backgroundColor: Colors.black,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(28),
+                      ),
+                      side: const BorderSide(color: Colors.black),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Icon(Icons.apple, color: Colors.white, size: 26),
+                        const SizedBox(width: 12),
+                        Text(
+                          tr('continue_with_apple'),
+                          style: const TextStyle(color: Colors.white, fontSize: 16),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
 
                 const SizedBox(height: 24),
 

@@ -1,7 +1,11 @@
+import 'dart:convert';
+import 'dart:math';
+import 'package:crypto/crypto.dart';
 import 'package:dio/dio.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/user_model.dart';
 import '../utils/rsa_encryptor.dart';
@@ -50,7 +54,7 @@ class AuthService {
       final userCred = await _auth.signInWithCredential(credential);
       if (userCred.user == null) return null;
 
-      return _syncGoogleWithBackend(
+      return _syncFirebaseUserWithBackend(
         name: userCred.user!.displayName ?? 'Usuario',
         profileImageUrl: userCred.user!.photoURL ?? '',
         referralCode: referralCode,
@@ -64,7 +68,69 @@ class AuthService {
     }
   }
 
-  Future<UserModel?> _syncGoogleWithBackend({
+  // ─── Sign in with Apple (Firebase) ──────────────────────────────────────────
+  // Requerido por la guía 4.8 de Apple: como la app ofrece otro login de
+  // terceros (Google), debe ofrecer también "Sign in with Apple" en iOS.
+
+  String _generateNonce([int length = 32]) {
+    const charset = '0123456789ABCDEFGHIJKLMNOPQRSTUVXYZabcdefghijklmnopqrstuvwxyz-._';
+    final random = Random.secure();
+    return List.generate(length, (_) => charset[random.nextInt(charset.length)]).join();
+  }
+
+  String _sha256(String input) => sha256.convert(utf8.encode(input)).toString();
+
+  Future<UserModel?> signInWithApple({String? referralCode}) async {
+    try {
+      final rawNonce = _generateNonce();
+      final nonce = _sha256(rawNonce);
+
+      final appleCredential = await SignInWithApple.getAppleIDCredential(
+        scopes: [
+          AppleIDAuthorizationScopes.email,
+          AppleIDAuthorizationScopes.fullName,
+        ],
+        nonce: nonce,
+      );
+
+      final oauthCredential = OAuthProvider('apple.com').credential(
+        idToken: appleCredential.identityToken,
+        rawNonce: rawNonce,
+        accessToken: appleCredential.authorizationCode,
+      );
+
+      final userCred = await _auth.signInWithCredential(oauthCredential);
+      if (userCred.user == null) return null;
+
+      // El nombre completo solo llega la PRIMERA vez que el usuario autoriza
+      // la app (Apple no lo reenvía en sesiones siguientes), así que hay que
+      // guardarlo en el perfil de Firebase en ese momento.
+      final givenName = appleCredential.givenName;
+      final familyName = appleCredential.familyName;
+      String? displayName = userCred.user!.displayName;
+      if ((givenName != null && givenName.isNotEmpty) || (familyName != null && familyName.isNotEmpty)) {
+        displayName = [givenName, familyName].where((s) => s != null && s.isNotEmpty).join(' ');
+        await userCred.user!.updateDisplayName(displayName);
+      }
+
+      return _syncFirebaseUserWithBackend(
+        name: displayName ?? 'Usuario',
+        profileImageUrl: userCred.user!.photoURL ?? '',
+        referralCode: referralCode,
+      );
+    } on SignInWithAppleAuthorizationException catch (e) {
+      // El usuario canceló el diálogo nativo de Apple.
+      if (e.code == AuthorizationErrorCode.canceled) return null;
+      rethrow;
+    } on DioException {
+      rethrow;
+    } catch (e) {
+      print('Error en signInWithApple: $e');
+      rethrow;
+    }
+  }
+
+  Future<UserModel?> _syncFirebaseUserWithBackend({
     String? name,
     String? profileImageUrl,
     String? userType,
@@ -82,7 +148,7 @@ class AuthService {
       await _uploadFcmToken();
       return user;
     } catch (e) {
-      print('Error en _syncGoogleWithBackend: $e');
+      print('Error en _syncFirebaseUserWithBackend: $e');
       if (e is DioException) {
         print('Dio error: ${e.type} | ${e.message} | ${e.response}');
       }
@@ -190,14 +256,14 @@ class AuthService {
     await _clearBackendUserId();
   }
 
-  /// Called on splash for Google-auth users.
+  /// Called on splash for Firebase-auth users (Google o Apple).
   /// Sincronización silenciosa: no propaga errores (el splash no debe mostrar
   /// snackbars ni romperse). El login interactivo sí los propaga.
   Future<UserModel?> syncCurrentUser() async {
     final firebaseUser = _auth.currentUser;
     if (firebaseUser == null) return null;
     try {
-      return await _syncGoogleWithBackend(
+      return await _syncFirebaseUserWithBackend(
         name: firebaseUser.displayName,
         profileImageUrl: firebaseUser.photoURL,
       );

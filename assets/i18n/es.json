@@ -349,6 +349,7 @@
   "sign_in": "Iniciar sesión",
   "or_continue_with": "O continuar con",
   "continue_with_google": "Continuar con Google",
+  "continue_with_apple": "Continuar con Apple",
   "proposal_from": "Propuesta de {name}",
   "must_be_authenticated_to_publish": "Debes estar autenticado para publicar.",
   "error_uploading_image_generic": "Error al subir la imagen: {e}",
