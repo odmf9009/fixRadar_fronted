@@ -7,16 +7,18 @@ import 'core/services/api_service.dart';
 import 'core/services/language_service.dart';
 import 'core/services/notification_service.dart';
 import 'core/theme/app_theme.dart';
-import 'core/localization/app_translations.dart';
+import 'core/localization/locale_config.dart';
 import 'firebase_options.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
-  
-  // Initialize date formatting for locales (specifically 'es' used in history)
-  await initializeDateFormatting('es', null);
-  await initializeDateFormatting('en', null);
+
+  // Inicializa el formateo de fechas de `intl` para cada idioma soportado
+  // (agregar un idioma a AppLocales.supported basta, no hace falta tocar esto).
+  for (final locale in AppLocales.supported) {
+    await initializeDateFormatting(locale.code, null);
+  }
 
   await LanguageService().init();
   ApiService().init();

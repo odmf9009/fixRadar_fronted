@@ -43,8 +43,8 @@ class _ChatScreenState extends State<ChatScreen> {
   bool get _isQuoteChat => widget.quoteId != null;
   String get _chatTitle => _isQuoteChat ? (widget.quoteTitle ?? tr('quote_chat_title')) : widget.request!.title;
   String get _chatSubtitle => _isQuoteChat
-      ? (widget.quoteTechnicianName != null ? 'Con ${widget.quoteTechnicianName}' : 'Chat privado')
-      : (widget.request!.technicianName != null ? 'Con ${widget.request!.technicianName}' : 'Chat de servicio');
+      ? (widget.quoteTechnicianName != null ? tr('with_name').replaceAll('{name}', widget.quoteTechnicianName!) : tr('private_chat'))
+      : (widget.request!.technicianName != null ? tr('with_name').replaceAll('{name}', widget.request!.technicianName!) : tr('service_chat'));
 
   @override
   void initState() {
@@ -139,7 +139,7 @@ class _ChatScreenState extends State<ChatScreen> {
         quoteId: widget.quoteId,
         senderId: _currentUserId,
         senderName: _currentUserName,
-        text: '📷 Foto del trabajo',
+        text: tr('job_photo_message'),
         imageUrl: url,
         type: MessageType.image,
         createdAt: DateTime.now(),
@@ -238,7 +238,7 @@ class _ChatScreenState extends State<ChatScreen> {
             child: Text(
               _isQuoteChat
                   ? tr('negotiation_chat_hint')
-                  : 'Por tu seguridad, no compartas datos bancarios fuera de la plataforma.',
+                  : tr('safety_no_bank_data'),
               style: TextStyle(
                 fontSize: 11,
                 color: _isQuoteChat ? const Color(0xFFCC6F00) : Colors.blue,

@@ -66,10 +66,10 @@ class _EditTechnicianProfileScreenState extends State<EditTechnicianProfileScree
             children: [
               Text(tr('public_info'), style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
               const SizedBox(height: 16),
-              _buildField('Empresa (Opcional)', _companyController, icon: Icons.business),
+              _buildField(tr('company_optional'), _companyController, icon: Icons.business),
               _buildField(tr('years_experience_label'), _experienceController, icon: Icons.history, keyboardType: TextInputType.number),
-              _buildField('Ciudad / Área Principal', _cityController, icon: Icons.location_city),
-              _buildField('Radio de Servicio (km)', _radiusController, icon: Icons.radar, keyboardType: TextInputType.number),
+              _buildField(tr('main_city_area'), _cityController, icon: Icons.location_city),
+              _buildField(tr('service_radius_km'), _radiusController, icon: Icons.radar, keyboardType: TextInputType.number),
               _buildPhoneTile(),
               const SizedBox(height: 24),
               Text(tr('professional_bio'), style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
@@ -87,7 +87,7 @@ class _EditTechnicianProfileScreenState extends State<EditTechnicianProfileScree
               const SizedBox(height: 24),
               Text(tr('business_settings'), style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
               const SizedBox(height: 8),
-              _buildField('Horario de Trabajo', _hoursController, icon: Icons.schedule, hint: 'Ej: Lunes a Viernes 9am - 6pm'),
+              _buildField(tr('work_hours'), _hoursController, icon: Icons.schedule, hint: tr('work_hours_hint')),
               SwitchListTile(
                 title: Text(tr('free_quote_offer')),
                 value: _freeQuote,

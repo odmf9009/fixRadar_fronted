@@ -3,6 +3,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../core/config/routes.dart';
 import '../../core/services/auth_service.dart';
 import '../../core/services/language_service.dart';
+import '../../core/localization/locale_config.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -79,7 +80,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               _buildSettingsItem(
                 Icons.language_rounded,
                 tr('idioma'),
-                trailingText: LanguageService().currentLanguage == 'es' ? 'Español' : 'English',
+                trailingText: AppLocales.byCode(LanguageService().currentLanguage).nativeName,
                 onTap: () async {
                   await Navigator.pushNamed(context, AppRoutes.languageSettings);
                   _loadCurrentSettings();

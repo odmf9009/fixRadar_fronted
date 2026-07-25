@@ -274,6 +274,7 @@ class _PhoneVerificationScreenState extends State<PhoneVerificationScreen> {
               final q = query.toLowerCase();
               return q.isEmpty ||
                   c.name.toLowerCase().contains(q) ||
+                  _countryDisplayName(c.name).toLowerCase().contains(q) ||
                   c.dial.contains(q);
             }).toList();
             return Padding(
@@ -314,7 +315,7 @@ class _PhoneVerificationScreenState extends State<PhoneVerificationScreen> {
                           final c = filtered[i];
                           return ListTile(
                             leading: Text(c.flag, style: const TextStyle(fontSize: 24)),
-                            title: Text(c.name),
+                            title: Text(_countryDisplayName(c.name)),
                             trailing: Text(c.dial,
                                 style: const TextStyle(fontWeight: FontWeight.w600)),
                             onTap: () => Navigator.pop(context, c),
@@ -359,6 +360,20 @@ class _Country {
   final String dial;
   final String flag;
   const _Country(this.name, this.dial, this.flag);
+}
+
+const Map<String, String> _countryTrKeys = {
+  'España': 'country_spain',
+  'Estados Unidos': 'country_usa',
+  'México': 'country_mexico',
+  'Perú': 'country_peru',
+  'República Dominicana': 'country_dominican_republic',
+  'Brasil': 'country_brazil',
+};
+
+String _countryDisplayName(String name) {
+  final key = _countryTrKeys[name];
+  return key != null ? tr(key) : name;
 }
 
 // Códigos de país. Colombia primero por ser el mercado principal.

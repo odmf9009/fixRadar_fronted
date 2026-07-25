@@ -155,13 +155,13 @@ class _TechnicianClientsScreenState extends State<TechnicianClientsScreen> {
                     length: 2,
                     child: Column(
                       children: [
-                        const TabBar(
-                          labelColor: Color(0xFFFF8A00),
+                        TabBar(
+                          labelColor: const Color(0xFFFF8A00),
                           unselectedLabelColor: Colors.grey,
-                          indicatorColor: Color(0xFFFF8A00),
+                          indicatorColor: const Color(0xFFFF8A00),
                           tabs: [
-                            Tab(text: 'Activos'),
-                            Tab(text: 'Historial'),
+                            Tab(text: tr('tab_active')),
+                            Tab(text: tr('tab_history')),
                           ],
                         ),
                         Expanded(
@@ -211,10 +211,10 @@ class _TechnicianClientsScreenState extends State<TechnicianClientsScreen> {
           children: [
             Icon(Icons.assignment_ind_outlined, size: 80, color: Colors.grey[300]),
             const SizedBox(height: 24),
-            const Text(
-              'No tienes trabajos actualmente.',
+            Text(
+              tr('no_jobs_currently'),
               textAlign: TextAlign.center,
-              style: TextStyle(color: Colors.black87, fontSize: 18, fontWeight: FontWeight.bold),
+              style: const TextStyle(color: Colors.black87, fontSize: 18, fontWeight: FontWeight.bold),
             ),
           ],
         ),
@@ -239,7 +239,7 @@ class _TechnicianClientsScreenState extends State<TechnicianClientsScreen> {
               Text(
                 isActiveTab
                     ? tr('no_active_jobs')
-                    : 'No hay trabajos en el historial.',
+                    : tr('no_jobs_in_history'),
                 textAlign: TextAlign.center,
                 style: const TextStyle(color: Colors.grey, fontSize: 14),
               ),
@@ -388,7 +388,7 @@ class _TechnicianClientsScreenState extends State<TechnicianClientsScreen> {
                         children: [
                           Expanded(
                             child: Text(
-                              'Autor: $clientName',
+                              tr('author_label').replaceAll('{name}', clientName),
                               style: TextStyle(
                                 fontWeight: hasUnread ? FontWeight.bold : FontWeight.w600,
                                 fontSize: 16,
@@ -431,7 +431,7 @@ class _TechnicianClientsScreenState extends State<TechnicianClientsScreen> {
                       const SizedBox(height: 4),
                       if (dateToShow != null)
                         Text(
-                          'Actualizado: ${DateFormat('dd/MM/yyyy HH:mm').format(dateToShow)}',
+                          tr('updated_label').replaceAll('{date}', DateFormat('dd/MM/yyyy HH:mm').format(dateToShow)),
                           style: TextStyle(color: Colors.grey[600], fontSize: 11),
                         ),
                       const SizedBox(height: 4),
@@ -472,10 +472,10 @@ class _TechnicianClientsScreenState extends State<TechnicianClientsScreen> {
     if (isRejected) {
       return Row(
         children: [
-          const Expanded(
+          Expanded(
             child: Text(
-              '❌ Propuesta Rechazada', 
-              style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold, fontSize: 12),
+              tr('proposal_rejected_title'),
+              style: const TextStyle(color: Colors.red, fontWeight: FontWeight.bold, fontSize: 12),
               overflow: TextOverflow.ellipsis,
             ),
           ),
@@ -503,7 +503,7 @@ class _TechnicianClientsScreenState extends State<TechnicianClientsScreen> {
           IconButton(
             onPressed: () => Navigator.pushNamed(context, AppRoutes.chat, arguments: request),
             icon: const Icon(Icons.chat_bubble_outline, color: Color(0xFFFF8A00)),
-            tooltip: 'Chat con cliente',
+            tooltip: tr('chat_with_client_tooltip'),
           ),
           const SizedBox(width: 4),
           Expanded(
@@ -698,34 +698,34 @@ class _TechnicianClientsScreenState extends State<TechnicianClientsScreen> {
 
   Widget _statusBadge(ServiceRequest request, Quote myQuote) {
     Color badgeColor = Colors.grey;
-    String badgeLabel = 'Desconocido';
+    String badgeLabel = tr('badge_unknown');
 
     try {
       final ServiceRequestStatus status = request.status;
-      
+
       if (myQuote.status == QuoteStatus.rejected) {
         badgeColor = Colors.red;
-        badgeLabel = 'Rechazada';
+        badgeLabel = tr('badge_rejected');
       } else if (myQuote.status == QuoteStatus.accepted || status == ServiceRequestStatus.assigned || status == ServiceRequestStatus.inProgress) {
         badgeColor = Colors.green;
-        badgeLabel = 'Trabajando';
+        badgeLabel = tr('badge_working');
       } else {
         switch (status) {
           case ServiceRequestStatus.open:
             badgeColor = Colors.orange;
-            badgeLabel = 'Propuesta enviada';
+            badgeLabel = tr('badge_proposal_sent');
             break;
           case ServiceRequestStatus.finishedByTechnician:
             badgeColor = Colors.blue;
-            badgeLabel = 'Por validar';
+            badgeLabel = tr('status_pending_validation');
             break;
           case ServiceRequestStatus.completed:
             badgeColor = Colors.grey;
-            badgeLabel = 'Completado';
+            badgeLabel = tr('status_completed');
             break;
           case ServiceRequestStatus.cancelled:
             badgeColor = Colors.red;
-            badgeLabel = 'Cancelado';
+            badgeLabel = tr('status_cancelled');
             break;
           default:
             badgeColor = Colors.grey;

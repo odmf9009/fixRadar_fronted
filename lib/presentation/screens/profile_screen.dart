@@ -476,7 +476,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     const SizedBox(height: 32),
                     
                     if (isAdmin)
-                      _buildMenuItem(Icons.admin_panel_settings, 'Panel de Administrador', () {
+                      _buildMenuItem(Icons.admin_panel_settings, tr('admin_panel_title'), () {
                         Navigator.pushNamed(context, AppRoutes.adminPanel);
                       }),
                     _buildMenuItem(Icons.edit_note_outlined, proView ? tr('my_jobs') : tr('my_orders'), () {

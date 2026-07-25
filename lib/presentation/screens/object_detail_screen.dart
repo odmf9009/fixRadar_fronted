@@ -183,13 +183,13 @@ class _RequestDetailScreenState extends State<RequestDetailScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Propuesta de ${_selectedQuote!.technicianName}',
+                      tr('proposal_from').replaceAll('{name}', _selectedQuote!.technicianName),
                       style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
                     ),
                     Text(
                       _selectedQuote!.minPrice == _selectedQuote!.maxPrice
-                          ? 'Presupuesto: \$${_selectedQuote!.minPrice.toInt()}'
-                          : 'Rango: \$${_selectedQuote!.minPrice.toInt()} - \$${_selectedQuote!.maxPrice.toInt()}',
+                          ? tr('budget_label').replaceAll('{amount}', '${_selectedQuote!.minPrice.toInt()}')
+                          : tr('range_label').replaceAll('{min}', '${_selectedQuote!.minPrice.toInt()}').replaceAll('{max}', '${_selectedQuote!.maxPrice.toInt()}'),
                       style: TextStyle(color: Colors.blue[700], fontSize: 13, fontWeight: FontWeight.w600),
                     ),
                   ],
@@ -643,9 +643,9 @@ class _RequestDetailScreenState extends State<RequestDetailScreen> {
           child: Column(
             children: [
               Text(
-                isFinalRejected 
-                  ? '❌ Rechazo Definitivo' 
-                  : (isFirstRejected ? '❌ Propuesta Rechazada' : (isAccepted ? '✅ Propuesta Aceptada' : 'Ya enviaste una propuesta')), 
+                isFinalRejected
+                  ? tr('badge_final_rejection')
+                  : (isFirstRejected ? tr('badge_proposal_rejected') : (isAccepted ? tr('badge_proposal_accepted') : tr('badge_already_proposed'))),
                 style: TextStyle(
                   fontWeight: FontWeight.bold, 
                   color: (isFirstRejected || isFinalRejected) ? Colors.red : (isAccepted ? Colors.green : Colors.blue)
@@ -740,7 +740,7 @@ class _RequestDetailScreenState extends State<RequestDetailScreen> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(isCounterOffer ? 'Enviar contraoferta' : 'Enviar propuesta', style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+              Text(isCounterOffer ? tr('send_counter') : tr('send_proposal'), style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
               const SizedBox(height: 20),
               Row(
                 children: [
@@ -838,7 +838,7 @@ class _RequestDetailScreenState extends State<RequestDetailScreen> {
                       if (serverData is Map && serverData['error'] != null) {
                         final String serverError = serverData['error'].toString().toLowerCase();
                         if (serverError.contains('already sent')) {
-                          errorMsg = 'Ya has enviado una propuesta para este pedido.';
+                          errorMsg = tr('already_proposed_error');
                           final quote = await _firestoreService.getQuoteByTechnician(request.id, _currentUserId);
                           if (mounted) {
                             setState(() => _myQuote = quote);
@@ -849,7 +849,7 @@ class _RequestDetailScreenState extends State<RequestDetailScreen> {
                         }
                       }
                     } else if (e.toString().contains('already sent')) {
-                      errorMsg = 'Ya has enviado una propuesta para este pedido.';
+                      errorMsg = tr('already_proposed_error');
                       if (mounted) {
                         final quote = await _firestoreService.getQuoteByTechnician(request.id, _currentUserId);
                         setState(() => _myQuote = quote);
@@ -876,7 +876,7 @@ class _RequestDetailScreenState extends State<RequestDetailScreen> {
                 ),
                 child: _isLoading 
                   ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                  : Text(isCounterOffer ? 'Enviar contraoferta' : 'Enviar propuesta', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                  : Text(isCounterOffer ? tr('send_counter') : tr('send_proposal'), style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
               ),
               const SizedBox(height: 40),
             ],

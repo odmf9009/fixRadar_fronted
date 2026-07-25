@@ -2,6 +2,8 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:google_generative_ai/google_generative_ai.dart';
 import '../config/service_constants.dart';
+import '../localization/locale_config.dart';
+import 'language_service.dart';
 
 class AIService {
   // Llave FixRadar (Proyecto: fixradar-77067)
@@ -20,9 +22,12 @@ class AIService {
       print('AIService: Enviando imagen a Gemini...');
       final imageBytes = await imageFile.readAsBytes();
       
+      final String languageName = AppLocales.byCode(LanguageService().currentLanguage).englishName;
+      final String outputLanguageInstruction = 'Write the title and description in $languageName.';
       final prompt = TextPart(
         'Analiza esta imagen de un problema o avería en el hogar (plomería, electricidad, aire acondicionado, etc.). '
-        'Genera: 1. Un título corto. 2. Una categoría de esta lista: [${ServiceConstants.categoryNames.join(', ')}]. 3. Una descripción de máximo 20 palabras detallando el problema técnico. '
+        'Genera: 1. Un título corto. 2. Una categoría de esta lista (usa exactamente uno de estos valores en español, sin traducirlo): [${ServiceConstants.categoryNames.join(', ')}]. 3. Una descripción de máximo 20 palabras detallando el problema técnico. '
+        '$outputLanguageInstruction '
         'Responde ÚNICAMENTE en formato JSON plano: {"title": "...", "category": "...", "description": "..."}'
       );
 

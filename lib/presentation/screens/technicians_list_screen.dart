@@ -114,7 +114,7 @@ class _TechniciansListScreenState extends State<TechniciansListScreen> {
                     margin: const EdgeInsets.only(bottom: 4),
                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                     decoration: BoxDecoration(color: Colors.orange.withOpacity(0.1), borderRadius: BorderRadius.circular(4), border: Border.all(color: Colors.orange.withOpacity(0.5))),
-                    child: const Text('🔄 CONTRAOFERTA', style: TextStyle(color: Colors.orange, fontSize: 10, fontWeight: FontWeight.bold)),
+                    child: Text(tr('counter_offer_badge'), style: const TextStyle(color: Colors.orange, fontSize: 10, fontWeight: FontWeight.bold)),
                   ),
                 if (quote.estimatedTime != null && quote.estimatedTime!.isNotEmpty)
                   Text(tr('time_label').replaceAll('{t}', quote.estimatedTime!), style: const TextStyle(color: Colors.blue, fontSize: 13, fontWeight: FontWeight.w500)),

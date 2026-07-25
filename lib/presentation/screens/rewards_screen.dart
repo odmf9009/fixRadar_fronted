@@ -107,7 +107,7 @@ class _RewardsScreenState extends State<RewardsScreen> {
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Text(
-                  '${user.points} Puntos',
+                  '${user.points} ${tr('puntos')}',
                   style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
                 ),
               ),

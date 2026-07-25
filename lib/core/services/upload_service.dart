@@ -109,7 +109,7 @@ class UploadService {
 
       return {'full': fullUrl, 'thumb': thumbUrl};
     } catch (e) {
-      throw Exception('Upload failed: $e');
+      throw Exception(tr('upload_failed').replaceAll('{e}', '$e'));
     }
   }
 

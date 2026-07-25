@@ -15,9 +15,9 @@ class AdminPanelScreen extends StatelessWidget {
       child: Scaffold(
         backgroundColor: Colors.grey[50],
         appBar: AppBar(
-          title: const Text(
-            'Panel de Administrador',
-            style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+          title: Text(
+            tr('admin_panel_title'),
+            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
           ),
           backgroundColor: const Color(0xFF121212),
           elevation: 0,
@@ -70,7 +70,7 @@ class AdminPanelScreen extends StatelessWidget {
                   const Icon(Icons.info_outline, size: 20, color: Colors.orange),
                   const SizedBox(width: 12),
                   Text(
-                    'Total de usuarios registrados: ${users.length}',
+                    tr('total_registered_users').replaceAll('{n}', '${users.length}'),
                     style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.black87),
                   ),
                 ],

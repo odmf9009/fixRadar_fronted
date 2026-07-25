@@ -94,7 +94,7 @@ class _ManagePortfolioScreenState extends State<ManagePortfolioScreen> {
           const Icon(Icons.info_outline, size: 16, color: Colors.grey),
           const SizedBox(width: 8),
           Text(
-            '$count/10 proyectos',
+            tr('projects_count').replaceAll('{n}', '$count'),
             style: const TextStyle(color: Colors.grey, fontSize: 13, fontWeight: FontWeight.bold),
           ),
           const Spacer(),
@@ -511,7 +511,7 @@ class _AddPortfolioItemSheetState extends State<AddPortfolioItemSheet> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
-                    widget.item == null ? 'Nuevo Proyecto' : 'Editar Proyecto',
+                    widget.item == null ? tr('new_project') : tr('edit_project'),
                     style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
                   ),
                   IconButton(
@@ -527,10 +527,10 @@ class _AddPortfolioItemSheetState extends State<AddPortfolioItemSheet> {
                 padding: const EdgeInsets.all(12),
                 margin: const EdgeInsets.only(bottom: 16),
                 decoration: BoxDecoration(color: Colors.amber.withOpacity(0.1), borderRadius: BorderRadius.circular(8)),
-                child: const Row(
+                child: Row(
                   children: [
-                    Icon(Icons.warning_amber_rounded, color: Colors.amber, size: 20),
-                    SizedBox(width: 8),
+                    const Icon(Icons.warning_amber_rounded, color: Colors.amber, size: 20),
+                    const SizedBox(width: 8),
                     Expanded(
                       child: Text(
                         tr('no_specialties_set_warning'),
@@ -648,7 +648,7 @@ class _AddPortfolioItemSheetState extends State<AddPortfolioItemSheet> {
               const Icon(Icons.calendar_today, color: Color(0xFFFF8A00), size: 20),
               const SizedBox(width: 12),
               Text(
-                'Fecha: ${DateFormat('dd/MM/yyyy').format(_selectedDate)}',
+                tr('date_label').replaceAll('{date}', DateFormat('dd/MM/yyyy').format(_selectedDate)),
                 style: const TextStyle(fontSize: 16),
               ),
             ],

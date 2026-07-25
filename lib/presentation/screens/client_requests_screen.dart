@@ -389,9 +389,9 @@ class _ClientRequestsScreenState extends State<ClientRequestsScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               if (request.completionPhotoUrl != null) ...[
-                const Text(
-                  'Foto del trabajo terminado:',
-                  style: TextStyle(fontSize: 12, color: Colors.grey),
+                Text(
+                  tr('completion_photo_label'),
+                  style: const TextStyle(fontSize: 12, color: Colors.grey),
                 ),
                 const SizedBox(height: 8),
                 ClipRRect(

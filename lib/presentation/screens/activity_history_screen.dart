@@ -206,7 +206,7 @@ class _ActivityHistoryScreenState extends State<ActivityHistoryScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Resumen de $monthName',
+            tr('month_summary').replaceAll('{month}', monthName),
             style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 12),
@@ -225,12 +225,12 @@ class _ActivityHistoryScreenState extends State<ActivityHistoryScreen> {
               crossAxisSpacing: 16,
               childAspectRatio: 1.3,
               children: [
-                _buildSmallStat('Pubs', user?.postsCount.toString() ?? '0'),
-                _buildSmallStat('Recog.', user?.foundCount.toString() ?? '0'),
-                _buildSmallStat('Pts', user?.points.toString() ?? '0'),
-                _buildSmallStat('Ayudados', user?.usersHelped.toString() ?? '0'),
-                _buildSmallStat('Millas', user?.totalDistance.toStringAsFixed(1) ?? '0.0'),
-                _buildSmallStat('Conf.', user?.confirmationsCount.toString() ?? '0'),
+                _buildSmallStat(tr('stat_pubs_short'), user?.postsCount.toString() ?? '0'),
+                _buildSmallStat(tr('stat_found_short'), user?.foundCount.toString() ?? '0'),
+                _buildSmallStat(tr('stat_points_short'), user?.points.toString() ?? '0'),
+                _buildSmallStat(tr('stat_helped_short'), user?.usersHelped.toString() ?? '0'),
+                _buildSmallStat(tr('stat_miles_short'), user?.totalDistance.toStringAsFixed(1) ?? '0.0'),
+                _buildSmallStat(tr('stat_confirmations_short'), user?.confirmationsCount.toString() ?? '0'),
               ],
             ),
           ),

@@ -57,13 +57,13 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
                       children: [
                         _buildMainInfo(user),
                         _buildStats(user),
-                        _buildSection('Especialidades', _buildSpecialties(user)),
+                        _buildSection(tr('specialties_section'), _buildSpecialties(user)),
                         _buildSection(tr('about_technician'), _buildAbout(user)),
-                        _buildSection('Insignias y Verificaciones', _buildVerifications(user)),
+                        _buildSection(tr('badges_verifications_section'), _buildVerifications(user)),
                         _buildSection(tr('business_info'), _buildBusinessInfo(user)),
-                        _buildSection('Área de Servicio', _buildServiceArea(user)),
-                        _buildSection('Portafolio de Trabajos', _buildPortfolio(user)),
-                        _buildSection('Opiniones de Clientes', _buildReviews(user)),
+                        _buildSection(tr('service_area_section'), _buildServiceArea(user)),
+                        _buildSection(tr('portfolio_section'), _buildPortfolio(user)),
+                        _buildSection(tr('client_reviews_section'), _buildReviews(user)),
                         const SizedBox(height: 100),
                       ],
                     ),
@@ -106,7 +106,7 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
             backgroundColor: Colors.black26,
             child: Icon(Icons.share, color: Colors.white),
           ),
-          onPressed: () => Share.share('Mira el perfil de ${user.name} en FixRadar: tecnico/${user.id}'),
+          onPressed: () => Share.share(tr('share_profile_text').replaceAll('{name}', user.name).replaceAll('{id}', user.id)),
         ),
         const SizedBox(width: 8),
       ],
@@ -183,7 +183,7 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
               const SizedBox(width: 16),
               Icon(Icons.location_on_outlined, size: 16, color: Colors.grey[600]),
               const SizedBox(width: 4),
-              Text(user.city.isNotEmpty ? user.city : 'Sin ciudad', style: TextStyle(color: Colors.grey[600])),
+              Text(user.city.isNotEmpty ? user.city : tr('no_city_set'), style: TextStyle(color: Colors.grey[600])),
             ],
           ),
         ],
@@ -199,11 +199,11 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
     if (user.isOnline) {
       if (user.presenceStatus == 'busy') {
         color = Colors.orange;
-        label = 'Ocupado';
+        label = tr('ocupado_status');
         icon = Icons.access_time;
       } else {
         color = Colors.green;
-        label = 'Disponible';
+        label = tr('disponible_status');
         icon = Icons.check_circle;
       }
     } else {
@@ -387,10 +387,10 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
       crossAxisSpacing: 16,
       childAspectRatio: 2.5,
       children: [
-        _bizItem(Icons.request_quote_outlined, 'Presupuesto Gratis', user.freeQuote ? 'SÍ' : 'Consultar'),
-        _bizItem(Icons.emergency_outlined, 'Emergencias 24/7', user.emergencyService ? 'SÍ' : 'NO'),
-        _bizItem(Icons.schedule, 'Horario', user.workHours ?? 'No especificado'),
-        _bizItem(Icons.event_available, 'Fines de semana', user.weekendAvailability ? 'Disponible' : 'Cerrado'),
+        _bizItem(Icons.request_quote_outlined, tr('free_quote_label'), user.freeQuote ? tr('yes_label') : tr('consult_label')),
+        _bizItem(Icons.emergency_outlined, tr('emergency_247_label'), user.emergencyService ? tr('yes_label') : tr('no_label')),
+        _bizItem(Icons.schedule, tr('schedule_label'), user.workHours ?? tr('not_specified')),
+        _bizItem(Icons.event_available, tr('weekends_label'), user.weekendAvailability ? tr('available_label') : tr('closed_label')),
       ],
     );
   }
@@ -686,9 +686,9 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(isFavorite ? 'Eliminado de favoritos' : 'Guardado en favoritos'),
+            content: Text(isFavorite ? tr('removed_from_favorites') : tr('saved_to_favorites')),
             duration: const Duration(seconds: 2),
-            action: SnackBarAction(label: 'Cerrar', onPressed: () {}, textColor: Colors.white),
+            action: SnackBarAction(label: tr('close_action'), onPressed: () {}, textColor: Colors.white),
           ),
         );
       }

@@ -188,19 +188,19 @@ class _MyPostsScreenState extends State<MyPostsScreen> {
         break;
       case ServiceRequestStatus.finishedByTechnician:
         statusColor = Colors.blue;
-        statusText = 'Por validar';
+        statusText = tr('status_pending_validation');
         break;
       case ServiceRequestStatus.completed:
         statusColor = Colors.grey;
-        statusText = 'Finalizado';
+        statusText = tr('status_completed');
         break;
       case ServiceRequestStatus.cancelled:
         statusColor = Colors.red;
-        statusText = 'Cancelado';
+        statusText = tr('status_cancelled');
         break;
       default:
         statusColor = Colors.grey;
-        statusText = 'Estado desconocido';
+        statusText = tr('unknown_status');
         break;
     }
 

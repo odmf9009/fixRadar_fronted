@@ -48,27 +48,19 @@ class _LanguageSettingsScreenState extends State<LanguageSettingsScreen> {
             padding: const EdgeInsets.symmetric(vertical: 20),
             child: Column(
               children: [
-                _buildLanguageOption(
-                  'Español',
-                  'Spanish',
-                  'es',
-                  '🇪🇸',
-                  currentLang == 'es',
-                ),
-                _buildLanguageOption(
-                  'English',
-                  'Inglés',
-                  'en',
-                  '🇺🇸',
-                  currentLang == 'en',
-                ),
+                for (final locale in _languageService.supportedLocales)
+                  _buildLanguageOption(
+                    locale.nativeName,
+                    locale.englishName,
+                    locale.code,
+                    locale.flag,
+                    currentLang == locale.code,
+                  ),
                 const Spacer(),
                 Padding(
                   padding: const EdgeInsets.all(24.0),
                   child: Text(
-                    currentLang == 'es' 
-                      ? 'CurbRadar ajustará la interfaz automáticamente al idioma seleccionado.'
-                      : 'CurbRadar will automatically adjust the interface to the selected language.',
+                    tr('language_auto_adjust_notice'),
                     style: TextStyle(color: Colors.grey[500], fontSize: 13),
                     textAlign: TextAlign.center,
                   ),

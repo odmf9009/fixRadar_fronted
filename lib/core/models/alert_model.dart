@@ -1,3 +1,5 @@
+import '../services/language_service.dart';
+
 enum AlertType { nearby, directQuote, quoteReceived, message, system }
 
 class AlertModel {
@@ -31,7 +33,7 @@ class AlertModel {
       id: json['_id'] ?? json['id'] ?? '',
       requestId: json['requestId'] ?? '',
       quoteId: (rawQuoteId == null || rawQuoteId == '') ? null : rawQuoteId.toString(),
-      requestTitle: json['requestTitle'] ?? 'Servicio detectado',
+      requestTitle: json['requestTitle'] ?? tr('detected_service'),
       requestImageUrl: json['requestImageUrl'] ?? '',
       address: json['address'] ?? '',
       distance: (json['distance'] as num?)?.toDouble() ?? 0.0,

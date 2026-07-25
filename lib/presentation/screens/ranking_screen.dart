@@ -67,7 +67,7 @@ class _RankingScreenState extends State<RankingScreen> {
                     children: [
                       _buildSubFilter(tr('puntos'), 'points'),
                       _buildSubFilter(tr('publicaciones'), 'postsCount'),
-                      _buildSubFilter('Reparaciones', 'foundCount'),
+                      _buildSubFilter(tr('reparaciones_stat'), 'foundCount'),
                       _buildSubFilter(tr('confirmaciones'), 'confirmationsCount'),
                     ],
                   ),

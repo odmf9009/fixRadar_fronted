@@ -65,9 +65,9 @@ class _ReferralScreenState extends State<ReferralScreen> {
                     children: [
                       _buildStatsGrid(user),
                       const SizedBox(height: 32),
-                      const Text(
-                        'Historial de Referidos',
-                        style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF121212)),
+                      Text(
+                        tr('referral_history_title'),
+                        style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF121212)),
                       ),
                       const SizedBox(height: 16),
                       _buildReferralHistory(),
@@ -97,9 +97,9 @@ class _ReferralScreenState extends State<ReferralScreen> {
         children: [
           const Icon(Icons.group_add_outlined, size: 64, color: Color(0xFFFF8A00)),
           const SizedBox(height: 16),
-          const Text(
-            'Invita Amigos y Gana XP',
-            style: TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold),
+          Text(
+            tr('invite_friends_earn_xp'),
+            style: const TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 8),
           Text(

@@ -48,7 +48,7 @@ class _CommunityStatsScreenState extends State<CommunityStatsScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 // SECTION 1: OVERVIEW
-                _buildSectionHeader('Resumen de Actividad'),
+                _buildSectionHeader(tr('activity_summary')),
                 GridView.count(
                   crossAxisCount: 2,
                   shrinkWrap: true,
@@ -57,10 +57,10 @@ class _CommunityStatsScreenState extends State<CommunityStatsScreen> {
                   mainAxisSpacing: 16,
                   childAspectRatio: 1.3,
                   children: [
-                    _buildOverviewCard('Objetos Activos', stats.activeObjects.toString(), Icons.inventory_2_outlined, Colors.blue),
-                    _buildOverviewCard('Recogidos', stats.totalCollected.toString(), Icons.check_circle_outline, Colors.green),
-                    _buildOverviewCard('Usuarios Activos', stats.activeUsers30d.toString(), Icons.people_outline, Colors.orange),
-                    _buildOverviewCard('Publicados Hoy', stats.objectsToday.toString(), Icons.today, Colors.purple),
+                    _buildOverviewCard(tr('active_requests_stat'), stats.activeObjects.toString(), Icons.inventory_2_outlined, Colors.blue),
+                    _buildOverviewCard(tr('completados_stat'), stats.totalCollected.toString(), Icons.check_circle_outline, Colors.green),
+                    _buildOverviewCard(tr('active_users_stat'), stats.activeUsers30d.toString(), Icons.people_outline, Colors.orange),
+                    _buildOverviewCard(tr('posted_today_stat'), stats.objectsToday.toString(), Icons.today, Colors.purple),
                   ],
                 ),
 
@@ -183,7 +183,7 @@ class _CommunityStatsScreenState extends State<CommunityStatsScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(area.name, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
-                Text('${area.objectCount} objetos reportados', style: TextStyle(fontSize: 12, color: Colors.grey[600])),
+                Text(tr('n_issues_reported').replaceAll('{n}', '${area.objectCount}'), style: TextStyle(fontSize: 12, color: Colors.grey[600])),
               ],
             ),
           ),
@@ -204,21 +204,21 @@ class _CommunityStatsScreenState extends State<CommunityStatsScreen> {
     return Column(
       children: [
         _buildImpactCard(
-          'Objetos Recuperados',
+          tr('jobs_repaired_stat'),
           '${impact.objectsRecovered}',
           '♻️',
-          'Evitamos que terminen en vertederos',
+          tr('avoid_landfill_desc'),
         ),
         const SizedBox(height: 12),
         _buildImpactCard(
-          'Peso Estimado Reciclado',
+          tr('estimated_weight_repaired'),
           '${impact.estimatedWeightKg.toInt()} kg',
           '⚖️',
-          'Basado en el peso promedio por objeto',
+          tr('avg_weight_desc'),
         ),
         const SizedBox(height: 12),
         _buildImpactCard(
-          'Emisiones CO₂ Evitadas',
+          tr('co2_avoided_stat'),
           '${impact.co2SavedKg.toInt()} kg',
           '🌎',
           tr('estimated_savings'),

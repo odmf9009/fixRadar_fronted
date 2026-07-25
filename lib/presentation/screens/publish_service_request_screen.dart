@@ -155,7 +155,7 @@ class _PublishServiceRequestScreenState extends State<PublishServiceRequestScree
     try {
       final uid = AuthService.currentUidSync;
       if (uid.isEmpty) {
-        throw Exception('Debes estar autenticado para publicar.');
+        throw Exception(tr('must_be_authenticated_to_publish'));
       }
 
       List<String> imageUrls = [];
@@ -167,7 +167,7 @@ class _PublishServiceRequestScreenState extends State<PublishServiceRequestScree
           thumbnailUrls.add(result['thumb']!);
         } catch (e) {
           print('Error subiendo imagen: $e');
-          throw Exception('Error al subir la imagen: $e');
+          throw Exception(tr('error_uploading_image_generic').replaceAll('{e}', '$e'));
         }
       }
 

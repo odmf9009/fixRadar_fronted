@@ -478,10 +478,10 @@ class HomeMapScreenState extends State<HomeMapScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Text(
-              'Configura tus especialidades en tu perfil para ver trabajos.',
+            Text(
+              tr('setup_specialties_map_desc'),
               textAlign: TextAlign.center,
-              style: TextStyle(color: Colors.grey, fontSize: 14),
+              style: const TextStyle(color: Colors.grey, fontSize: 14),
             ),
             const SizedBox(height: 8),
             TextButton(

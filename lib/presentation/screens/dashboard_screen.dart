@@ -811,15 +811,15 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
         children: [
           const Icon(Icons.engineering_outlined, size: 48, color: Color(0xFFFF8A00)),
           const SizedBox(height: 16),
-          const Text(
-            'Configura tus especialidades',
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          Text(
+            tr('setup_specialties_title'),
+            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 8),
-          const Text(
-            'Para ver trabajos disponibles, debes seleccionar al menos una especialidad en tu perfil.',
+          Text(
+            tr('setup_specialties_desc'),
             textAlign: TextAlign.center,
-            style: TextStyle(color: Colors.grey),
+            style: const TextStyle(color: Colors.grey),
           ),
           const SizedBox(height: 20),
           ElevatedButton(
