@@ -24,8 +24,8 @@ class AuthErrorMapper {
     '04': {'es': 'Completa todos los campos.', 'en': 'Please fill in all fields.'},
     '05': {'es': 'Email inválido.', 'en': 'Invalid email.'},
     '06': {
-      'es': 'Este email ya está registrado. Inicia sesión.',
-      'en': 'This email is already registered. Sign in.',
+      'es': 'Ya existe un usuario registrado con este correo electrónico.',
+      'en': 'A user with that email already exists.',
     },
     '07': {
       'es': 'Código expirado. Solicita uno nuevo.',
@@ -35,6 +35,10 @@ class AuthErrorMapper {
     '09': {
       'es': 'Error al procesar la contraseña.',
       'en': 'Error processing password.',
+    },
+    '10': {
+      'es': 'No existe una cuenta con ese correo electrónico.',
+      'en': 'No account exists with this email.',
     },
   };
 
