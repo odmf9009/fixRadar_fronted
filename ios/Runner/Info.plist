@@ -80,5 +80,18 @@
 	<string>La cámara puede requerir acceso al micrófono para funcionar correctamente al tomar fotos.</string>
 	<key>ITSAppUsesNonExemptEncryption</key>
 	<false/>
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleTypeRole</key>
+			<string>Editor</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<!-- REVERSED_CLIENT_ID de GoogleService-Info.plist, requerido por
+				     google_sign_in en iOS para volver a la app tras autenticar. -->
+				<string>com.googleusercontent.apps.528608210144-4nnmq9kqont8b0bjs2s2v6r9fnhu54vp</string>
+			</array>
+		</dict>
+	</array>
 </dict>
 </plist>
