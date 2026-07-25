@@ -10,6 +10,7 @@ import '../../core/services/language_service.dart';
 import '../../core/services/view_mode_service.dart';
 import '../../core/services/achievement_service.dart';
 import '../../core/widgets/photo_source_picker.dart';
+import '../../core/widgets/delete_account_dialog.dart';
 import '../../core/models/service_request.dart';
 import '../../core/models/user_model.dart';
 import '../../core/config/service_constants.dart';
@@ -485,7 +486,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     _buildMenuItem(Icons.history, tr('historial_menu'), () {
                       Navigator.pushNamed(context, AppRoutes.activityHistory);
                     }),
-                    
+
                     const SizedBox(height: 40),
                   ],
                 ),
@@ -507,13 +508,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  Widget _buildMenuItem(IconData icon, String title, VoidCallback onTap, {int? count}) {
+  Widget _buildMenuItem(IconData icon, String title, VoidCallback onTap, {int? count, Color? color}) {
     return Column(
       children: [
         ListTile(
           contentPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 4),
-          leading: Icon(icon, color: Colors.black87, size: 24),
-          title: Text(title, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w500)),
+          leading: Icon(icon, color: color ?? Colors.black87, size: 24),
+          title: Text(title, style: TextStyle(fontSize: 15, fontWeight: FontWeight.w500, color: color)),
           trailing: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
