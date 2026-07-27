@@ -46,6 +46,7 @@ import '../../presentation/screens/terms_screen.dart';
 import '../../presentation/screens/about_screen.dart';
 import '../../presentation/screens/help_support_screen.dart';
 import '../services/auth_service.dart';
+import '../services/language_service.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
 class AppRoutes {
@@ -204,6 +205,12 @@ class _SplashScreenState extends State<SplashScreen> {
   }
 
   void _navigate(UserModel? userModel) {
+    // Respeta el idioma guardado en la cuenta (por si se cambió desde otro
+    // dispositivo) en vez del idioma local guardado en este teléfono.
+    if (userModel != null) {
+      LanguageService().setLanguage(userModel.language);
+    }
+
     if (userModel == null || !userModel.onboardingCompleted || userModel.userType == null) {
       Navigator.pushReplacementNamed(context, AppRoutes.roleSelection);
     } else {

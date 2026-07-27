@@ -46,9 +46,15 @@ class _AppContent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    context.watch<LanguageService>(); // Listen for language changes
+    final languageService = context.watch<LanguageService>();
 
     return MaterialApp(
+      // La mayoría de las pantallas leen tr() directo en build() sin
+      // escuchar LanguageService, así que un cambio de idioma no las
+      // refresca solas. Cambiar la key fuerza a Flutter a descartar y
+      // reconstruir todo el árbol (Navigator incluido) con el idioma
+      // nuevo, en vez de tener que agregar un listener a cada pantalla.
+      key: ValueKey(languageService.currentLanguage),
       title: 'FixRadar',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.light,
