@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import '../../core/services/auth_service.dart';
+import '../../core/services/firestore_service.dart';
 import '../../core/services/language_service.dart';
 import '../../core/services/user_service.dart';
 
@@ -12,6 +14,7 @@ class LanguageSettingsScreen extends StatefulWidget {
 class _LanguageSettingsScreenState extends State<LanguageSettingsScreen> {
   final LanguageService _languageService = LanguageService();
   final UserService _userService = UserService();
+  final FirestoreService _firestoreService = FirestoreService();
 
   Future<void> _selectLanguage(String code) async {
     // Guardamos primero en el backend y DESPUÉS aplicamos el cambio local.
@@ -21,6 +24,16 @@ class _LanguageSettingsScreenState extends State<LanguageSettingsScreen> {
     // en ese momento, esa resincronización pisaría el cambio recién hecho.
     try {
       await _userService.updateMe({'language': code});
+      // Para técnicos, ProximityService mantiene una suscripción permanente
+      // al stream del usuario (singleton, nunca se cancela entre rebuilds),
+      // así que el stream cacheado en FirestoreService nunca se cierra y
+      // sigue sirviendo el valor viejo (hasta 60s desactualizado) al
+      // remontar la app. Forzamos un refresh inmediato de esa caché para
+      // que el remount reciba ya el idioma nuevo.
+      final uid = AuthService.currentUidSync;
+      if (uid.isNotEmpty) {
+        await _firestoreService.refreshUserStream(uid);
+      }
     } catch (_) {}
     await _languageService.setLanguage(code);
   }
