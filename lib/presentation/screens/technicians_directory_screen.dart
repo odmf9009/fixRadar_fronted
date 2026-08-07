@@ -10,7 +10,8 @@ import 'public_profile_screen.dart';
 import '../../core/config/service_constants.dart';
 
 class TechniciansDirectoryScreen extends StatefulWidget {
-  const TechniciansDirectoryScreen({super.key});
+  final String? initialCategory;
+  const TechniciansDirectoryScreen({super.key, this.initialCategory});
 
   @override
   State<TechniciansDirectoryScreen> createState() => _TechniciansDirectoryScreenState();
@@ -36,6 +37,7 @@ class _TechniciansDirectoryScreenState extends State<TechniciansDirectoryScreen>
   @override
   void initState() {
     super.initState();
+    if (widget.initialCategory != null) _selectedCategory = widget.initialCategory!;
     _loadLocation();
     _initStream();
   }

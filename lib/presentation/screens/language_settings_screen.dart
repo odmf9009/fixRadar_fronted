@@ -14,12 +14,15 @@ class _LanguageSettingsScreenState extends State<LanguageSettingsScreen> {
   final UserService _userService = UserService();
 
   Future<void> _selectLanguage(String code) async {
-    await _languageService.setLanguage(code);
-    // Persistir la preferencia en el perfil del usuario (backend) para que se
-    // mantenga entre dispositivos y el servidor envíe push en ese idioma.
+    // Guardamos primero en el backend y DESPUÉS aplicamos el cambio local.
+    // El cambio local dispara un rebuild completo de la app (vía ValueKey en
+    // main.dart) que vuelve a sincronizar el usuario desde el backend (splash
+    // y MainNavigationScreen); si el backend todavía tuviera el idioma viejo
+    // en ese momento, esa resincronización pisaría el cambio recién hecho.
     try {
       await _userService.updateMe({'language': code});
     } catch (_) {}
+    await _languageService.setLanguage(code);
   }
 
   @override

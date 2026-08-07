@@ -125,7 +125,10 @@ class AppRoutes {
     rewards: (context) => const RewardsScreen(),
     alerts: (context) => const AlertsScreen(),
     favoriteTechnicians: (context) => const FavoriteTechniciansScreen(),
-    techniciansDirectory: (context) => const TechniciansDirectoryScreen(),
+    techniciansDirectory: (context) {
+      final category = ModalRoute.of(context)!.settings.arguments as String?;
+      return TechniciansDirectoryScreen(initialCategory: category);
+    },
     techniciansList: (context) {
       final request = ModalRoute.of(context)!.settings.arguments as ServiceRequest;
       return TechniciansListScreen(request: request);

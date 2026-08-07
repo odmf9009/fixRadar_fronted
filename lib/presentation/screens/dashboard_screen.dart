@@ -595,12 +595,30 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
         const SizedBox(height: 16),
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: ServiceConstants.allCategories.take(4).map((cat) => 
-            CategoryItem(label: ServiceConstants.getDisplayName(cat['name'] as String), icon: cat['icon'] as IconData, color: cat['color'] as Color)
-          ).toList(),
+          children: ServiceConstants.allCategories.take(4).map((cat) {
+            final categoryName = cat['name'] as String;
+            return CategoryItem(
+              label: ServiceConstants.getDisplayName(categoryName),
+              icon: cat['icon'] as IconData,
+              color: cat['color'] as Color,
+              onTap: () => _onCategoryTap(categoryName),
+            );
+          }).toList(),
         ),
       ],
     );
+  }
+
+  void _onCategoryTap(String categoryName) {
+    if (_isClientView) {
+      Navigator.pushNamed(context, AppRoutes.techniciansDirectory, arguments: categoryName);
+    } else {
+      final jobsInCategory = _nearbyRequests.where((r) => r.category == categoryName).toList();
+      Navigator.pushNamed(context, AppRoutes.allNearby, arguments: {
+        'requests': jobsInCategory,
+        'position': _currentPosition,
+      });
+    }
   }
 
   Widget _buildMyRequestsSummary() {
@@ -707,7 +725,10 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
               itemCount: _topTechnicians.length,
               itemBuilder: (context, index) {
                 final tech = _topTechnicians[index];
-                return Container(
+                return InkWell(
+                  borderRadius: BorderRadius.circular(16),
+                  onTap: () => Navigator.pushNamed(context, AppRoutes.publicProfile, arguments: tech.id),
+                  child: Container(
                   width: 210,
                   margin: const EdgeInsets.only(right: 16),
                   padding: const EdgeInsets.all(12),
@@ -732,6 +753,7 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
                         ),
                       ),
                     ],
+                  ),
                   ),
                 );
               },
