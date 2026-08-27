@@ -3,7 +3,12 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../core/services/language_service.dart';
 
 class TermsScreen extends StatelessWidget {
-  const TermsScreen({super.key});
+  /// Si se provee, la pantalla se muestra en modo "obligatorio de inicio":
+  /// sin botón de volver, con un botón de "Aceptar" abajo que dispara este
+  /// callback. Si es null, se comporta como la vista normal de Ajustes
+  /// (solo lectura, con botón de volver).
+  final VoidCallback? onAccept;
+  const TermsScreen({super.key, this.onAccept});
 
   Future<void> _launchEmail(String email) async {
     final Uri emailLaunchUri = Uri(
@@ -17,10 +22,14 @@ class TermsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    final bool mandatory = onAccept != null;
+    return PopScope(
+      canPop: !mandatory,
+      child: Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
-        leading: IconButton(
+        automaticallyImplyLeading: !mandatory,
+        leading: mandatory ? null : IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.white),
           onPressed: () => Navigator.pop(context),
         ),
@@ -32,6 +41,25 @@ class TermsScreen extends StatelessWidget {
         elevation: 0,
         centerTitle: true,
       ),
+      bottomNavigationBar: mandatory
+          ? SafeArea(
+              child: Padding(
+                padding: const EdgeInsets.all(20),
+                child: SizedBox(
+                  width: double.infinity,
+                  height: 54,
+                  child: ElevatedButton(
+                    onPressed: onAccept,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFFFF8A00),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                    ),
+                    child: Text(tr('accept_terms_btn'), style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
+                  ),
+                ),
+              ),
+            )
+          : null,
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(20.0),
         child: Column(
@@ -93,6 +121,7 @@ class TermsScreen extends StatelessWidget {
             const SizedBox(height: 40),
           ],
         ),
+      ),
       ),
     );
   }

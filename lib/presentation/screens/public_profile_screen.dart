@@ -58,6 +58,8 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
                         _buildMainInfo(user),
                         _buildStats(user),
                         _buildSection(tr('specialties_section'), _buildSpecialties(user)),
+                        if (user.categoryRatings.isNotEmpty)
+                          _buildSection(tr('category_ratings_section'), _buildCategoryRatings(user)),
                         _buildSection(tr('about_technician'), _buildAbout(user)),
                         _buildSection(tr('badges_verifications_section'), _buildVerifications(user)),
                         _buildSection(tr('business_info'), _buildBusinessInfo(user)),
@@ -313,6 +315,50 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
     );
   }
 
+  Widget _buildCategoryRatings(UserModel user) {
+    final sorted = [...user.categoryRatings]..sort((a, b) => b.rating.compareTo(a.rating));
+    return Column(
+      children: sorted.map((cr) {
+        return Padding(
+          padding: const EdgeInsets.only(bottom: 12),
+          child: Row(
+            children: [
+              SizedBox(
+                width: 110,
+                child: Text(
+                  ServiceConstants.getDisplayName(cr.category),
+                  style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              Expanded(
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(6),
+                  child: LinearProgressIndicator(
+                    value: (cr.rating / 5).clamp(0.0, 1.0),
+                    minHeight: 8,
+                    backgroundColor: Colors.grey[200],
+                    valueColor: const AlwaysStoppedAnimation<Color>(Color(0xFFFF8A00)),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 10),
+              SizedBox(
+                width: 70,
+                child: Text(
+                  '${cr.rating.toStringAsFixed(1)} ⭐ (${cr.count})',
+                  textAlign: TextAlign.end,
+                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
+                ),
+              ),
+            ],
+          ),
+        );
+      }).toList(),
+    );
+  }
+
   Widget _buildVerifications(UserModel user) {
     return Column(
       children: [
@@ -453,7 +499,9 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
                     Circle(
                       circleId: const CircleId('service_area'),
                       center: LatLng(user.latitude!, user.longitude!),
-                      radius: user.serviceRadius * 1000,
+                      // serviceRadius se guarda en millas (igual que en el resto
+                      // de la app); 1609.34 = metros por milla.
+                      radius: user.serviceRadius * 1609.34,
                       fillColor: primaryColor.withOpacity(0.2),
                       strokeColor: primaryColor,
                       strokeWidth: 2,
@@ -571,6 +619,20 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
                     ),
                   ],
                 ),
+                if (rev.category.isNotEmpty) ...[
+                  const SizedBox(height: 8),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                    decoration: BoxDecoration(
+                      color: primaryColor.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Text(
+                      ServiceConstants.getDisplayName(rev.category),
+                      style: TextStyle(color: primaryColor, fontWeight: FontWeight.bold, fontSize: 11),
+                    ),
+                  ),
+                ],
                 const SizedBox(height: 12),
                 Text(rev.comment, style: TextStyle(color: Colors.grey[800], fontSize: 13, height: 1.4)),
               ],
@@ -683,6 +745,10 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
   void _toggleFavorite(String currentUserId, String techId, bool isFavorite) async {
     try {
       await _firestoreService.toggleFavoriteTechnician(currentUserId, techId, isFavorite);
+      // El ícono del corazón depende del stream del usuario actual; lo
+      // refrescamos para que refleje el cambio de inmediato en vez de
+      // esperar al próximo ciclo de polling (hasta 60s).
+      await _firestoreService.refreshUserStream(currentUserId);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -693,7 +759,11 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
         );
       }
     } catch (e) {
-      print('Error toggleFavorite: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(tr('generic_error')), duration: const Duration(seconds: 2)),
+        );
+      }
     }
   }
 }

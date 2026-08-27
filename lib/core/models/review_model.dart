@@ -7,6 +7,7 @@ class ReviewModel {
   final String? clientPhotoUrl;
   final double rating;
   final String comment;
+  final String category;
   final DateTime createdAt;
 
   const ReviewModel({
@@ -18,6 +19,7 @@ class ReviewModel {
     this.clientPhotoUrl,
     required this.rating,
     required this.comment,
+    this.category = '',
     required this.createdAt,
   });
 
@@ -31,7 +33,24 @@ class ReviewModel {
       clientPhotoUrl: json['clientPhotoUrl'],
       rating: (json['rating'] as num?)?.toDouble() ?? 5.0,
       comment: json['comment'] ?? '',
+      category: json['category'] ?? '',
       createdAt: DateTime.tryParse(json['createdAt'] ?? '') ?? DateTime.now(),
+    );
+  }
+}
+
+class CategoryRating {
+  final String category;
+  final double rating;
+  final int count;
+
+  const CategoryRating({required this.category, required this.rating, required this.count});
+
+  factory CategoryRating.fromJson(Map<String, dynamic> json) {
+    return CategoryRating(
+      category: json['category'] ?? '',
+      rating: (json['rating'] as num?)?.toDouble() ?? 0.0,
+      count: (json['count'] as num?)?.toInt() ?? 0,
     );
   }
 }

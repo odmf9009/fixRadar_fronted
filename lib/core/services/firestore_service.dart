@@ -655,6 +655,10 @@ class FirestoreService {
     await _api.put('/users/me', data: {'username': alias});
   }
 
+  Future<void> acceptTerms() async {
+    await _api.put('/users/me', data: {'termsAcceptedAt': DateTime.now().toIso8601String()});
+  }
+
   Future<void> updateUserRole(String userId, String role, {List<String>? specialties}) async {
     await _api.put('/users/me', data: {
       'userType': role,
@@ -680,14 +684,10 @@ class FirestoreService {
     await _api.delete('/users/me');
   }
 
+  // El backend hace toggle completo en un solo POST (agrega si no estaba,
+  // quita si ya estaba) — no existe un endpoint DELETE separado.
   Future<void> toggleFavoriteTechnician(String userId, String technicianId, [bool? isFavorite]) async {
-    try {
-      if (isFavorite == true) {
-        await _api.delete('/users/me/favorites/$technicianId');
-      } else {
-        await _api.post('/users/me/favorites', data: {'technicianId': technicianId});
-      }
-    } catch (_) {}
+    await _api.post('/users/me/favorites', data: {'technicianId': technicianId});
   }
 
   // ─── TECHNICIANS ──────────────────────────────────────────────────────────

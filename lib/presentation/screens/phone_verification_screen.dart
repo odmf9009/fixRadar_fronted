@@ -1,3 +1,4 @@
+import 'dart:ui' show PlatformDispatcher;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../core/services/firestore_service.dart';
@@ -37,8 +38,10 @@ class _PhoneVerificationScreenState extends State<PhoneVerificationScreen> {
   bool _isLoading = false;
   String _phone = '';
 
-  // País seleccionado para el prefijo telefónico. Por defecto Colombia.
-  _Country _country = _countries.firstWhere((c) => c.dial == '+57');
+  // País seleccionado para el prefijo telefónico. Por defecto, el país del
+  // dispositivo (según su configuración regional); si no se detecta o no
+  // está en la lista, cae a Colombia.
+  _Country _country = _countryFromDeviceLocale();
 
   static const Color _primary = Color(0xFFFF8A00);
 
@@ -359,7 +362,21 @@ class _Country {
   final String name;
   final String dial;
   final String flag;
-  const _Country(this.name, this.dial, this.flag);
+  final String iso;
+  const _Country(this.name, this.dial, this.flag, this.iso);
+}
+
+/// Detecta el país del dispositivo (código ISO de la configuración regional,
+/// ej. "US", "ES") y devuelve el país correspondiente de la lista. Si no hay
+/// match, cae a Estados Unidos (mercado principal).
+_Country _countryFromDeviceLocale() {
+  final isoCode = PlatformDispatcher.instance.locale.countryCode;
+  if (isoCode != null) {
+    for (final c in _countries) {
+      if (c.iso == isoCode) return c;
+    }
+  }
+  return _countries.firstWhere((c) => c.dial == '+1');
 }
 
 const Map<String, String> _countryTrKeys = {
@@ -378,27 +395,27 @@ String _countryDisplayName(String name) {
 
 // Códigos de país. Colombia primero por ser el mercado principal.
 const List<_Country> _countries = [
-  _Country('Colombia', '+57', '🇨🇴'),
-  _Country('Argentina', '+54', '🇦🇷'),
-  _Country('Bolivia', '+591', '🇧🇴'),
-  _Country('Chile', '+56', '🇨🇱'),
-  _Country('Costa Rica', '+506', '🇨🇷'),
-  _Country('Cuba', '+53', '🇨🇺'),
-  _Country('Ecuador', '+593', '🇪🇨'),
-  _Country('El Salvador', '+503', '🇸🇻'),
-  _Country('España', '+34', '🇪🇸'),
-  _Country('Estados Unidos', '+1', '🇺🇸'),
-  _Country('Guatemala', '+502', '🇬🇹'),
-  _Country('Honduras', '+504', '🇭🇳'),
-  _Country('México', '+52', '🇲🇽'),
-  _Country('Nicaragua', '+505', '🇳🇮'),
-  _Country('Panamá', '+507', '🇵🇦'),
-  _Country('Paraguay', '+595', '🇵🇾'),
-  _Country('Perú', '+51', '🇵🇪'),
-  _Country('Puerto Rico', '+1787', '🇵🇷'),
-  _Country('República Dominicana', '+1809', '🇩🇴'),
-  _Country('Uruguay', '+598', '🇺🇾'),
-  _Country('Venezuela', '+58', '🇻🇪'),
-  _Country('Brasil', '+55', '🇧🇷'),
-  _Country('Portugal', '+351', '🇵🇹'),
+  _Country('Colombia', '+57', '🇨🇴', 'CO'),
+  _Country('Argentina', '+54', '🇦🇷', 'AR'),
+  _Country('Bolivia', '+591', '🇧🇴', 'BO'),
+  _Country('Chile', '+56', '🇨🇱', 'CL'),
+  _Country('Costa Rica', '+506', '🇨🇷', 'CR'),
+  _Country('Cuba', '+53', '🇨🇺', 'CU'),
+  _Country('Ecuador', '+593', '🇪🇨', 'EC'),
+  _Country('El Salvador', '+503', '🇸🇻', 'SV'),
+  _Country('España', '+34', '🇪🇸', 'ES'),
+  _Country('Estados Unidos', '+1', '🇺🇸', 'US'),
+  _Country('Guatemala', '+502', '🇬🇹', 'GT'),
+  _Country('Honduras', '+504', '🇭🇳', 'HN'),
+  _Country('México', '+52', '🇲🇽', 'MX'),
+  _Country('Nicaragua', '+505', '🇳🇮', 'NI'),
+  _Country('Panamá', '+507', '🇵🇦', 'PA'),
+  _Country('Paraguay', '+595', '🇵🇾', 'PY'),
+  _Country('Perú', '+51', '🇵🇪', 'PE'),
+  _Country('Puerto Rico', '+1787', '🇵🇷', 'PR'),
+  _Country('República Dominicana', '+1809', '🇩🇴', 'DO'),
+  _Country('Uruguay', '+598', '🇺🇾', 'UY'),
+  _Country('Venezuela', '+58', '🇻🇪', 'VE'),
+  _Country('Brasil', '+55', '🇧🇷', 'BR'),
+  _Country('Portugal', '+351', '🇵🇹', 'PT'),
 ];

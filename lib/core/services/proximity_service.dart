@@ -23,12 +23,23 @@ class ProximityService {
   StreamSubscription<List<ServiceRequest>>? _requestsSubscription;
   StreamSubscription<UserModel?>? _userSubscription;
   StreamSubscription<List<AlertModel>>? _alertsSubscription;
-  
+
   List<ServiceRequest> _availableRequests = [];
   UserModel? _currentUser;
-  
+  String _monitoringUid = '';
+
+  // Punto desde el que se pidió la última "ventana" de trabajos candidatos al
+  // backend. Si el técnico se aleja demasiado de este punto, la renovamos.
+  Position? _requestsOrigin;
+  static const double _requestsRefreshDistanceMeters = 8000;
+
   final Set<String> _notifiedRequestIds = {};
   final Set<String> _notifiedAlertIds = {};
+
+  // requestId de cualquier alerta tipo "nearby" ya recibida (creada por el
+  // backend al publicarse el pedido, o por este mismo servicio antes). Evita
+  // notificar dos veces el mismo trabajo: una al crearse, otra al acercarnos.
+  final Set<String> _alertedRequestIds = {};
 
   bool _isMonitoring = false;
 
@@ -39,6 +50,7 @@ class ProximityService {
     await _loadNotifiedIDs();
 
     final String uid = AuthService.currentUidSync;
+    _monitoringUid = uid;
     if (uid.isNotEmpty) {
       _userSubscription = _firestoreService.getUserStream(uid).listen((user) {
         _currentUser = user;
@@ -48,17 +60,12 @@ class ProximityService {
       // Listen for alerts (quotes, assignments, etc.)
       _alertsSubscription = _firestoreService.getUserAlerts(uid).listen((alerts) {
         _handleNewAlerts(alerts);
+        _trackBackendNearbyAlerts(alerts);
       });
     }
 
     // Only technicians need real-time nearby request tracking and foreground GPS
     if (isTechnician) {
-      _requestsSubscription = _firestoreService.getNearbyServiceRequests(userId: uid.isNotEmpty ? uid : null).listen((requests) {
-        _availableRequests = requests.where((r) => r.status == ServiceRequestStatus.open).toList();
-        Future.delayed(const Duration(seconds: 1), () => _runImmediateCheck());
-        _cleanupStaleNotifiedIDs(requests);
-      });
-
       // El radar solo corre mientras la app está ABIERTA (sin foreground service).
       // Cuando la app pasa a segundo plano, el stream se detiene; los trabajos
       // nuevos de su categoría y radio le llegan por notificación push (FCM)
@@ -68,13 +75,56 @@ class ProximityService {
       // when the user already granted location access.
       final hasPermission = await _locationService.checkAndRequestPermissions();
       if (hasPermission) {
+        // La búsqueda de "trabajos cercanos" en el backend necesita una
+        // posición real desde dónde buscar (no una lista vacía por defecto).
+        final initialPosition = await _locationService.getCurrentLocation();
+        if (initialPosition != null) {
+          _startNearbyRequestsStream(initialPosition);
+        }
+
         _positionSubscription = _locationService.locationStream.listen((position) {
           _checkProximity(position);
+
+          // El técnico se movió lejos del punto donde pedimos la ventana de
+          // candidatos: la renovamos para cubrir trabajos que antes quedaban
+          // fuera de rango y ahora podrían estar cerca.
+          final bool needsRefresh = _requestsOrigin == null ||
+              Geolocator.distanceBetween(
+                _requestsOrigin!.latitude,
+                _requestsOrigin!.longitude,
+                position.latitude,
+                position.longitude,
+              ) > _requestsRefreshDistanceMeters;
+          if (needsRefresh) {
+            _startNearbyRequestsStream(position);
+          }
         });
       } else {
         print('[Proximity] Location permission not granted — skipping GPS stream');
       }
     }
+  }
+
+  void _startNearbyRequestsStream(Position position) {
+    _requestsSubscription?.cancel();
+    _requestsOrigin = position;
+
+    // Ventana generosa alrededor del punto de arranque (mínimo 100km, o 1.5x
+    // el radio configurado si es mayor); el filtro fino por el radio real del
+    // técnico lo hace _checkProximity con la posición GPS actual en cada tick.
+    final double configuredRadiusMeters = (_currentUser?.serviceRadius ?? 20.0) * 1609.34 * 1.5;
+    final double windowRadiusMeters = configuredRadiusMeters > 100000 ? configuredRadiusMeters : 100000;
+
+    _requestsSubscription = _firestoreService.getNearbyServiceRequests(
+      latitude: position.latitude,
+      longitude: position.longitude,
+      radius: windowRadiusMeters,
+      userId: _monitoringUid.isNotEmpty ? _monitoringUid : null,
+    ).listen((requests) {
+      _availableRequests = requests.where((r) => r.status == ServiceRequestStatus.open).toList();
+      Future.delayed(const Duration(seconds: 1), () => _runImmediateCheck());
+      _cleanupStaleNotifiedIDs(requests);
+    });
   }
 
   /// Stops all monitoring (called when technician goes offline or app signs out).
@@ -90,6 +140,17 @@ class ProximityService {
     _alertsSubscription = null;
     _availableRequests = [];
     _currentUser = null;
+    _requestsOrigin = null;
+    _alertedRequestIds.clear();
+    _monitoringUid = '';
+  }
+
+  void _trackBackendNearbyAlerts(List<AlertModel> alerts) {
+    for (final alert in alerts) {
+      if (alert.type == AlertType.nearby) {
+        _alertedRequestIds.add(alert.requestId);
+      }
+    }
   }
 
   Future<void> _runImmediateCheck() async {
@@ -227,8 +288,11 @@ class ProximityService {
       );
 
       if (distance <= thresholdInMeters) {
-        if (!_notifiedRequestIds.contains(request.id)) {
+        // No duplicar: el backend ya pudo haber alertado este mismo pedido
+        // al momento de crearse (si el técnico ya estaba en rango entonces).
+        if (!_notifiedRequestIds.contains(request.id) && !_alertedRequestIds.contains(request.id)) {
           _persistNotifiedID(request.id);
+          _alertedRequestIds.add(request.id);
           _sendAlert(request, distance);
         }
       }

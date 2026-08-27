@@ -39,7 +39,12 @@ class UploadService {
 
       final ref = _storage.ref('profiles/$userId/avatar.jpg');
       await ref.putData(compressed);
-      return await ref.getDownloadURL();
+      final url = await ref.getDownloadURL();
+      // La ruta de storage es fija (siempre el mismo archivo), así que
+      // Firebase devuelve la misma URL en cada re-subida. Sin un query param
+      // que cambie, el ImageCache de Flutter sigue mostrando la foto vieja
+      // en la misma sesión hasta reiniciar la app.
+      return '$url&_v=${DateTime.now().millisecondsSinceEpoch}';
     } catch (e) {
       return null;
     }
@@ -57,6 +62,26 @@ class UploadService {
 
       final fileName = '${_uuid.v4()}.jpg';
       final ref = _storage.ref('portfolio/$technicianId/$fileName');
+      await ref.putData(compressed);
+      return await ref.getDownloadURL();
+    } catch (e) {
+      return null;
+    }
+  }
+
+  /// Sube la foto de la licencia/ID que el técnico presenta al registrarse
+  /// como contratista, para verificación posterior por un admin.
+  Future<String?> uploadLicenseDocument(File file, String userId) async {
+    try {
+      final compressed = await FlutterImageCompress.compressWithFile(
+        file.absolute.path,
+        quality: 85,
+        minWidth: 1200,
+        minHeight: 1200,
+      );
+      if (compressed == null) return null;
+
+      final ref = _storage.ref('licenses/$userId/document.jpg');
       await ref.putData(compressed);
       return await ref.getDownloadURL();
     } catch (e) {

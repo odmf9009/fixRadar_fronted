@@ -17,6 +17,11 @@
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" tools:node="remove" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_LOCATION" tools:node="remove" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
+    <!-- Permite pedirle al técnico, con un diálogo nativo de un toque, que
+         excluya a FixRadar de la optimización de batería. Sin esto, algunos
+         fabricantes (Samsung, Xiaomi, etc.) bloquean la entrega de las
+         notificaciones push de trabajos nuevos cuando la app está cerrada. -->
+    <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS"/>
 
     <application
         android:label="Fix Radar"

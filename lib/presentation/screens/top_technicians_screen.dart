@@ -113,7 +113,7 @@ class TopTechniciansScreen extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      tech.name,
+                      tech.displayName,
                       style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,

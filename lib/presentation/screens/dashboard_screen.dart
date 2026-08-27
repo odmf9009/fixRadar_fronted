@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:geolocator/geolocator.dart';
 import '../../core/services/auth_service.dart';
+import '../../core/services/battery_optimization_service.dart';
 import '../../core/services/firestore_service.dart';
 import '../../core/services/language_service.dart';
 import '../../core/services/location_service.dart';
@@ -113,6 +114,8 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
     super.dispose();
   }
 
+  bool _batteryPromptShown = false;
+
   void _startDataListeners() {
     // 1. Escuchar Usuario
     _userSub = _firestoreService.getUserStream(_currentUserId).listen((userData) {
@@ -121,6 +124,12 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
           _user = userData;
           _isLoadingUser = false;
         });
+        final isTechnician = userData != null &&
+            (userData.role == 'technician' || userData.userType == 'technician');
+        if (isTechnician && !_batteryPromptShown) {
+          _batteryPromptShown = true;
+          BatteryOptimizationService.checkAndPromptIfNeeded(context);
+        }
       }
     });
 
@@ -138,11 +147,13 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
 
   void _startNearbyTechnicianListener(Position pos) {
     _techsSub?.cancel();
-    final double radius = (_user?.serviceRadius ?? 20.0);
+    // serviceRadius se guarda en millas; /users/nearby-technicians espera km
+    // (el backend hace radius*1000 para el $maxDistance en metros).
+    final double radiusKm = (_user?.serviceRadius ?? 20.0) * 1.60934;
     _techsSub = _firestoreService.getNearbyTechniciansStream(
       latitude: pos.latitude,
       longitude: pos.longitude,
-      radius: radius < 20 ? 20 : radius,
+      radius: radiusKm < 20 ? 20 : radiusKm,
     ).listen((data) {
       if (mounted) {
         setState(() {
@@ -157,15 +168,15 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
 
   void _startNearbyListener(Position pos) {
     _nearbySub?.cancel();
-    // Use user's service radius if available (convert miles to km if needed, 
-    // but for now we'll assume km for consistency with backend)
-    final double radius = (_user?.serviceRadius ?? 20.0) * 1.6; // Assuming stored in miles, convert to km
+    // serviceRadius se guarda en millas; /service-requests/nearby espera el
+    // radio directo en METROS (el backend lo usa tal cual en $maxDistance).
+    final double radiusMeters = (_user?.serviceRadius ?? 20.0) * 1609.34;
 
     _nearbySub = _firestoreService.getNearbyServiceRequests(
       userId: _currentUserId,
       latitude: pos.latitude,
       longitude: pos.longitude,
-      radius: radius > 50 ? radius : 50.0, // Minimum 50km for safety
+      radius: radiusMeters > 50000 ? radiusMeters : 50000.0, // Mínimo 50km de seguridad
     ).listen((data) {
       print('STABLE_DASHBOARD: Received ${data.length} nearby requests');
       if (mounted) {
@@ -508,6 +519,34 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
     );
   }
 
+  /// Pide confirmación antes de cambiar el lente: es un toggle grande y
+  /// prominente en la parte de arriba del dashboard, fácil de tocar sin
+  /// querer al hacer scroll u otras acciones cercanas.
+  Future<void> _confirmSwitchLens(AppViewMode mode) async {
+    final bool switchingToClient = mode == AppViewMode.client;
+    final bool alreadySelected = switchingToClient == _isClientView;
+    if (alreadySelected) return;
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(tr('switch_lens_title')),
+        content: Text(switchingToClient ? tr('switch_lens_to_client') : tr('switch_lens_to_work')),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context, false), child: Text(tr('cancel'))),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFFF8A00)),
+            onPressed: () => Navigator.pop(context, true),
+            child: Text(tr('confirm'), style: const TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
+    );
+    if (confirmed == true) {
+      ViewModeService.instance.setMode(mode);
+    }
+  }
+
   /// Toggle de lente (solo cuentas de técnico): alternar entre actuar como
   /// profesional o como cliente. No cambia el rol → no se pierden trabajos.
   Widget _buildLensToggle() {
@@ -525,13 +564,13 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
             label: tr('lens_work'),
             icon: Icons.engineering,
             selected: !isClient,
-            onTap: () => ViewModeService.instance.setMode(AppViewMode.pro),
+            onTap: () => _confirmSwitchLens(AppViewMode.pro),
           ),
           _buildLensOption(
             label: tr('lens_need_help'),
             icon: Icons.handyman_outlined,
             selected: isClient,
-            onTap: () => ViewModeService.instance.setMode(AppViewMode.client),
+            onTap: () => _confirmSwitchLens(AppViewMode.client),
           ),
         ],
       ),
@@ -593,15 +632,19 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
       children: [
         Text(tr('popular_categories'), style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
         const SizedBox(height: 16),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: ServiceConstants.allCategories.take(4).map((cat) {
+        Wrap(
+          spacing: 16,
+          runSpacing: 20,
+          children: ServiceConstants.allCategories.map((cat) {
             final categoryName = cat['name'] as String;
-            return CategoryItem(
-              label: ServiceConstants.getDisplayName(categoryName),
-              icon: cat['icon'] as IconData,
-              color: cat['color'] as Color,
-              onTap: () => _onCategoryTap(categoryName),
+            return SizedBox(
+              width: 72,
+              child: CategoryItem(
+                label: ServiceConstants.getDisplayName(categoryName),
+                icon: cat['icon'] as IconData,
+                color: cat['color'] as Color,
+                onTap: () => _onCategoryTap(categoryName),
+              ),
             );
           }).toList(),
         ),
@@ -746,7 +789,7 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
                           crossAxisAlignment: CrossAxisAlignment.start,
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            Text(tech.name, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14), maxLines: 1, overflow: TextOverflow.ellipsis),
+                            Text(tech.displayName, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14), maxLines: 1, overflow: TextOverflow.ellipsis),
                             Text(tech.specialties.isNotEmpty ? ServiceConstants.getDisplayName(tech.specialties.first) : tr('general_technician'), style: const TextStyle(fontSize: 11, color: Colors.grey)),
                             Row(children: [const Icon(Icons.star, color: Colors.amber, size: 14), Text(' ${tech.rating.toStringAsFixed(1)}', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold))]),
                           ],

@@ -113,11 +113,13 @@ class HomeMapScreenState extends State<HomeMapScreen> {
   }
 
   void _listenToRequests(Position pos) {
+    // serviceRadius se guarda en millas; /service-requests/nearby espera el
+    // radio directo en METROS (el backend lo usa tal cual en $maxDistance).
     _firestoreService.getNearbyServiceRequests(
       userId: AuthService.currentUidSync,
       latitude: pos.latitude,
       longitude: pos.longitude,
-      radius: (_currentUser?.serviceRadius ?? 20.0) * 1.6,
+      radius: (_currentUser?.serviceRadius ?? 20.0) * 1609.34,
     ).listen((requests) {
       if (mounted) {
         _allRequests = requests;

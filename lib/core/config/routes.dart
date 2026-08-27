@@ -5,6 +5,7 @@ import '../../core/models/service_request.dart';
 import '../../core/models/filter_model.dart';
 import '../../presentation/screens/login_screen.dart';
 import '../../presentation/screens/role_selection_screen.dart';
+import '../../presentation/screens/alias_setup_screen.dart';
 import '../../presentation/screens/onboarding_screen.dart';
 import '../../presentation/screens/main_navigation_screen.dart';
 import '../../presentation/screens/object_detail_screen.dart';
@@ -46,6 +47,7 @@ import '../../presentation/screens/terms_screen.dart';
 import '../../presentation/screens/about_screen.dart';
 import '../../presentation/screens/help_support_screen.dart';
 import '../services/auth_service.dart';
+import '../services/firestore_service.dart';
 import '../services/language_service.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
@@ -54,6 +56,7 @@ class AppRoutes {
   static const String onboarding = '/onboarding';
   static const String login = '/login';
   static const String roleSelection = '/role-selection';
+  static const String aliasSetup = '/alias-setup';
   static const String home = '/home';
   static const String publish = '/publish';
   static const String premium = '/premium';
@@ -96,6 +99,7 @@ class AppRoutes {
     onboarding: (context) => const OnboardingScreen(),
     login: (context) => const LoginScreen(),
     roleSelection: (context) => const RoleSelectionScreen(),
+    aliasSetup: (context) => const AliasSetupScreen(),
     home: (context) => const MainNavigationScreen(),
     publish: (context) => const PublishServiceRequestScreen(),
     premium: (context) => const PremiumScreen(),
@@ -163,6 +167,42 @@ class AppRoutes {
     },
     managePortfolio: (context) => const ManagePortfolioScreen(),
   };
+
+  /// Punto único de decisión post-login: Términos → rol → alias → home.
+  /// Se usa tanto al abrir la app con sesión activa (splash) como tras un
+  /// login interactivo, para no duplicar esta cadena de gating en cada uno.
+  static void continueAfterAuth(BuildContext context, UserModel? user) {
+    if (user != null) {
+      LanguageService().setLanguage(user.language);
+    }
+    if (user == null) {
+      Navigator.pushReplacementNamed(context, login);
+      return;
+    }
+    if (user.termsAcceptedAt == null) {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (_) => TermsScreen(onAccept: () async {
+            await FirestoreService().acceptTerms();
+            if (context.mounted) _continuePastTerms(context, user);
+          }),
+        ),
+      );
+      return;
+    }
+    _continuePastTerms(context, user);
+  }
+
+  static void _continuePastTerms(BuildContext context, UserModel user) {
+    if (!user.onboardingCompleted || user.userType == null) {
+      Navigator.pushReplacementNamed(context, roleSelection);
+    } else if (user.username.isEmpty) {
+      Navigator.pushReplacementNamed(context, aliasSetup);
+    } else {
+      Navigator.pushReplacementNamed(context, home);
+    }
+  }
 }
 
 class SplashScreen extends StatefulWidget {
@@ -208,17 +248,7 @@ class _SplashScreenState extends State<SplashScreen> {
   }
 
   void _navigate(UserModel? userModel) {
-    // Respeta el idioma guardado en la cuenta (por si se cambió desde otro
-    // dispositivo) en vez del idioma local guardado en este teléfono.
-    if (userModel != null) {
-      LanguageService().setLanguage(userModel.language);
-    }
-
-    if (userModel == null || !userModel.onboardingCompleted || userModel.userType == null) {
-      Navigator.pushReplacementNamed(context, AppRoutes.roleSelection);
-    } else {
-      Navigator.pushReplacementNamed(context, AppRoutes.home);
-    }
+    AppRoutes.continueAfterAuth(context, userModel);
   }
 
   @override

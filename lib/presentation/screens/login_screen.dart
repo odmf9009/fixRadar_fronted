@@ -164,16 +164,7 @@ class _LoginScreenState extends State<LoginScreen> {
   // ─── Navigation ────────────────────────────────────────────────────────────
 
   void _navigateAfterAuth(UserModel user) {
-    // Respeta el idioma guardado en la cuenta (por si el usuario ya lo
-    // configuró antes desde otro dispositivo), en vez del idioma local
-    // del teléfono/simulador.
-    LanguageService().setLanguage(user.language);
-
-    if (!user.onboardingCompleted || user.userType == null) {
-      Navigator.pushReplacementNamed(context, AppRoutes.roleSelection);
-    } else {
-      Navigator.pushReplacementNamed(context, AppRoutes.home);
-    }
+    AppRoutes.continueAfterAuth(context, user);
   }
 
   // ─── Helpers ───────────────────────────────────────────────────────────────

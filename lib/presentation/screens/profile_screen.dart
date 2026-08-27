@@ -86,7 +86,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   void _showSpecialtiesDialog(BuildContext context, UserModel user) {
-    final List<String> allCategories = ServiceConstants.categoryNames;
+    // "Handyman" es una categoría especial interna (da acceso a todos los
+    // trabajos) y no debe poder elegirse manualmente como especialidad.
+    final List<String> allCategories =
+        ServiceConstants.categoryNames.where((c) => c != 'Handyman').toList();
     
     List<String> tempSpecialties = List.from(user.specialties);
 
@@ -111,13 +114,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     return GestureDetector(
                       onTap: () {
                         setDialogState(() {
-                          // Selección ÚNICA en la UI: solo una especialidad a la vez.
-                          // Se sigue guardando como List<String> para que la
-                          // estructura admita varias en el futuro sin cambios.
+                          // Selección múltiple: cada especialidad se agrega o
+                          // quita de forma independiente.
                           if (isSelected) {
-                            tempSpecialties = [];
+                            tempSpecialties = tempSpecialties.where((s) => s != cat).toList();
                           } else {
-                            tempSpecialties = [cat];
+                            tempSpecialties = [...tempSpecialties, cat];
                           }
                         });
                       },
@@ -192,8 +194,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
       final imageUrl = await _uploadService.uploadProfileImage(File(pickedFile.path), userId);
       if (imageUrl != null) {
         await _firestoreService.updateUserProfileImage(userId, imageUrl);
+        // Sin esto, la UI seguía mostrando la foto vieja hasta el próximo
+        // ciclo de polling (60s) o hasta reiniciar la app.
+        await _firestoreService.refreshUserStream(userId);
       }
-      
+
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(tr('profile_photo_updated'))),

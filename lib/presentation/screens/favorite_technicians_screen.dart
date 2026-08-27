@@ -112,7 +112,7 @@ class _FavoriteTechniciansScreenState extends State<FavoriteTechniciansScreen> {
         ),
         title: Row(
           children: [
-            Text(tech.name, style: const TextStyle(fontWeight: FontWeight.bold)),
+            Text(tech.displayName, style: const TextStyle(fontWeight: FontWeight.bold)),
             const SizedBox(width: 4),
             if (tech.idVerified) const Icon(Icons.verified, color: Colors.blue, size: 14),
           ],

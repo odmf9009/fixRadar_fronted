@@ -72,12 +72,7 @@ class _ActivityHistoryScreenState extends State<ActivityHistoryScreen> {
                 child: _buildUserSummary(user),
               ),
 
-              // 2. Monthly Summary Section
-              SliverToBoxAdapter(
-                child: _buildMonthlySummary(user),
-              ),
-
-              // 3. Recent Achievements Section
+              // 2. Recent Achievements Section
               SliverToBoxAdapter(
                 child: _buildRecentAchievements(),
               ),
@@ -190,61 +185,6 @@ class _ActivityHistoryScreenState extends State<ActivityHistoryScreen> {
         const SizedBox(height: 8),
         Text(value, style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
         Text(label, style: const TextStyle(color: Colors.grey, fontSize: 10)),
-      ],
-    );
-  }
-
-  Widget _buildMonthlySummary(UserModel? user) {
-    final now = DateTime.now();
-    final String currentLang = LanguageService().currentLanguage;
-    final monthName = DateFormat('MMMM', currentLang).format(now);
-    
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 20),
-      margin: const EdgeInsets.only(bottom: 24),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            tr('month_summary').replaceAll('{month}', monthName),
-            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: 12),
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: Colors.grey[50],
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: Colors.grey[200]!),
-            ),
-            child: GridView.count(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              crossAxisCount: 3,
-              mainAxisSpacing: 16,
-              crossAxisSpacing: 16,
-              childAspectRatio: 1.3,
-              children: [
-                _buildSmallStat(tr('stat_pubs_short'), user?.postsCount.toString() ?? '0'),
-                _buildSmallStat(tr('stat_found_short'), user?.foundCount.toString() ?? '0'),
-                _buildSmallStat(tr('stat_points_short'), user?.points.toString() ?? '0'),
-                _buildSmallStat(tr('stat_helped_short'), user?.usersHelped.toString() ?? '0'),
-                _buildSmallStat(tr('stat_miles_short'), user?.totalDistance.toStringAsFixed(1) ?? '0.0'),
-                _buildSmallStat(tr('stat_confirmations_short'), user?.confirmationsCount.toString() ?? '0'),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildSmallStat(String label, String value) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(label, style: TextStyle(color: Colors.grey[600], fontSize: 10)),
-        Text(value, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
       ],
     );
   }

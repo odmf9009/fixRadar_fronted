@@ -333,7 +333,7 @@ class _TechniciansDirectoryScreenState extends State<TechniciansDirectoryScreen>
                           children: [
                             Expanded(
                               child: Text(
-                                tech.name,
+                                tech.displayName,
                                 style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 17),
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,

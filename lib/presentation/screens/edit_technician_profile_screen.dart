@@ -1,7 +1,11 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import '../../core/models/user_model.dart';
 import '../../core/services/firestore_service.dart';
 import '../../core/services/language_service.dart';
+import '../../core/services/upload_service.dart';
+import '../../core/widgets/photo_source_picker.dart';
 import 'phone_verification_screen.dart';
 
 class EditTechnicianProfileScreen extends StatefulWidget {
@@ -14,8 +18,10 @@ class EditTechnicianProfileScreen extends StatefulWidget {
 
 class _EditTechnicianProfileScreenState extends State<EditTechnicianProfileScreen> {
   final FirestoreService _firestoreService = FirestoreService();
+  final UploadService _uploadService = UploadService();
+  final ImagePicker _picker = ImagePicker();
   final _formKey = GlobalKey<FormState>();
-  
+
   late TextEditingController _bioController;
   late TextEditingController _companyController;
   late TextEditingController _experienceController;
@@ -26,6 +32,10 @@ class _EditTechnicianProfileScreenState extends State<EditTechnicianProfileScree
   // El teléfono no se edita como texto plano: cambiarlo exige verificación SMS.
   String _phoneNumber = '';
   bool _phoneVerified = false;
+
+  String _licenseDocumentUrl = '';
+  bool _licenseVerified = false;
+  bool _uploadingLicense = false;
 
   bool _freeQuote = true;
   bool _emergency = false;
@@ -42,9 +52,44 @@ class _EditTechnicianProfileScreenState extends State<EditTechnicianProfileScree
     _hoursController = TextEditingController(text: widget.user.workHours);
     _phoneNumber = widget.user.phoneNumber ?? '';
     _phoneVerified = widget.user.phoneVerified;
+    _licenseDocumentUrl = widget.user.licenseDocumentUrl;
+    _licenseVerified = widget.user.licenseVerified;
     _freeQuote = widget.user.freeQuote;
     _emergency = widget.user.emergencyService;
     _weekend = widget.user.weekendAvailability;
+  }
+
+  Future<void> _uploadLicense() async {
+    final source = await PhotoSourcePicker.chooseSource(context);
+    if (source == null) return;
+
+    final XFile? pickedFile = await _picker.pickImage(source: source, imageQuality: 70);
+    if (pickedFile == null) return;
+
+    setState(() => _uploadingLicense = true);
+    try {
+      final url = await _uploadService.uploadLicenseDocument(File(pickedFile.path), widget.user.id);
+      if (url != null) {
+        await _firestoreService.saveUser(UserModel.fromJson({
+          ...widget.user.toJson(),
+          'licenseDocumentUrl': url,
+          '_id': widget.user.id,
+        }));
+        await _firestoreService.refreshUserStream(widget.user.id);
+        if (mounted) setState(() => _licenseDocumentUrl = url);
+      }
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(tr('license_uploaded'))));
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(tr('generic_error')), backgroundColor: Colors.red),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _uploadingLicense = false);
+    }
   }
 
   @override
@@ -52,6 +97,10 @@ class _EditTechnicianProfileScreenState extends State<EditTechnicianProfileScree
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: Colors.white),
+          onPressed: () => Navigator.pop(context),
+        ),
         title: Text(tr('professional_profile_title'), style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
         backgroundColor: const Color(0xFF121212),
         elevation: 0,
@@ -71,6 +120,7 @@ class _EditTechnicianProfileScreenState extends State<EditTechnicianProfileScree
               _buildField(tr('main_city_area'), _cityController, icon: Icons.location_city),
               _buildField(tr('service_radius_km'), _radiusController, icon: Icons.radar, keyboardType: TextInputType.number),
               _buildPhoneTile(),
+              _buildLicenseTile(),
               const SizedBox(height: 24),
               Text(tr('professional_bio'), style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
               const SizedBox(height: 12),
@@ -87,7 +137,7 @@ class _EditTechnicianProfileScreenState extends State<EditTechnicianProfileScree
               const SizedBox(height: 24),
               Text(tr('business_settings'), style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
               const SizedBox(height: 8),
-              _buildField(tr('work_hours'), _hoursController, icon: Icons.schedule, hint: tr('work_hours_hint')),
+              _buildWorkHoursField(),
               SwitchListTile(
                 title: Text(tr('free_quote_offer')),
                 value: _freeQuote,
@@ -191,6 +241,210 @@ class _EditTechnicianProfileScreenState extends State<EditTechnicianProfileScree
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildLicenseTile() {
+    final bool hasLicense = _licenseDocumentUrl.isNotEmpty;
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        decoration: BoxDecoration(
+          color: Colors.grey[100],
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Row(
+          children: [
+            const Icon(Icons.badge_outlined, color: Color(0xFFFF8A00)),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(tr('license_or_id'), style: const TextStyle(color: Colors.grey, fontSize: 12)),
+                  const SizedBox(height: 2),
+                  Row(
+                    children: [
+                      Text(
+                        hasLicense ? tr('license_uploaded_status') : tr('license_not_set'),
+                        style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+                      ),
+                      if (hasLicense && _licenseVerified) ...[
+                        const SizedBox(width: 6),
+                        const Icon(Icons.verified, color: Colors.green, size: 18),
+                      ],
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            if (_uploadingLicense)
+              const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2))
+            else
+              TextButton(
+                onPressed: _uploadLicense,
+                child: Text(
+                  hasLicense ? tr('change_license') : tr('add_license'),
+                  style: const TextStyle(color: Color(0xFFFF8A00), fontWeight: FontWeight.bold),
+                  textAlign: TextAlign.end,
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildWorkHoursField() {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16),
+      child: TextFormField(
+        controller: _hoursController,
+        readOnly: true,
+        onTap: _showWorkHoursPicker,
+        decoration: InputDecoration(
+          labelText: tr('work_hours'),
+          hintText: tr('work_hours_hint'),
+          prefixIcon: const Icon(Icons.schedule, color: Color(0xFFFF8A00)),
+          suffixIcon: const Icon(Icons.arrow_drop_down),
+          filled: true,
+          fillColor: Colors.grey[100],
+          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+          labelStyle: const TextStyle(color: Colors.grey),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _showWorkHoursPicker() async {
+    final Map<String, bool> days = {
+      tr('day_mon_short'): false,
+      tr('day_tue_short'): false,
+      tr('day_wed_short'): false,
+      tr('day_thu_short'): false,
+      tr('day_fri_short'): false,
+      tr('day_sat_short'): false,
+      tr('day_sun_short'): false,
+    };
+    final weekdayKeys = days.keys.take(5).toList();
+    TimeOfDay fromTime = const TimeOfDay(hour: 9, minute: 0);
+    TimeOfDay toTime = const TimeOfDay(hour: 18, minute: 0);
+
+    await showDialog(
+      context: context,
+      builder: (dialogContext) => StatefulBuilder(
+        builder: (dialogContext, setDialogState) {
+          void applyPreset({required bool everyDay, required TimeOfDay from, required TimeOfDay to}) {
+            setDialogState(() {
+              for (final key in days.keys) {
+                days[key] = everyDay || weekdayKeys.contains(key);
+              }
+              fromTime = from;
+              toTime = to;
+            });
+          }
+
+          return AlertDialog(
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            title: Text(tr('work_hours'), style: const TextStyle(fontWeight: FontWeight.bold)),
+            content: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(tr('quick_presets'), style: const TextStyle(fontWeight: FontWeight.w600)),
+                  const SizedBox(height: 8),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: [
+                      ActionChip(
+                        label: Text(tr('preset_weekdays_9_18')),
+                        onPressed: () => applyPreset(
+                          everyDay: false,
+                          from: const TimeOfDay(hour: 9, minute: 0),
+                          to: const TimeOfDay(hour: 18, minute: 0),
+                        ),
+                      ),
+                      ActionChip(
+                        label: Text(tr('preset_everyday_9_18')),
+                        onPressed: () => applyPreset(
+                          everyDay: true,
+                          from: const TimeOfDay(hour: 9, minute: 0),
+                          to: const TimeOfDay(hour: 18, minute: 0),
+                        ),
+                      ),
+                      ActionChip(
+                        label: Text(tr('preset_24_7')),
+                        onPressed: () {
+                          setState(() => _hoursController.text = tr('available_24_7'));
+                          Navigator.pop(dialogContext);
+                        },
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  Text(tr('select_work_days'), style: const TextStyle(fontWeight: FontWeight.w600)),
+                  const SizedBox(height: 8),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: days.keys.map((day) {
+                      final bool selected = days[day]!;
+                      return ChoiceChip(
+                        label: Text(day),
+                        selected: selected,
+                        selectedColor: const Color(0xFFFF8A00),
+                        labelStyle: TextStyle(color: selected ? Colors.white : Colors.black87),
+                        onSelected: (val) => setDialogState(() => days[day] = val),
+                      );
+                    }).toList(),
+                  ),
+                  const SizedBox(height: 12),
+                  ListTile(
+                    contentPadding: EdgeInsets.zero,
+                    title: Text(tr('from_time')),
+                    trailing: Text(fromTime.format(dialogContext), style: const TextStyle(fontWeight: FontWeight.bold)),
+                    onTap: () async {
+                      final picked = await showTimePicker(context: dialogContext, initialTime: fromTime);
+                      if (picked != null) setDialogState(() => fromTime = picked);
+                    },
+                  ),
+                  ListTile(
+                    contentPadding: EdgeInsets.zero,
+                    title: Text(tr('to_time')),
+                    trailing: Text(toTime.format(dialogContext), style: const TextStyle(fontWeight: FontWeight.bold)),
+                    onTap: () async {
+                      final picked = await showTimePicker(context: dialogContext, initialTime: toTime);
+                      if (picked != null) setDialogState(() => toTime = picked);
+                    },
+                  ),
+                ],
+              ),
+            ),
+            actions: [
+              TextButton(onPressed: () => Navigator.pop(dialogContext), child: Text(tr('cancel'))),
+              ElevatedButton(
+                style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFFF8A00)),
+                onPressed: () {
+                  final selectedDays = days.entries.where((e) => e.value).map((e) => e.key).toList();
+                  if (selectedDays.isEmpty) {
+                    ScaffoldMessenger.of(dialogContext).showSnackBar(
+                      SnackBar(content: Text(tr('select_days_error'))),
+                    );
+                    return;
+                  }
+                  final formatted = '${selectedDays.join(', ')} ${fromTime.format(dialogContext)} - ${toTime.format(dialogContext)}';
+                  setState(() => _hoursController.text = formatted);
+                  Navigator.pop(dialogContext);
+                },
+                child: Text(tr('save'), style: const TextStyle(color: Colors.white)),
+              ),
+            ],
+          );
+        },
       ),
     );
   }

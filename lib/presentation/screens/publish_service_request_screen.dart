@@ -41,6 +41,7 @@ class _PublishServiceRequestScreenState extends State<PublishServiceRequestScree
   final TextEditingController _addressController = TextEditingController(text: tr('detecting_location'));
   UrgencyLevel _selectedUrgency = UrgencyLevel.medium;
   Position? _currentPosition;
+  bool _isSearchingAddress = false;
   String? _targetTechnicianId;
   UserModel? _targetTechnician;
 
@@ -101,6 +102,52 @@ class _PublishServiceRequestScreenState extends State<PublishServiceRequestScree
       }
     } catch (e) {
       setState(() => _addressController.text = tr('location_manual'));
+    }
+  }
+
+  /// Permite ingresar a mano una dirección distinta a la del GPS (ej: estás
+  /// en la calle pero el problema es en tu casa) y la convierte a
+  /// coordenadas, ya que el envío de la solicitud usa `_currentPosition`.
+  Future<void> _searchManualAddress() async {
+    final query = _addressController.text.trim();
+    if (query.isEmpty) return;
+    setState(() => _isSearchingAddress = true);
+    try {
+      final locations = await locationFromAddress(query);
+      if (locations.isNotEmpty) {
+        final loc = locations.first;
+        setState(() {
+          _currentPosition = Position(
+            latitude: loc.latitude,
+            longitude: loc.longitude,
+            timestamp: DateTime.now(),
+            accuracy: 0,
+            altitude: 0,
+            altitudeAccuracy: 0,
+            heading: 0,
+            headingAccuracy: 0,
+            speed: 0,
+            speedAccuracy: 0,
+          );
+        });
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(tr('address_updated'))),
+          );
+        }
+      } else if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(tr('address_not_found')), backgroundColor: Colors.red),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(tr('address_not_found')), backgroundColor: Colors.red),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isSearchingAddress = false);
     }
   }
 
@@ -511,10 +558,22 @@ class _PublishServiceRequestScreenState extends State<PublishServiceRequestScree
                     isDense: true,
                   ),
                   style: const TextStyle(fontSize: 16),
+                  onSubmitted: (_) => _searchManualAddress(),
                 ),
               ),
+              if (_isSearchingAddress)
+                const Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 8),
+                  child: SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2)),
+                )
+              else
+                IconButton(
+                  icon: const Icon(Icons.search, color: Color(0xFFFF8A00)),
+                  tooltip: tr('use_this_address'),
+                  onPressed: _searchManualAddress,
+                ),
               IconButton(
-                icon: const Icon(Icons.refresh, color: Colors.grey), 
+                icon: const Icon(Icons.refresh, color: Colors.grey),
                 onPressed: () {
                   _addressController.text = 'Actualizando...';
                   _initLocation();
@@ -523,6 +582,8 @@ class _PublishServiceRequestScreenState extends State<PublishServiceRequestScree
             ],
           ),
         ),
+        const SizedBox(height: 12),
+        Text(tr('manual_address_hint'), style: const TextStyle(color: Colors.grey, fontSize: 13)),
         const SizedBox(height: 20),
         Text(tr('address_correct_hint'), style: const TextStyle(color: Colors.grey, fontSize: 13)),
         const SizedBox(height: 4),
@@ -568,7 +629,7 @@ class _PublishServiceRequestScreenState extends State<PublishServiceRequestScree
       case 'Aire Acond.': return tr('th_aire');
       case 'Pintura': return tr('th_pint');
       case 'Techos': return tr('th_tech');
-      case 'Carpintería': return tr('th_carp');
+      case 'Gabinetes': return tr('th_carp');
       case 'Drywall y Reparación de Paredes': return tr('th_drywall');
       case 'Electrodomésticos': return tr('th_appliance');
       case 'Jardinería': return tr('th_garden');
@@ -589,7 +650,7 @@ class _PublishServiceRequestScreenState extends State<PublishServiceRequestScree
       case 'Aire Acond.': return tr('dh_aire');
       case 'Pintura': return tr('dh_pint');
       case 'Techos': return tr('dh_tech');
-      case 'Carpintería': return tr('dh_carp');
+      case 'Gabinetes': return tr('dh_carp');
       case 'Drywall y Reparación de Paredes': return tr('dh_drywall');
       case 'Electrodomésticos': return tr('dh_appliance');
       case 'Jardinería': return tr('dh_garden');

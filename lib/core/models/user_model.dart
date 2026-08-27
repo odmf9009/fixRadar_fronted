@@ -1,4 +1,5 @@
 import '../services/language_service.dart';
+import 'review_model.dart';
 
 class UserModel {
   final String id;
@@ -18,11 +19,13 @@ class UserModel {
   final List<String> redeemedRewards;
   final String? userType;
   final bool onboardingCompleted;
+  final DateTime? termsAcceptedAt;
   final String role;
   final String language;
   final List<String> specialties;
   final double rating;
   final int reviewsCount;
+  final List<CategoryRating> categoryRatings;
   final int activeStreak;
   final double totalDistance;
   final int usersHelped;
@@ -51,6 +54,7 @@ class UserModel {
   final bool phoneVerified;
   final bool emailVerified;
   final bool licenseVerified;
+  final String licenseDocumentUrl;
   final bool insuranceVerified;
   final List<String> badges;
   final bool freeQuote;
@@ -67,11 +71,13 @@ class UserModel {
     this.profileImageUrl = '',
     this.userType,
     this.onboardingCompleted = false,
+    this.termsAcceptedAt,
     this.role = 'client',
     this.language = 'en',
     this.specialties = const [],
     this.rating = 0.0,
     this.reviewsCount = 0,
+    this.categoryRatings = const [],
     this.points = 0,
     this.totalXp = 0,
     this.level = 1,
@@ -110,6 +116,7 @@ class UserModel {
     this.phoneVerified = false,
     this.emailVerified = false,
     this.licenseVerified = false,
+    this.licenseDocumentUrl = '',
     this.insuranceVerified = false,
     this.badges = const [],
     this.freeQuote = true,
@@ -129,11 +136,15 @@ class UserModel {
       profileImageUrl: json['profileImageUrl'] ?? '',
       userType: json['userType'],
       onboardingCompleted: json['onboardingCompleted'] ?? false,
+      termsAcceptedAt: json['termsAcceptedAt'] != null ? DateTime.tryParse(json['termsAcceptedAt']) : null,
       role: json['role'] ?? json['userType'] ?? 'client',
       language: json['language'] ?? 'en',
       specialties: List<String>.from(json['specialties'] ?? []),
       rating: (json['rating'] as num?)?.toDouble() ?? 0.0,
       reviewsCount: json['reviewsCount'] ?? 0,
+      categoryRatings: (json['categoryRatings'] as List<dynamic>? ?? [])
+          .map((e) => CategoryRating.fromJson(e as Map<String, dynamic>))
+          .toList(),
       points: json['points'] ?? 0,
       totalXp: json['totalXp'] ?? json['points'] ?? 0,
       level: json['level'] ?? 1,
@@ -178,6 +189,7 @@ class UserModel {
       phoneVerified: json['phoneVerified'] ?? false,
       emailVerified: json['emailVerified'] ?? false,
       licenseVerified: json['licenseVerified'] ?? false,
+      licenseDocumentUrl: json['licenseDocumentUrl'] ?? '',
       insuranceVerified: json['insuranceVerified'] ?? false,
       badges: List<String>.from(json['badges'] ?? []),
       freeQuote: json['freeQuote'] ?? true,
@@ -195,11 +207,15 @@ class UserModel {
     'profileImageUrl': profileImageUrl,
     'userType': userType,
     'onboardingCompleted': onboardingCompleted,
+    if (termsAcceptedAt != null) 'termsAcceptedAt': termsAcceptedAt!.toIso8601String(),
     'role': role,
     'language': language,
     'specialties': specialties,
     'rating': rating,
     'reviewsCount': reviewsCount,
+    'categoryRatings': categoryRatings
+        .map((c) => {'category': c.category, 'rating': c.rating, 'count': c.count})
+        .toList(),
     'points': points,
     'totalXp': totalXp,
     'level': level,
@@ -208,11 +224,11 @@ class UserModel {
     'notificationsEnabled': notificationsEnabled,
     'presenceStatus': presenceStatus,
     'companyName': companyName,
+    'licenseDocumentUrl': licenseDocumentUrl,
     'yearsOfExperience': yearsOfExperience,
     'bio': bio,
     'city': city,
     'serviceRadius': serviceRadius,
-    'specialties': specialties,
     'freeQuote': freeQuote,
     'emergencyService': emergencyService,
     'workHours': workHours,

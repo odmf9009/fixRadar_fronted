@@ -4,6 +4,7 @@ import '../../core/services/firestore_service.dart';
 import '../../core/services/auth_service.dart';
 import '../../core/config/routes.dart';
 import '../../core/services/language_service.dart';
+import '../../core/models/user_model.dart';
 
 class RoleSelectionScreen extends StatefulWidget {
   const RoleSelectionScreen({super.key});
@@ -23,19 +24,27 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
     _checkExistingRole();
   }
 
+  void _goHomeOrAliasSetup(UserModel userData) {
+    if (!mounted) return;
+    Navigator.pushReplacementNamed(
+      context,
+      userData.username.isEmpty ? AppRoutes.aliasSetup : AppRoutes.home,
+    );
+  }
+
   Future<void> _checkExistingRole() async {
     final firebaseUser = FirebaseAuth.instance.currentUser;
     if (firebaseUser != null) {
       final userData = await _firestoreService.getUser(firebaseUser.uid);
       if (userData != null && userData.onboardingCompleted && userData.userType != null) {
-        if (mounted) Navigator.pushReplacementNamed(context, AppRoutes.home);
+        _goHomeOrAliasSetup(userData);
       }
     } else {
       final token = await _authService.getBackendToken();
       if (token != null) {
         final userData = await _authService.syncCurrentUserFromBackend();
         if (userData != null && userData.onboardingCompleted && userData.userType != null) {
-          if (mounted) Navigator.pushReplacementNamed(context, AppRoutes.home);
+          _goHomeOrAliasSetup(userData);
         }
       }
     }
@@ -47,7 +56,7 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
       // PUT /users/me uses the token identity — uid param is ignored by the backend
       await _firestoreService.updateUserRole('', role);
       if (mounted) {
-        Navigator.pushReplacementNamed(context, AppRoutes.home);
+        Navigator.pushReplacementNamed(context, AppRoutes.aliasSetup);
       }
     } catch (e) {
       if (mounted) {

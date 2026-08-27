@@ -11,7 +11,6 @@ class PrivacySettingsScreen extends StatefulWidget {
 }
 
 class _PrivacySettingsScreenState extends State<PrivacySettingsScreen> {
-  bool _showRealName = false;
   bool _shareLocationHistory = true;
   bool _isLoading = true;
 
@@ -24,7 +23,6 @@ class _PrivacySettingsScreenState extends State<PrivacySettingsScreen> {
   Future<void> _loadSettings() async {
     final prefs = await SharedPreferences.getInstance();
     setState(() {
-      _showRealName = prefs.getBool('privacy_show_real_name') ?? false;
       _shareLocationHistory = prefs.getBool('privacy_share_location') ?? true;
       _isLoading = false;
     });
@@ -57,17 +55,6 @@ class _PrivacySettingsScreenState extends State<PrivacySettingsScreen> {
           : ListView(
               padding: const EdgeInsets.symmetric(vertical: 12),
               children: [
-                _buildHeader(tr('identidad_header')),
-                _buildSwitchTile(
-                  tr('show_real_name'),
-                  tr('alias_only_desc'),
-                  _showRealName,
-                  (val) {
-                    setState(() => _showRealName = val);
-                    _saveSetting('privacy_show_real_name', val);
-                  },
-                ),
-                const Divider(),
                 _buildHeader(tr('location_data')),
                 _buildSwitchTile(
                   tr('smart_radar'),
