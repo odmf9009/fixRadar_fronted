@@ -183,9 +183,20 @@ class AppRoutes {
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(
-          builder: (_) => TermsScreen(onAccept: () async {
-            await FirestoreService().acceptTerms();
-            if (context.mounted) _continuePastTerms(context, user);
+          // Usamos el context de esta nueva ruta (no el de la pantalla
+          // anterior, que queda desmontada por el pushReplacement) para que
+          // la navegación tras aceptar funcione correctamente.
+          builder: (termsContext) => TermsScreen(onAccept: () async {
+            try {
+              await FirestoreService().acceptTerms();
+              if (termsContext.mounted) _continuePastTerms(termsContext, user);
+            } catch (e) {
+              if (termsContext.mounted) {
+                ScaffoldMessenger.of(termsContext).showSnackBar(
+                  SnackBar(content: Text(tr('generic_error')), backgroundColor: Colors.red),
+                );
+              }
+            }
           }),
         ),
       );
