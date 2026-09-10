@@ -635,7 +635,7 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
         Wrap(
           spacing: 16,
           runSpacing: 20,
-          children: ServiceConstants.allCategories.map((cat) {
+          children: ServiceConstants.selectableCategories.map((cat) {
             final categoryName = cat['name'] as String;
             return SizedBox(
               width: 72,
@@ -643,6 +643,7 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
                 label: ServiceConstants.getDisplayName(categoryName),
                 icon: cat['icon'] as IconData,
                 color: cat['color'] as Color,
+                description: ServiceConstants.getDescription(categoryName),
                 onTap: () => _onCategoryTap(categoryName),
               ),
             );

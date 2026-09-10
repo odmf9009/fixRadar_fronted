@@ -45,7 +45,7 @@ class _PublishServiceRequestScreenState extends State<PublishServiceRequestScree
   String? _targetTechnicianId;
   UserModel? _targetTechnician;
 
-  final List<Map<String, dynamic>> _categories = ServiceConstants.allCategories;
+  final List<Map<String, dynamic>> _categories = ServiceConstants.selectableCategories;
 
   @override
   void initState() {

@@ -27,12 +27,18 @@ class LanguageService extends ChangeNotifier {
     await _loadAllLocales();
 
     final prefs = await SharedPreferences.getInstance();
-    // Idioma por defecto: inglés. Se sobreescribe con la preferencia guardada
-    // del usuario (sincronizada desde su perfil en backend) al iniciar sesión.
+    // Preferencia guardada del usuario (sincronizada desde su perfil en
+    // backend al iniciar sesión) > idioma del teléfono > inglés como último
+    // respaldo. Así una instalación nueva arranca en el idioma del sistema
+    // (ej. pantallas previas al login, como Términos y Condiciones) en vez
+    // de quedar fija en un idioma por defecto.
     final saved = prefs.getString('app_language');
-    _currentLanguage = (saved != null && _translations.containsKey(saved))
-        ? saved
-        : AppLocales.fallback;
+    if (saved != null && _translations.containsKey(saved)) {
+      _currentLanguage = saved;
+    } else {
+      final deviceLanguage = PlatformDispatcher.instance.locale.languageCode;
+      _currentLanguage = _translations.containsKey(deviceLanguage) ? deviceLanguage : AppLocales.fallback;
+    }
     notifyListeners();
   }
 

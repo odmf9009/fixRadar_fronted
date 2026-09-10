@@ -31,8 +31,18 @@ class _TechniciansDirectoryScreenState extends State<TechniciansDirectoryScreen>
 
   final List<Map<String, dynamic>> _categories = [
     {'name': 'Todos', 'icon': Icons.all_inclusive},
-    ...ServiceConstants.allCategories,
+    ...ServiceConstants.selectableCategories,
   ];
+
+  /// La categoría seleccionada siempre se muestra justo al lado de "Todos",
+  /// para que el usuario vea de inmediato cuál tiene marcada sin buscarla
+  /// en su posición original dentro de la lista.
+  List<Map<String, dynamic>> get _orderedCategories {
+    if (_selectedCategory == 'Todos') return _categories;
+    final rest = _categories.where((c) => c['name'] != _selectedCategory).toList();
+    final selected = _categories.firstWhere((c) => c['name'] == _selectedCategory);
+    return [rest.first, selected, ...rest.skip(1)];
+  }
 
   @override
   void initState() {
@@ -193,9 +203,9 @@ class _TechniciansDirectoryScreenState extends State<TechniciansDirectoryScreen>
       child: ListView.builder(
         scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.symmetric(horizontal: 16),
-        itemCount: _categories.length,
+        itemCount: _orderedCategories.length,
         itemBuilder: (context, index) {
-          final cat = _categories[index];
+          final cat = _orderedCategories[index];
           final isSelected = _selectedCategory == cat['name'];
           return GestureDetector(
             onTap: () => setState(() => _selectedCategory = cat['name']),
